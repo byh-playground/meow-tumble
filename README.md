@@ -2,7 +2,7 @@
 
 집 안을 누비는 작은 고양이가 쥐·곤충을 사냥하며 성장하고, 거인의 공격을 피하며 거대한 젠가탑을 무너뜨리는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.10.0** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.10.1** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -22,7 +22,7 @@ A small cat hunts around a house, grows heavier, dodges giants, and topples a to
 
 `index.html` 하나가 현행 소스이자 배포 파일입니다. 빌드가 없습니다. 저장소에서 `python -m http.server 8080`을 실행한 뒤 http://localhost:8080 에 접속합니다. WebGL 및 외부 GameKit·Rapier CDN 접속이 필요합니다. 멀티플레이에는 공개 Nostr relay와 WebRTC 연결이 필요합니다.
 
-GameKit **v0.3.0**, dist `63c62dae8d339f6f0329c0940206806f69509630`에 고정합니다. 입력·루프·PRNG·방/세션·보간·확정 표시 이벤트를 SDK가 맡고, 호스트의 Rapier 월드가 싱글/멀티의 같은 게임 규칙을 실행합니다. 게스트 보간은 표시 전용이며 별도 이동 시뮬레이션을 만들지 않습니다. 의존성 해시는 [dependencies.json](docs/dependencies.json)에 있습니다.
+GameKit **v0.3.1**, dist `72b09b260edf9650353017acb49c06873fe9f5a1`에 고정합니다. 입력·루프·PRNG·방/세션·보간·확정 표시 이벤트를 SDK가 맡고, 호스트의 Rapier 월드가 싱글/멀티의 같은 게임 규칙을 실행합니다. 게스트 보간은 표시 전용이며 별도 이동 시뮬레이션을 만들지 않습니다. 의존성 해시는 [dependencies.json](docs/dependencies.json)에 있습니다.
 
 ## 검증과 배포
 
@@ -39,3 +39,7 @@ Actions는 PR에서 배포 파일을 준비하고, main 병합 후 Pages에 같�
 [개발 규칙](https://github.com/byh-playground/bloom-reference/blob/main/rules/development.html) · [관리 규칙](https://github.com/byh-playground/bloom-reference/blob/main/rules/project-management.html) · [UI/UX 규칙](https://github.com/byh-playground/bloom-reference/blob/main/rules/visual-ux.html)
 
 이 저장소에 새 프로젝트 라이선스를 임의로 부여하지 않았습니다. 외부 [Rapier 0.21.0](https://github.com/dimforge/rapier.js) 및 [Bloom GameKit](https://github.com/byh-playground/bloom-gamekit)의 기존 권리·고지를 유지합니다. 집·고양이·효과는 원본의 절차적 그래픽이며 별도 이미지 에셋으로 교체하지 않았습니다.
+
+## GameKit 0.3.1 후보 검증
+
+0.10.1은 SDK 배포 pin과 공식 모듈 해시만 갱신한 호환 PATCH입니다. 게임 규칙·30TPS·기존 방 namespace를 유지합니다. [현재 로컬 결과](docs/verification-sdk031.json)는 Chromium 시작 단계의 실행 환경 차단이며 게임 PASS가 아닙니다. 기존 Edge 검증은 위에 별도 역사 기록으로 유지합니다. 실제 브라우저 검증이 끝난 뒤 Stable로 승격합니다.

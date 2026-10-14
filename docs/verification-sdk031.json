@@ -1,0 +1,22 @@
+{
+  "dateUTC": "2026-10-14",
+  "status": "ENVIRONMENT_BLOCKED",
+  "stage": "Chromium startup before game boot",
+  "reason": "Linux process_singleton socket() Operation not permitted; normal and escalated launch both failed",
+  "checks": [],
+  "notTested": [
+    "Rapier initialization",
+    "solo input",
+    "real 2P Nostr/WebRTC",
+    "mobile hardware",
+    "4 peers",
+    "external NAT"
+  ],
+  "candidateVersion": "0.10.1",
+  "gamekitDist": "72b09b260edf9650353017acb49c06873fe9f5a1",
+  "staticChecks": [
+    "ES module syntax",
+    "module hashes matched official manifest"
+  ],
+  "mock": false
+}

@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"/>
 <meta name="theme-color" content="#182438"/>
-<title>와르르냥 / Meow Tumble · 집 전체 사냥과 젠가 결전 · v0.10.0</title>
+<title>와르르냥 / Meow Tumble · 집 전체 사냥과 젠가 결전 · v0.10.1</title>
 <style>
 :root{color-scheme:dark;--bg:#17283c;--ink:#fffaf0;--sub:#c8d1da;--mint:#93edcb;--pink:#ffaaa6;--yellow:#ffe49e;--shadow:0 10px 55px #0b1228ba}
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);font-family:ui-rounded,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:var(--ink);overscroll-behavior:none;-webkit-tap-highlight-color:transparent}button{font:inherit;cursor:pointer;color:inherit;touch-action:manipulation}button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}.hidden{display:none!important}
@@ -150,7 +150,7 @@
   <div class="bottomRight"><button id="helpBtn" class="tool">조작법 ❔</button><button id="soundBtn" class="tool">🔊</button><div id="status" class="status">박치기 1.5초 · 점프 1초 차지</div><div class="dashbar"><i id="dashReady"></i></div></div>
  </div>
  <div id="netRoster" aria-label="멀티플레이 참가자"></div><div id="netLabels" aria-hidden="true"></div>
- <div id="buildTag">v0.10.0 · MEOW TUMBLE</div>
+ <div id="buildTag">v0.10.1 · MEOW TUMBLE</div>
  <div id="touch"><div id="stick" class="joystick"><div id="knob" class="knob"></div></div><div class="actionPad"><button type="button" class="action" data-action="charge" aria-label="짧게 누르면 할퀴기, 0.25초 이상 길게 누르고 떼면 박치기"><strong>🐾</strong><small>탭 할퀴기 · 홀드 박치기</small><span class="chargeTrack"><i id="touchChargeFill"></i></span></button><button type="button" class="action" data-action="jump" aria-label="점프: 1초까지 누르고 떼서 점프"><strong>↥</strong><small>길게 눌러 점프</small><span class="chargeTrack jumpTrack"><i id="touchJumpFill"></i></span></button><button type="button" class="action" data-action="dodge"><strong>↻</strong><small>구르기</small></button></div><div class="touchTooltip">왼쪽 이동 · 오른쪽 화면 드래그로 시점 회전</div></div>
  <section id="intro" class="cover"><div class="hero"><div class="eyebrow">MEOW TUMBLE · 고양이 반란 작전</div><h1>와르르<em>냥</em></h1><p>인간 둘이 쌓는 <b>고양이보다 훨씬 거대한 젠가탑.</b><br>처음에는 몸이 가벼워 탑에 거의 충격을 못 줍니다.<br><b>집 전체를 누비며 <b>도망가는 쥐와 곤충, 공격하는 거미</b>를 사냥해 질량을 키우세요. 중앙 식탁으로 올라가 두 거인의 손을 피하면서 젠가탑을 물리적으로 무너뜨리세요. 체력이 0이 되어도 <b>성장·탑 진행도 손실 없이 고양이 잠자리에서 부활</b>합니다.</p><div class="pills"><span class="pill">🐈 작은 고양이 vs 거인 둘</span><span class="pill">🐁 쥐·곤충·거미 사냥 · 성장</span><span class="pill">💥 거인의 지면 충격파 · 공중 튕김</span><span class="pill">🏰 무너지는 거대 탑</span></div><button id="startBtn" type="button" class="primary">🐾 싱글 플레이 시작 →</button>
 <div class="roomSetup">
@@ -163,10 +163,10 @@
  <section id="ending" class="cover hidden"><div class="hero"><div class="eyebrow">◆ 오늘의 대참사 ◆</div><h1 id="endingTitle" class="endTitle">대참사 성공! 🐾</h1><p id="endingSub">거대한 탑이 무너졌어요!</p><div class="statsEnd" id="endingStats"></div><button id="retryBtn" type="button" class="primary">🐾 한 판 더!</button><small>거인의 충격파를 구르기로 피하며 질량을 키우고, 균형이 약한 블록을 물리적으로 밀어보세요.</small></div></section>
 </div>
 <script type="module">
-/* Bloom GameKit · v0.3.0 pinned published dist commit (2026-10-14). No duplicate input/loop/PRNG engine.
+/* Bloom GameKit · v0.3.1 pinned published dist commit (2026-10-14). No duplicate input/loop/PRNG engine.
  * The 3D renderer, Rapier physics, gameplay and presentation remain owned by Meow Tumble.
  * Browser WebRTC uses the official group-room transport, never a second signaling stack. */
-const GAMEKIT_PIN='63c62dae8d339f6f0329c0940206806f69509630';
+const GAMEKIT_PIN='72b09b260edf9650353017acb49c06873fe9f5a1';
 const GAMEKIT_CDN=`https://cdn.jsdelivr.net/gh/byh-playground/bloom-gamekit@${GAMEKIT_PIN}/`;
 let ActionState,SeededPRNG,createLoop,createNostrDynamicRoom,createRoomSession,profiles,InterpolationTimeline,PresentationEventQueue;
 try{
@@ -599,7 +599,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
 const DEF={
-  build:'20261014-gamekit-v0100',version:'0.10.0',
+  build:'20261014-gamekit-v0101',version:'0.10.1',
   // After the success threshold, physics keeps stepping until the debris is quiet.
   // These are PRESENTATION timings only; they never influence Rapier impulses.
   round:{durationMs:0,winBlocks:TOWER.winScattered,
