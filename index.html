@@ -950,6 +950,8 @@ function updateHUD(){
  const side=-Math.cos(camera.yaw)*dx+Math.sin(camera.yaw)*dz,forward=Math.sin(camera.yaw)*dx+Math.cos(camera.yaw)*dz;
  const angle=Math.atan2(side,forward),arrows=['↑','↗','→','↘','↓','↙','←','↖'];const direction=arrows[(Math.round(angle/(Math.PI/4))+8)%8];
  ui.farmArrow.textContent=direction+(cat.level<6?' 🐁 사냥 '+dist.toFixed(0)+'m':' 🏰 식탁 '+dist.toFixed(0)+'m');ui.farmArrow.style.display='block';
+ // Guests refresh the roster on snapshots; the host must refresh from its own simulation.
+ if(net.room&&net.isHost)net.showRoster();
  drawMinimap();
 }
 function drawMinimap(){const canvas=ui.minimap,ctx=canvas.getContext('2d');if(!ctx)return;
