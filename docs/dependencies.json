@@ -1,0 +1,41 @@
+{
+  "gamekit": {
+    "version": "0.3.0",
+    "commit": "63c62dae8d339f6f0329c0940206806f69509630",
+    "modules": [
+      {
+        "file": "interpolation.js",
+        "sha256": "bf6c8737ef48ca327814cf7326406025c2ece6c49a690ca7652cac2cc6af2562"
+      },
+      {
+        "file": "input.js",
+        "sha256": "ae84399953c7e54c8d96408c97208f42b2246a8ac27ef5265053cb0beb306168"
+      },
+      {
+        "file": "deterministic.js",
+        "sha256": "688178b889e7bd3f19c1bc504c91c03f896a9a7bd832fd2c0fc958b2feadce55"
+      },
+      {
+        "file": "simloop.js",
+        "sha256": "6d8c3462ac01b0af967b3c259eede2b85e2f2f3f6813217391e6c322a7d10007"
+      },
+      {
+        "file": "transport.js",
+        "sha256": "3bded746222c0aa1769697442b579922d406e67d79e3dbf65df5580dd387c007"
+      },
+      {
+        "file": "rollback.js",
+        "sha256": "efd95275b42e0c7457714123ac6497f6c02ffabf11a23f9dc7e2ec0ad1b244cc"
+      },
+      {
+        "file": "presentation-events.js",
+        "sha256": "469a820e22730cdff9a0e4cd37fcbbfa4ffc9af3e39eab6d9a784e1d544caf84"
+      }
+    ]
+  },
+  "rapier": {
+    "package": "@dimforge/rapier3d-compat",
+    "version": "0.21.0",
+    "url": "https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.21.0/+esm"
+  }
+}

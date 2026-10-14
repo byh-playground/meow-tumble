@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"/>
 <meta name="theme-color" content="#182438"/>
-<title>do meow no · 집 전체 사냥과 젠가 결전 · v0.9.3</title>
+<title>와르르냥 / Meow Tumble · 집 전체 사냥과 젠가 결전 · v0.10.0</title>
 <style>
 :root{color-scheme:dark;--bg:#17283c;--ink:#fffaf0;--sub:#c8d1da;--mint:#93edcb;--pink:#ffaaa6;--yellow:#ffe49e;--shadow:0 10px 55px #0b1228ba}
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);font-family:ui-rounded,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:var(--ink);overscroll-behavior:none;-webkit-tap-highlight-color:transparent}button{font:inherit;cursor:pointer;color:inherit;touch-action:manipulation}button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}.hidden{display:none!important}
@@ -119,10 +119,10 @@
 .roomActions button{pointer-events:auto;border:1px solid #9ad9cc88;background:#285266;color:#f7fff7;border-radius:12px;padding:11px 6px;font-size:13px;font-weight:900}
 #lobbyStatus{margin:9px 0 0;min-height:20px;font-size:12px;line-height:1.35;font-weight:750;color:#ffebb9}
 #cancelLobby{display:none;margin-top:6px;background:transparent;border:1px solid #e5e5d366;border-radius:9px;padding:8px 12px;font-size:12px;color:#d9eff1}
-#netRoster{position:absolute;right:14px;top:132px;z-index:7;pointer-events:none;min-width:140px;border:1px solid #ceeae77e;background:#132b41b9;backdrop-filter:blur(8px);padding:8px 12px;border-radius:12px;font:850 12px/1.65 system-ui;display:none}
+#netRoster{position:absolute;left:18px;top:232px;z-index:7;pointer-events:none;min-width:140px;border:1px solid #ceeae77e;background:#132b41b9;backdrop-filter:blur(8px);padding:8px 12px;border-radius:12px;font:850 12px/1.65 system-ui;display:none}
 #netRoster .self{color:#ffe1a1}#netRoster .guest{color:#b9e9ff}
 .netName{position:absolute;z-index:7;pointer-events:none;white-space:nowrap;color:#f7fefa;background:#183647cc;border:1px solid #fff6;border-radius:12px;padding:2px 7px;font-size:11px;font-weight:850;transform:translate(-50%,-100%)}
-@media(max-width:650px){#netRoster{top:136px;right:8px;min-width:95px;font-size:10px;padding:6px 8px}.roomSetup{gap:6px}.roomActions button{font-size:12px}.hero{max-height:94dvh;overflow:auto;padding:22px 19px}.brand span{letter-spacing:1px!important}}
+@media(max-width:650px){#netRoster{top:365px;left:9px;right:auto;min-width:95px;font-size:10px;padding:6px 8px}.roomSetup{gap:6px}.roomActions button{font-size:12px}.hero{max-height:94dvh;overflow:auto;padding:22px 19px}.brand span{letter-spacing:1px!important}}
 </style>
 </head>
 <body>
@@ -132,7 +132,7 @@
  <div id="boot">고양이에게 힘을 불어넣는 중… 🐈</div>
  <div id="error"></div>
  <div id="hud" class="inactive">
-  <div class="ui topbar"><div class="brand"><strong>do <b>meow</b> no</strong><span>HOUSE RAID · PHYSICS BOSS · 1–4 PLAYERS</span></div><div class="stats"><div class="stat heart"><span class="tiny">냥이 체력</span><div class="hpTrack"><i id="hpFill"></i></div><strong class="hpLabel" id="hpText">100 / 100</strong></div><div class="stat clock"><span class="tiny">경과 시간</span><strong id="clock">0:00</strong></div></div></div>
+  <div class="ui topbar"><div class="brand"><strong>와르르<b>냥</b></strong><span>HOUSE RAID · PHYSICS BOSS · 1–4 PLAYERS</span></div><div class="stats"><div class="stat heart"><span class="tiny">냥이 체력</span><div class="hpTrack"><i id="hpFill"></i></div><strong class="hpLabel" id="hpText">100 / 100</strong></div><div class="stat clock"><span class="tiny">경과 시간</span><strong id="clock">0:00</strong></div></div></div>
   <div class="ui centerHead"><div class="progressTitle">🏰 젠가탑 물리 붕괴 · 충돌/중력</div><div class="progressBox"><div class="progressFill" id="progressFill"></div></div><div class="progressFraction" id="fraction">물리적으로 무너진 블록 0 / 32</div></div>
  <div class="ui growthHud" id="growthHud"><div class="growthTop"><strong>🐈 LV <span id="level">1</span></strong><span id="power">질량 1.00 · 박치기 5~10</span></div><div class="growthBar"><i id="xpFill"></i></div><div class="growthHelp" id="growthHelp">🐁 쥐·곤충은 짧게 할퀴고, 탑은 차지 박치기로 무너뜨리세요</div></div>
  <div class="ui farmArrow" id="farmArrow">🐁 사냥터</div>
@@ -150,9 +150,9 @@
   <div class="bottomRight"><button id="helpBtn" class="tool">조작법 ❔</button><button id="soundBtn" class="tool">🔊</button><div id="status" class="status">박치기 1.5초 · 점프 1초 차지</div><div class="dashbar"><i id="dashReady"></i></div></div>
  </div>
  <div id="netRoster" aria-label="멀티플레이 참가자"></div><div id="netLabels" aria-hidden="true"></div>
- <div id="buildTag">v0.9.3 · HOUSE RAID</div>
+ <div id="buildTag">v0.10.0 · HOUSE RAID</div>
  <div id="touch"><div id="stick" class="joystick"><div id="knob" class="knob"></div></div><div class="actionPad"><button type="button" class="action" data-action="charge" aria-label="짧게 누르면 할퀴기, 0.25초 이상 길게 누르고 떼면 박치기"><strong>🐾</strong><small>탭 할퀴기 · 홀드 박치기</small><span class="chargeTrack"><i id="touchChargeFill"></i></span></button><button type="button" class="action" data-action="jump" aria-label="점프: 1초까지 누르고 떼서 점프"><strong>↥</strong><small>길게 눌러 점프</small><span class="chargeTrack jumpTrack"><i id="touchJumpFill"></i></span></button><button type="button" class="action" data-action="dodge"><strong>↻</strong><small>구르기</small></button></div><div class="touchTooltip">왼쪽 이동 · 오른쪽 화면 드래그로 시점 회전</div></div>
- <section id="intro" class="cover"><div class="hero"><div class="eyebrow">◆ 고양이 반란 작전 ◆</div><h1>do <em>meow</em><br>no!</h1><p>인간 둘이 쌓는 <b>고양이보다 훨씬 거대한 젠가탑.</b><br>처음에는 몸이 가벼워 탑에 거의 충격을 못 줍니다.<br><b>집 전체를 누비며 <b>도망가는 쥐와 곤충, 공격하는 거미</b>를 사냥해 질량을 키우세요. 중앙 식탁으로 올라가 두 거인의 손을 피하면서 젠가탑을 물리적으로 무너뜨리세요. 체력이 0이 되어도 <b>성장·탑 진행도 손실 없이 고양이 잠자리에서 부활</b>합니다.</p><div class="pills"><span class="pill">🐈 작은 고양이 vs 거인 둘</span><span class="pill">🐁 쥐·곤충·거미 사냥 · 성장</span><span class="pill">💥 거인의 지면 충격파 · 공중 튕김</span><span class="pill">🏰 무너지는 거대 탑</span></div><button id="startBtn" type="button" class="primary">🐾 싱글 플레이 시작 →</button>
+ <section id="intro" class="cover"><div class="hero"><div class="eyebrow">MEOW TUMBLE · 고양이 반란 작전</div><h1>와르르<em>냥</em></h1><p>인간 둘이 쌓는 <b>고양이보다 훨씬 거대한 젠가탑.</b><br>처음에는 몸이 가벼워 탑에 거의 충격을 못 줍니다.<br><b>집 전체를 누비며 <b>도망가는 쥐와 곤충, 공격하는 거미</b>를 사냥해 질량을 키우세요. 중앙 식탁으로 올라가 두 거인의 손을 피하면서 젠가탑을 물리적으로 무너뜨리세요. 체력이 0이 되어도 <b>성장·탑 진행도 손실 없이 고양이 잠자리에서 부활</b>합니다.</p><div class="pills"><span class="pill">🐈 작은 고양이 vs 거인 둘</span><span class="pill">🐁 쥐·곤충·거미 사냥 · 성장</span><span class="pill">💥 거인의 지면 충격파 · 공중 튕김</span><span class="pill">🏰 무너지는 거대 탑</span></div><button id="startBtn" type="button" class="primary">🐾 싱글 플레이 시작 →</button>
 <div class="roomSetup">
  <span class="lobbyCap">🐈 최대 4명 · 1명부터 시작 가능</span>
  <label>방 코드<input id="roomCode" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="4자리 코드"></label>
@@ -163,19 +163,20 @@
  <section id="ending" class="cover hidden"><div class="hero"><div class="eyebrow">◆ 오늘의 대참사 ◆</div><h1 id="endingTitle" class="endTitle">대참사 성공! 🐾</h1><p id="endingSub">거대한 탑이 무너졌어요!</p><div class="statsEnd" id="endingStats"></div><button id="retryBtn" type="button" class="primary">🐾 한 판 더!</button><small>거인의 충격파를 구르기로 피하며 질량을 키우고, 균형이 약한 블록을 물리적으로 밀어보세요.</small></div></section>
 </div>
 <script type="module">
-/* Bloom GameKit · pinned published dist commit (2026-10-13). No duplicate input/loop/PRNG engine.
+/* Bloom GameKit · v0.3.0 pinned published dist commit (2026-10-14). No duplicate input/loop/PRNG engine.
  * The 3D renderer, Rapier physics, gameplay and presentation remain owned by do meow no.
  * Browser WebRTC uses the official group-room transport, never a second signaling stack. */
-const GAMEKIT_PIN='7cf67c33451848d1af4a7b003cbe1b81ffef8b53';
+const GAMEKIT_PIN='63c62dae8d339f6f0329c0940206806f69509630';
 const GAMEKIT_CDN=`https://cdn.jsdelivr.net/gh/byh-playground/bloom-gamekit@${GAMEKIT_PIN}/`;
-let ActionState,SeededPRNG,createLoop,createNostrDynamicRoom,createRoomSession,profiles;
+let ActionState,SeededPRNG,createLoop,createNostrDynamicRoom,createRoomSession,profiles,InterpolationTimeline,PresentationEventQueue;
 try{
- const [inputModule,deterministicModule,loopModule,transportModule,sessionModule]=await Promise.all([
+ const [inputModule,deterministicModule,loopModule,transportModule,sessionModule,interpolationModule,eventModule]=await Promise.all([
   import(GAMEKIT_CDN+'input.js'),import(GAMEKIT_CDN+'deterministic.js'),
-  import(GAMEKIT_CDN+'simloop.js'),import(GAMEKIT_CDN+'transport.js'),import(GAMEKIT_CDN+'rollback.js')]);
+  import(GAMEKIT_CDN+'simloop.js'),import(GAMEKIT_CDN+'transport.js'),import(GAMEKIT_CDN+'rollback.js'),import(GAMEKIT_CDN+'interpolation.js'),import(GAMEKIT_CDN+'presentation-events.js')]);
+ ({InterpolationTimeline}=interpolationModule);({PresentationEventQueue}=eventModule);
  ({ActionState}=inputModule);({SeededPRNG}=deterministicModule);
  ({createLoop}=loopModule);({createNostrDynamicRoom}=transportModule);({createRoomSession,profiles}=sessionModule);
- if(!ActionState||!SeededPRNG||!createLoop||!createNostrDynamicRoom||!createRoomSession||!profiles)throw new Error('Bloom GameKit 공개 API가 누락됨');
+ if(!InterpolationTimeline||!PresentationEventQueue||!ActionState||!SeededPRNG||!createLoop||!createNostrDynamicRoom||!createRoomSession||!profiles)throw new Error('Bloom GameKit 공개 API가 누락됨');
 }catch(error){
  document.querySelector('#boot').textContent='Bloom GameKit 로드 실패 · 인터넷/CORS 확인';
  const panel=document.querySelector('#error');panel.textContent=String(error.stack||error);panel.classList.add('show');throw error;
@@ -439,6 +440,7 @@ class PhysicsTower {
   this.totalImpulses=0;this.lastImpact=null;this.contacts=0;this.sleeperCount=0;}
  init(){
   if(!RAPIER)throw new Error('Rapier 초기화 전에 물리 월드를 생성할 수 없습니다.');
+  this.eventQueue?.free();
   if(this.world)this.world.free();
   this.resetCounters();this.blocks=[];this.playerBodies.clear();
   const r=RAPIER,thisWorld=this.world=new r.World({x:0,y:-PHYS.gravity,z:0});
@@ -576,7 +578,7 @@ class PhysicsTower {
   this.tick++;
   for(const b of this.blocks){b.highlight=Math.max(0,b.highlight-dt);b.spawn=Math.max(0,b.spawn-dt);}
   // Two 60 Hz Rapier substeps per 30 TPS authoritative game tick.
-  this.world.step(this.eventQueue);
+  for(let substep=0;substep<2;substep++){
   this.world.step(this.eventQueue);
   this.eventQueue.drainCollisionEvents((a,b,started)=>{
    if(!started)return;
@@ -586,6 +588,7 @@ class PhysicsTower {
    const mob=mobs.find(m=>m.collider.handle===other);
    if(mob&&!mob.dead)withCatActor(who[0],()=>onMobContact(mob));
   });
+  }
   this.syncBlocks();this.syncCat();
  }
 }
@@ -596,7 +599,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
 const DEF={
-  build:'20261014-slope-ramp-v093',version:'0.9.3',
+  build:'20261014-gamekit-v0100',version:'0.10.0',
   // After the success threshold, physics keeps stepping until the debris is quiet.
   // These are PRESENTATION timings only; they never influence Rapier impulses.
   round:{durationMs:0,winBlocks:TOWER.winScattered,
@@ -638,7 +641,7 @@ const MOB_SPAWNS=[
 class CombatPresentation {
  constructor(){
   this.layer=document.querySelector('#mobHudLayer');this.textLayer=document.querySelector('#combatFloatLayer');
-  this.plates=new Map();this.pending=[];this.bursts=[];this.frame=0;this.dropped=0;this.reticleUntil=0;
+  this.plates=new Map();this.pending=[];this.recent=[];this.events=null;this.bursts=[];this.frame=0;this.dropped=0;this.reticleUntil=0;
   this.floats=Array.from({length:DEF.graphics.maxDamageNumbers},()=>{
    const node=document.createElement('div');node.className='combatFloat';this.textLayer.append(node);
    return{node,endMs:0,startMs:0,p:[0,0,0],side:0};
@@ -665,8 +668,14 @@ class CombatPresentation {
   plate.mob=null;plate.deadUntil=performance.now()+490;plate.p=[p.x,p.y,p.z];plate.node.classList.add('dead');
   this.paint(plate,0);plate.name.textContent='✦ 처치!';
  }
- queue(e){if(this.pending.length<64)this.pending.push(e);else this.dropped++;}
- reset(){for(const plate of this.plates.values())plate.node.remove();this.plates.clear();
+ queue(e,remote=false){
+  this.events.emit({...e,generation:0,durationMs:0});this.events.confirmThrough(Math.max(e.tick,this.events.confirmedTick));
+  if(!remote){this.recent.push(e);this.recent=this.recent.filter(v=>v.tick>e.tick-30).slice(-16);}
+ }
+ reset(){this.events?.dispose();
+  const adapter={start:e=>{if(this.pending.length<64)this.pending.push(e);else this.dropped++;}};
+  this.events=new PresentationEventQueue({adapters:{hit:adapter,level:adapter},retentionTicks:120,maxPending:512});this.recent=[];
+  for(const plate of this.plates.values())plate.node.remove();this.plates.clear();
   this.pending.length=0;this.bursts.length=0;this.dropped=0;this.frame=0;this.reticleUntil=0;
   for(const f of this.floats){f.node.style.display='none';f.endMs=0;}
   ui.target.classList.remove('hit');
@@ -754,7 +763,7 @@ class CombatPresentation {
 }
 const combatUI=new CombatPresentation();
 
-let mobs=[],nextMobId=1,mobRespawnMs=0,kills={mouse:0,beetle:0,spider:0},catRespawnMs=0;
+let mobs=[],nextMobId=1,mobRespawnMs=0,kills={mouse:0,beetle:0,spider:0};
 const HOUSE_SOLIDS=[
  // Apartment-like shell: the central dining room stays open, while side rooms connect through wide interior doorways.
  ...[
@@ -911,13 +920,13 @@ function collectMobsAfterStep(){if(tower.world.contactPairsWith){
 }
 function damageCat(amount,reason){if(cat.invuln>0||cat.motion.state==='dead'||phase!=='play')return;
  cat.hp=Math.max(0,cat.hp-amount);cat.invuln=DEF.cat.hitInvulnMs;if(cat===localCat){announce(reason+' −'+amount+' HP',1100);sfx('hit',.65);}
- if(cat.hp<=0){catRespawnMs=1050;setCatMotion('dead');cancelCharge();cancelJumpCharge();cat.dash.leftMs=0;cat.claw.pendingHit=false;if(cat===localCat){ui.respawn.classList.remove('hidden');announce('🐾 잠시 후 잠자리에서 다시 시작! 레벨·젠가 유지',1600);}}
+ if(cat.hp<=0){cat.respawn.leftMs=1050;setCatMotion('dead');cancelCharge();cancelJumpCharge();cat.dash.leftMs=0;cat.claw.pendingHit=false;if(cat===localCat){ui.respawn.classList.remove('hidden');announce('🐾 잠시 후 잠자리에서 다시 시작! 레벨·젠가 유지',1600);}}
 }
 function respawnCat(){const body=tower.catBody;
  const spawnIndex=net.room?net.room.players.indexOf(cat.id):-1;
  const spawnX=spawnIndex<0?ARENA.spawnX:(spawnIndex-(net.room.players.length-1)/2)*3.4;
  body.setTranslation({x:spawnX,y:ARENA.floorY+.54,z:ARENA.spawnZ},true);body.setLinvel({x:0,y:0,z:0},true);body.setAngvel({x:0,y:0,z:0},true);
- cat.hp=DEF.cat.maxHp;cat.invuln=2200;catRespawnMs=0;cat.x=spawnX;cat.y=ARENA.floorY;cat.z=ARENA.spawnZ;cat.yaw=Math.PI;cat.aimYaw=Math.PI;cat.vx=cat.vz=0;setCatMotion('respawn');cancelCharge();cancelJumpCharge();cat.trail=[];
+ cat.hp=DEF.cat.maxHp;cat.invuln=2200;cat.respawn.leftMs=0;cat.x=spawnX;cat.y=ARENA.floorY;cat.z=ARENA.spawnZ;cat.yaw=Math.PI;cat.aimYaw=Math.PI;cat.vx=cat.vz=0;setCatMotion('respawn');cancelCharge();cancelJumpCharge();cat.trail=[];
  if(cat===localCat){camera.yaw=Math.PI;camera.pitch=.06;camera.eye=[spawnX,ARENA.floorY+LOOK.eyeHeight,ARENA.spawnZ+LOOK.followDistance];camera.armLength=LOOK.followDistance;ui.respawn.classList.add('hidden');announce('🐾 부활 완료! 체력 회복 · 성장과 젠가 그대로',1800);}
  particle([cat.x,cat.y+.5,cat.z],'mint',34,3);sfx('jump');
 }
@@ -926,11 +935,11 @@ let cat,localCat,human,particles,shockwaves=[],phase='intro',seconds=0,nowTicks=
 const roomCats=new Map();
 let hapticEnabled=true;
 const rand=(a,b)=>a+(b-a)*rng.nextUint32()/4294967296;
-function makeCat(){return {id:"local",x:ARENA.spawnX,z:ARENA.spawnZ,y:ARENA.floorY,surfaceY:ARENA.floorY,vy:0,vx:0,vz:0,knockX:0,knockZ:0,aimYaw:Math.PI,get mass(){return catMassForLevel(this.level)},yaw:Math.PI,targetYaw:Math.PI,speed:0,hp:DEF.cat.maxHp,xp:0,level:1,openingMs:0,invuln:0,
+function makeCat(){return {id:"local",x:ARENA.spawnX,z:ARENA.spawnZ,y:ARENA.floorY,surfaceY:ARENA.floorY,vy:0,vx:0,vz:0,knockX:0,knockZ:0,aimYaw:Math.PI,get mass(){return catMassForLevel(this.level)},yaw:Math.PI,targetYaw:Math.PI,speed:0,hp:DEF.cat.maxHp,xp:0,level:1,openingMs:0,invuln:0,respawn:{leftMs:0},
  charge:{held:false,elapsedMs:0,ratio:0},claw:{cooldown:{leftMs:0},animation:{leftMs:0},pendingHit:false,side:-1,attacks:0,lastHits:0},jump:{held:false,elapsedMs:0,ratio:0,lastVelocity:0},dash:{cooldown:{leftMs:0},leftMs:0,velocity:0,direction:{x:0,z:1}},dodgeCd:0,dodgeMs:0,ticks:0,
  motion:{state:'idle',elapsedMs:0,rollAxis:[1,0,0],rollDirX:0,rollDirZ:1,spinAxis:[1,0,0],spinRad:0,spinRate:0,wasAirborne:false},trail:[],landings:0,giantHits:0,successfulRolls:0};}
 function makeHuman(id){return {id,x:id===0?-8.4:8.4,z:-8.6,pattern:id===0?'slam':'sweep',mode:'idle',timer:id===0?1600:3100,anim:0,target:[0,0,0],attackApplied:false,buildDone:false,anger:0,noticeMs:0,speech:id===0?'이번엔 진짜 높이 쌓자':'고양이 어디 갔지?',attacks:0,builds:0};}
-function resetWorld(){combatUI.reset();cat=null;roomCats.clear();for(const m of mobs){}mobs=[];nextMobId=1;kills={mouse:0,beetle:0,spider:0};rng.state=702104;vfxRng.state=91011;tower.init();cat=makeCat();localCat=cat;
+function resetWorld(){combatUI.reset();net.resetView();cat=null;roomCats.clear();mobs=[];nextMobId=1;kills={mouse:0,beetle:0,spider:0};rng.state=702104;vfxRng.state=91011;tower.init();cat=makeCat();localCat=cat;
  if(net.room){
    cat.id=net.localId;
    const members=net.room.players;
@@ -945,7 +954,7 @@ function resetWorld(){combatUI.reset();cat=null;roomCats.clear();for(const m of 
     if(net.isHost) tower.addPlayer(other.id,{x:other.x,z:ARENA.spawnZ});
    }
  }else{roomCats.set('local',cat);tower.playerBodies.clear();tower.playerBodies.set('local',{body:tower.catBody,collider:tower.catCollider});}
- tower.syncCat();prepareMobs();human=[makeHuman(0),makeHuman(1)];particles=[];shockwaves=[];camera={yaw:Math.PI,pitch:.09,eye:[0,ARENA.floorY+LOOK.eyeHeight,ARENA.spawnZ+LOOK.followDistance],shake:0,armLength:LOOK.followDistance};seconds=0;nowTicks=0;catRespawnMs=0;ui.respawn.classList.add('hidden');toastKey='';messageUntil=0;winClock=0;collapseState=null;ui.end.classList.add('hidden');ui.warning.classList.remove('show');ui.humanA.textContent='';ui.humanB.textContent='';updateHUD();}
+ tower.syncCat();prepareMobs();human=[makeHuman(0),makeHuman(1)];particles=[];shockwaves=[];camera={yaw:Math.PI,pitch:.09,eye:[0,ARENA.floorY+LOOK.eyeHeight,ARENA.spawnZ+LOOK.followDistance],shake:0,armLength:LOOK.followDistance};seconds=0;nowTicks=0;cat.respawn.leftMs=0;ui.respawn.classList.add('hidden');toastKey='';messageUntil=0;winClock=0;collapseState=null;ui.end.classList.add('hidden');ui.warning.classList.remove('show');ui.humanA.textContent='';ui.humanB.textContent='';updateHUD();}
 function beginCollapse(remote=false){
  if(phase!=='play')return;
  phase='collapse';
@@ -1361,18 +1370,16 @@ function updateGame(dt,frame){if(phase!=='play'&&phase!=='collapse')return;
   updateCollapse(dt);
   return;
  }
- if(cat.motion.state==='dead'){catRespawnMs-=dt*1000;if(catRespawnMs<=0)respawnCat();}else updateCat(dt,frame);
- if(net.room&&net.isHost){for(const [id,actor] of roomCats)if(id!==net.localId){
-   const input=net.remoteFrame(id);
-   withCatActor(id,()=>{
-    if(cat.motion.state==='dead'){catRespawnMs-=dt*1000;if(catRespawnMs<=0)respawnCat();}else updateCat(dt,input);
-   });
- }}
+ // Single and host multiplayer run the same actor transition exactly once.
+ for(const [id] of roomCats)withCatActor(id,()=>{
+  const input=id===localCat.id?frame:net.remoteFrame(id);
+  if(cat.motion.state==='dead'){cat.respawn.leftMs-=dt*1000;if(cat.respawn.leftMs<=0)respawnCat();}
+  else updateCat(dt,input);
+ });
  updateMobs(dt);updateHumans(dt);updateShockwaves(dt);tower.step(dt);collectMobsAfterStep();
- if(cat.motion.state!=='dead')updateCatMotion(dt);
- if(net.room&&net.isHost){for(const id of roomCats.keys())if(id!==net.localId)withCatActor(id,()=>{
-    tower.syncCat();collectMobsAfterStep();if(cat.motion.state!=='dead')updateCatMotion(dt);
- });}
+ for(const id of roomCats.keys())withCatActor(id,()=>{
+  tower.syncCat();if(id!==localCat.id)collectMobsAfterStep();if(cat.motion.state!=='dead')updateCatMotion(dt);
+ });
  updateParticles(dt);
  if(tower.scattered>=DEF.round.winBlocks){beginCollapse();updateHUD();return}
  if(net.isHost&&nowTicks%3===0)net.publishState();
@@ -2044,7 +2051,7 @@ function rotateLook(dx,dy,sensitivity){
  camera.yaw=(camera.yaw-dx*sensitivity+Math.PI*3)%(Math.PI*2)-Math.PI;
  camera.pitch=clamp(camera.pitch-dy*sensitivity,LOOK.pitchMin,LOOK.pitchMax);
 }
-function drawWorld(){if(!renderer)return;const g=renderer,c=cat;
+function drawWorld(){if(!renderer)return;net.sampleViews(performance.now());const g=renderer,c=net.viewFor(cat);
  if(phase==='collapse'){
   // Follow the actual Rapier collapse with an unobstructed wide shot of the
   // dining table. Camera motion is presentation-only, not a physics event.
@@ -2100,7 +2107,7 @@ function drawWorld(){if(!renderer)return;const g=renderer,c=cat;
  g.gl.depthMask(localFade>=.999);
  drawCat(g,c);
  g.localOpacity=1;g.gl.depthMask(true);
- if(net.room)for(const [id,actor] of roomCats)if(id!==net.localId)drawCat(g,actor);
+ if(net.room)for(const [id,actor] of roomCats)if(id!==net.localId)drawCat(g,net.viewFor(actor));
  drawParticles(g);
  // Render-only event consumer after camera projection; no gameplay feedback loop.
  const visualNow=performance.now();combatUI.flush(visualNow);combatUI.drawBursts(g,visualNow);combatUI.update(g,visualNow);
@@ -2118,7 +2125,7 @@ function drawWorld(){if(!renderer)return;const g=renderer,c=cat;
 const samples=Object.fromEntries(['left','right','up','down','charge','jump','dodge'].map(k=>[k,{held:false,pressed:false,released:false}]));
 const canceledTouch=new Set();
 let pendingInputEdges=0;
-let inputEdgeSequence=0;
+
 const joy={id:null,x:0,y:0};
 const look={id:null,x:0,y:0},mouse={lastX:null,lastY:null};
 const lookZone=document.querySelector('#lookZone');
@@ -2135,9 +2142,9 @@ function sampleControls(){for(const k in samples)actions.sampleInto(k,samples[k]
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
- namespace:'do-meow-no-house-raid-0.9.1',inputBytes:5,snapshotLimit:15000,
- inputType:91,snapshotType:92,resetType:93,startType:94,protocol:2});
-const LOBBY_VERSION='do-meow-no-room-membership-0.9.1';
+ namespace:'meow-tumble-0.10.0',inputBytes:5,snapshotLimit:15000,
+ inputType:91,snapshotType:92,resetType:93,startType:94,protocol:3});
+const LOBBY_VERSION='meow-tumble-0.10.0';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};
@@ -2180,7 +2187,7 @@ const net={
  accepting:false,active:false,pendingStart:false,remote:new Map(),lastInput:null,lastSentMs:0,lastReceiveMs:0,snapshotVersion:-1,
  code:document.querySelector('#roomCode'),startButton:document.querySelector('#beginRoom'),
  statusNode:document.querySelector('#lobbyStatus'),rosterNode:document.querySelector('#netRoster'),
- labels:document.querySelector('#netLabels'),pendingState:null,
+ labels:document.querySelector('#netLabels'),
  status(message){this.statusNode.textContent=message;},
  roster(){return this.memberSession?.players?.slice()??this.room?.players?.slice()??[];},
  ready(){return !!this.room&&!!this.memberSession&&this.memberSession.status!=='membership'&&this.roster().includes(this.localId);},
@@ -2278,7 +2285,7 @@ const net={
   this.memberSession?.close();this.memberSession=null;
   for(const peer of this.remote.values())peer.remove?.();
   this.room?.close();this.room=null;this.remote.clear();this.isHost=false;this.localId='local';
-  this.lastInput=null;this.sentInputEdges=0;this.pendingState=null;this.pendingStart=false;
+  this.resetView();this.pendingStart=false;
   this.rosterNode.style.display='none';this.labels.innerHTML='';
   this.startButton.style.display='none';
   document.querySelector('#cancelLobby').style.display='none';
@@ -2327,7 +2334,7 @@ const net={
     const state=JSON.parse(new TextDecoder().decode(data.subarray(2)));
     if(!state||!Number.isSafeInteger(state.t)||state.t<=this.snapshotVersion)return;
     this.snapshotVersion=state.t;this.lastReceiveMs=performance.now();
-    if(phase==='play'||phase==='collapse'||phase==='win')this.applyState(state);else this.pendingState=state;
+    if(phase==='play'||phase==='collapse'||phase==='win')this.applyState(state);
    }catch(error){console.warn('상태 패킷 손상',error);}
    return;
   }
@@ -2345,9 +2352,10 @@ const net={
   if(!this.room||!this.isHost||(!force&&nowTicks%3!==0))return;
   const round=n=>Math.round(n*1000)/1000;
   const actors=[...roomCats].map(([id,c])=>[id,round(c.x),round(c.y),round(c.z),round(c.yaw),Math.round(c.hp),c.level,c.xp,
-    c.motion.state,round(c.motion.elapsedMs),round(c.vy),Math.round(c.dash.leftMs),Math.round(c.charge.ratio*100),Math.round(c.jump.ratio*100),
-    ...c.motion.rollAxis.map(round),round(c.motion.rollDirX),round(c.motion.rollDirZ)]);
-  const state={t:nowTicks,s:round(seconds),phase,b:tower.blocks.map(b=>[
+    round(c.vy),Math.round(c.dash.leftMs),{
+      motion:c.motion,speed:round(c.speed),surfaceY:round(c.surfaceY),charge:{...c.charge},jump:{...c.jump},
+      claw:{animation:{...c.claw.animation},side:c.claw.side},invuln:round(c.invuln)}]);
+  const state={t:nowTicks,s:round(seconds),phase,collapse:collapseState,events:combatUI.recent,b:tower.blocks.map(b=>[
     b.id,round(b.p[0]),round(b.p[1]),round(b.p[2]),...b.q.map(round),b.fallen?1:0]),
     cats:actors,m:mobs.map(m=>{const p=m.body.translation();return[m.id,m.type,round(p.x),round(p.y),round(p.z),m.hp,m.hitMs]}),
     h:human.map(h=>[h.id,h.mode,h.pattern,round(h.timer),round(h.anim),...h.target.map(round),h.attacks,h.builds]),
@@ -2369,18 +2377,15 @@ const net={
   // Ground-wave visuals are view-only on guests; the host has already resolved the true impulse.
   if(Array.isArray(state.w))shockwaves=state.w.map(w=>({id:w[0],x:w[1],z:w[2],r:w[3],maxRadius:w[4],pattern:w[5],age:w[6]}));
   for(const row of state.cats){
-   const [id,x,y,z,yaw,hp,level,xp,motion,elapsed,vy,dashMs,charge,jump,ax,ay,az,rollDirX,rollDirZ]=row;
+   const [id,x,y,z,yaw,hp,level,xp,vy,dashMs,visual]=row;
    const actor=roomCats.get(id);if(!actor)continue;
-   // Remote cats interpolate between authority updates; our own input remains responsive.
-   actor.netTarget={x,y,z,yaw};actor.hp=hp;actor.level=level;actor.xp=xp;actor.vy=vy;
-   if(actor.motion.state!==motion)actor.motion.state=motion;
-   // Replicate the authoritative roll phase & local-space rotation axis, not just an enum.
-   actor.motion.elapsedMs=elapsed;
-   if(motion==='roll'){
-    actor.motion.rollAxis=[ax??1,ay??0,az??0];
-    actor.motion.rollDirX=rollDirX??0;actor.motion.rollDirZ=rollDirZ??1;
-   }
-   actor.dash.leftMs=dashMs;actor.charge.ratio=charge/100;actor.jump.ratio=jump/100;
+   // Authoritative pose stays untouched by the render timeline.
+   const teleported=actor.motion.state==='dead'&&visual.motion.state!=='dead';
+   actor.x=x;actor.y=y;actor.z=z;actor.yaw=yaw;
+   actor.viewTeleport=teleported;actor.hp=hp;actor.level=level;actor.xp=xp;actor.vy=vy;
+   actor.dash.leftMs=dashMs;actor.charge={...visual.charge};actor.jump={...visual.jump};
+   actor.motion={...visual.motion};actor.speed=visual.speed;actor.surfaceY=visual.surfaceY;
+   actor.claw.animation={...visual.claw.animation};actor.claw.side=visual.claw.side;actor.invuln=visual.invuln;
   }
   const alive=new Set();
   for(const row of state.m){const [id,type,x,y,z,hp,hitMs]=row;alive.add(id);
@@ -2389,11 +2394,7 @@ const net={
     // Replace the temporary generated ID in the presentation owner as well.
     combatUI.unregister(mob);mob.id=id;combatUI.register(mob);
    }
-   const damageReceived=Math.max(0,mob.hp-hp);mob.hp=hp;mob.hitMs=hitMs;
-   if(damageReceived){
-    combatUI.queue({kind:'hit',tick:state.t,entityId:mob.id,sequence:state.t,
-      amount:damageReceived,hp,maxHp:MOB_TYPES[type].maxHp,source:'claw',fatal:hp===0,xp:hp===0?MOB_TYPES[type].xp:0,p:[x,y,z]});
-   }
+   mob.hp=hp;mob.hitMs=hitMs;
    mob.body.setTranslation({x,y,z},true);mob.body.setLinvel({x:0,y:0,z:0},true);
   }
   for(let i=mobs.length-1;i>=0;i--){if(!alive.has(mobs[i].id)){combatUI.unregister(mobs[i]);tower.world.removeRigidBody(mobs[i].body);mobs.splice(i,1);}}
@@ -2404,29 +2405,37 @@ const net={
   if(state.phase==='collapse'&&phase==='play')beginCollapse(true);
   if(state.phase==='win'&&(phase==='play'||phase==='collapse'))endRound(true);
   if(cat?.motion.state==='dead')ui.respawn.classList.remove('hidden');else ui.respawn.classList.add('hidden');
+  for(const event of state.events)combatUI.queue(event,true);
+  if(state.collapse)collapseState={...state.collapse};
+  this.view.accept({revision:0,sequence:state.t,timeMs:state.s*1000,entities:[...roomCats].map(([id,c])=>({
+   id,generation:0,teleport:!!c.viewTeleport,values:{x:c.x,y:c.y,z:c.z,yaw:c.yaw}}))},performance.now());
   this.showRoster();updateHUD();
  },
- predictGuest(dt,frame){
-  if(!cat)return;
-  for(const actor of roomCats.values()){
-   const target=actor.netTarget;if(!target)continue;
-   const smoothing=actor===cat?.48:.34;
-   actor.x=lerp(actor.x,target.x,smoothing);actor.y=lerp(actor.y,target.y,smoothing);actor.z=lerp(actor.z,target.z,smoothing);
-   actor.yaw=target.yaw;
-   if(['jump','dash','launched','roll','recover','stunned'].includes(actor.motion.state))actor.motion.elapsedMs+=dt*1000;
-  }
-  // A small camera-only input preview does not affect Rapier or the authority snapshot.
-  const yaw=decodeAimYaw(frame),mx=(frame[0]-128)/100,mz=(frame[1]-128)/100;
-  const dirX=-Math.cos(yaw)*mx+Math.sin(yaw)*mz,dirZ=Math.sin(yaw)*mx+Math.cos(yaw)*mz;
-  if(cat.netTarget){cat.x+=dirX*dt*DEF.cat.moveSpeed*.38;cat.z+=dirZ*dt*DEF.cat.moveSpeed*.38;}
-  if(performance.now()-this.lastReceiveMs>6000&&this.lastReceiveMs){this.status('연결 지연 · 방장의 상태를 기다리는 중');}
+ // Display poses are detached from the host snapshot. No second movement simulation.
+ resetView(){
+  this.snapshotVersion=-1;this.lastReceiveMs=0;
+  this.view=new InterpolationTimeline({schema:{x:'number',y:'number',z:'number',yaw:'angle'},stepMs:100});
+  this.views=new Map();this.lastInput=null;this.sentInputEdges=0;
  },
+ sampleViews(now){
+  if(!this.room||this.isHost)return;
+  for(const [id,actor] of roomCats){
+   const pose={};if(!this.view.sampleInto(id,0,now,pose))continue;
+   const elapsed=Math.min(100,Math.max(0,now-this.lastReceiveMs));
+   const view={...actor,...pose,motion:{...actor.motion},claw:{...actor.claw,animation:{...actor.claw.animation}}};
+   if(['jump','dash','launched','roll','recover','stunned','respawn'].includes(view.motion.state))view.motion.elapsedMs+=elapsed;
+   if(view.motion.state==='launched')view.motion.spinRad+=view.motion.spinRate*elapsed/1000;
+   view.claw.animation.leftMs=Math.max(0,view.claw.animation.leftMs-elapsed);
+   this.views.set(id,view);
+  }
+ },
+ viewFor(actor){return (!this.isHost&&this.room?this.views.get(actor.id):null)??actor;},
  updateLabels(g){
   if(!this.room)return;
   const ids=[...roomCats.keys()].filter(id=>id!==this.localId);
   while(this.labels.children.length<ids.length){const el=document.createElement('div');el.className='netName';this.labels.appendChild(el);}
   for(let i=0;i<this.labels.children.length;i++){
-   const el=this.labels.children[i],id=ids[i],actor=roomCats.get(id);
+   const el=this.labels.children[i],id=ids[i],actor=roomCats.has(id)?this.viewFor(roomCats.get(id)):null;
    if(!actor){el.style.display='none';continue;}
    const point=g.screen([actor.x,actor.y+2.5,actor.z]);if(!point){el.style.display='none';continue;}
    el.style.display='block';el.style.left=point.x+'px';el.style.top=point.y+'px';
@@ -2440,16 +2449,16 @@ const net={
 function withCatActor(id,callback){
  const current=roomCats.get(id);if(!current)return;
  const entry=tower.playerBodies.get(id);if(!entry)return;
- const wasCat=cat,wasBody=tower.catBody,wasCollider=tower.catCollider,wasTimer=catRespawnMs;
- cat=current;tower.catBody=entry.body;tower.catCollider=entry.collider;catRespawnMs=current.respawnMs??0;
+ const wasCat=cat,wasBody=tower.catBody,wasCollider=tower.catCollider;
+ cat=current;tower.catBody=entry.body;tower.catCollider=entry.collider;
  try{return callback();}
- finally{current.respawnMs=catRespawnMs;cat=wasCat;tower.catBody=wasBody;tower.catCollider=wasCollider;catRespawnMs=wasTimer;}
+ finally{cat=wasCat;tower.catBody=wasBody;tower.catCollider=wasCollider;}
 }
 
 const session={profile:{tickRate:30,maxCatchupSteps:4},inputSize:5,closed:false,resimulating:false,pace:1,metrics:{pace:1},poll(){},
  submitInput(input){net.submitInput(input);return{commandSequences:[]}},
  releaseInput(){actions.releaseAll();joy.x=0;joy.y=0;net.releaseInput();},
- advance(input){net.pollMembership();if(net.room&&!net.isHost){if(phase==='play')net.predictGuest(1/30,input);}else updateGame(1/30,input);pendingInputEdges=0;net.sentInputEdges=0;return{status:'advanced'}}};
+ advance(input){net.pollMembership();if(!net.room||net.isHost)updateGame(1/30,input);else updateParticles(1/30);pendingInputEdges=0;net.sentInputEdges=0;return{status:'advanced'}}};
 const simLoop=createLoop({session,getInput:sampleControls,render:drawWorld,onError:e=>{console.error(e);document.querySelector('#error').textContent='게임 실행 오류: '+e.message;document.querySelector('#error').classList.add('show');},onInputRelease:()=>{joy.x=joy.y=0;look.id=null;cancelCharge();cancelJumpCharge();actions.consume();ui.chargeButton.classList.remove('pressed');ui.jumpButton.classList.remove('pressed');}});
 function bindControls(){const keyboard={KeyW:'up',ArrowUp:'up',KeyS:'down',ArrowDown:'down',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right'};
  const discrete={ShiftLeft:'dodge',ShiftRight:'dodge'};const chargeKeys=new Set(['KeyF']);const jumpKeys=new Set(['Space']);
@@ -2519,6 +2528,9 @@ function bindControls(){const keyboard={KeyW:'up',ArrowUp:'up',KeyS:'down',Arrow
    button.addEventListener('pointerup',up);button.addEventListener('pointercancel',up);button.addEventListener('lostpointercapture',up);
   }
  });
+ for(const type of ['keydown','keyup','pointerdown','pointerup','pointermove','pointercancel','mousemove']){
+  window.addEventListener(type,()=>{if(phase==='play')simLoop.observeInput(performance.now());});
+ }
  ui.startBtn.addEventListener('click',()=>{net.close();start();});ui.retryBtn.addEventListener('click',()=>{if(net.room&&!net.isHost){net.status('방장이 다음 판을 시작하면 함께 시작해요.');return;}if(net.room)net.sendReset();start();});net.bindLobby();ui.help.addEventListener('click',()=>ui.hint.classList.toggle('hidden'));ui.sound.addEventListener('click',()=>{soundEnabled=!soundEnabled;ui.sound.textContent=soundEnabled?'🔊':'🔇';if(soundEnabled)wakeAudio()});
 }
 async function main(){try{
