@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"/>
 <meta name="theme-color" content="#182438"/>
-<title>와르르냥 / Meow Tumble · 집 전체 사냥과 젠가 결전 · v0.10.2</title>
+<title>와르르냥 / Meow Tumble · 집 전체 사냥과 젠가 결전 · v0.10.3</title>
 <style>
 :root{color-scheme:dark;--bg:#17283c;--ink:#fffaf0;--sub:#c8d1da;--mint:#93edcb;--pink:#ffaaa6;--yellow:#ffe49e}
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:ui-rounded,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}button,input,summary{font:inherit}button,summary{cursor:pointer;touch-action:manipulation}button{color:inherit;min-height:48px}button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}button:disabled{opacity:.55;cursor:default}.hidden{display:none!important}
@@ -53,7 +53,7 @@
 
 
 @media(pointer:coarse){#lookZone,#touch{display:block}.bottomRight{bottom:215px}.actionPad{transform:scale(.86);transform-origin:bottom right}.joystick{width:116px;height:116px}}
-.clock{display:block}@media(max-width:740px){.clock{display:none}.showDetails .clock{display:block;position:fixed;top:190px;right:14px;left:auto}.hero{padding:22px}.topbar{top:max(10px,env(safe-area-inset-top));left:10px}.stat{padding:6px 9px;min-width:58px}.stat.heart{width:110px}.hudTools{top:max(10px,env(safe-area-inset-top));right:10px;gap:4px}.tool{padding:8px;font-size:11px}.centerHead{top:85px;width:190px;left:auto;right:10px;transform:none}.growthHud{top:85px;left:10px;width:135px}.farmArrow{top:145px}.showDetails .growthHud{width:145px}.growthTop{flex-wrap:wrap}.areaTag{top:198px}.huntCounter{top:231px}.minimap{top:266px;width:112px;height:86px}#netRoster{top:360px;left:10px}#warning{top:177px;font-size:12px}.bottomRight{bottom:205px;width:90%;font-size:11px}#targetText{display:none}.actionPad{transform:scale(.78);transform-origin:bottom right}.joystick{width:108px;height:108px}.knob{width:48px;height:48px}}
+.clock{display:block}@media(max-width:740px){.clock{display:none}.showDetails .clock{display:block;position:fixed;top:190px;right:14px;left:auto}.hero{padding:22px}.topbar{top:max(10px,env(safe-area-inset-top));left:10px}.stat{padding:6px 9px;min-width:58px}.stat.heart{width:110px}.hudTools{top:max(10px,env(safe-area-inset-top));right:10px;gap:4px}.tool{padding:8px;font-size:11px}.centerHead{top:85px;width:190px;left:auto;right:10px;transform:none}.growthHud{top:85px;left:10px;width:135px}.farmArrow{top:145px}.showDetails .growthHud{width:145px}.growthTop{flex-wrap:wrap}.growthTop strong{font-size:15px}.areaTag{top:198px}.huntCounter{top:231px}.minimap{top:266px;width:112px;height:86px}#netRoster{top:360px;left:10px}#warning{top:177px;font-size:12px}.bottomRight{bottom:205px;width:90%;font-size:11px}#targetText{display:none}.actionPad{transform:scale(.78);transform-origin:bottom right}.joystick{width:108px;height:108px}.knob{width:48px;height:48px}}
 @media(max-height:500px){.cover{padding:12px}.hero{padding:16px 24px;width:min(530px,100%)}h1{font-size:42px;margin:10px 0}.hero p{margin:8px 0 14px}.menuLinks{margin-top:10px}.hero small{margin-top:8px}.guide{margin:4px 0;font-size:12px}.guide li{padding:3px 0}.centerHead{top:12px;width:180px;left:50%;right:auto;transform:translateX(-50%)}.growthHud{top:85px}.farmArrow{top:90px}.bottomRight{bottom:8px}.actionPad{transform:scale(.72);transform-origin:bottom right}.joystick{width:98px;height:98px;bottom:14px}.minimap{top:190px}.areaTag{top:145px}.huntCounter{top:175px}#netRoster{top:85px;left:auto;right:14px}#warning{top:130px}#toast{bottom:130px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
 </style>
@@ -67,7 +67,7 @@
  <div id="hud" class="inactive">
   <div class="ui topbar"><div class="stats"><div class="stat heart"><span class="tiny">냥이 체력</span><div class="hpTrack"><i id="hpFill"></i></div><strong class="hpLabel" id="hpText">100 / 100</strong></div><div class="stat clock"><span class="tiny">경과 시간</span><strong id="clock">0:00</strong></div></div></div>
   <div class="ui centerHead"><div class="progressTitle">젠가탑 무너뜨리기</div><div class="progressBox"><div class="progressFill" id="progressFill"></div></div><div class="progressFraction" id="fraction">물리적으로 무너진 블록 0 / 32</div></div>
- <div class="ui growthHud" id="growthHud"><div class="growthTop"><strong>🐈 LV <span id="level">1</span></strong><span id="power">질량 1.00 · 박치기 5~10</span></div><div class="growthBar"><i id="xpFill"></i></div><div class="growthHelp" id="growthHelp">🐁 쥐·곤충은 짧게 할퀴고, 탑은 차지 박치기로 무너뜨리세요</div></div>
+ <div class="ui growthHud" id="growthHud"><div class="growthTop"><strong>🐈 LV <span id="level">1</span></strong><span id="power">질량 1.00 · 박치기 5~10</span></div><div class="growthBar" role="progressbar" aria-label="레벨 경험치" aria-valuemin="0" aria-valuemax="100"><i id="xpFill"></i></div><div class="growthHelp" id="growthHelp">🐁 쥐·곤충은 짧게 할퀴고, 탑은 차지 박치기로 무너뜨리세요</div></div>
  <div class="ui farmArrow" id="farmArrow">🐁 사냥터</div>
  <div class="ui areaTag" id="areaTag">🏠 집 전체 · 사냥 중</div>
  <div class="ui huntCounter" id="huntCounter">🐁 0 · 🪲 0 · 🕷 0</div>
@@ -83,13 +83,13 @@
  <div class="bottomRight"><div id="status" class="status"></div><div class="dashbar"><i id="dashReady"></i></div></div>
  </div>
  <div id="netRoster" aria-label="멀티플레이 참가자"></div><div id="netLabels" aria-hidden="true"></div>
- <div id="buildTag">v0.10.2 · MEOW TUMBLE</div>
+ <div id="buildTag">v0.10.3 · MEOW TUMBLE</div>
  <div id="touch"><div id="stick" class="joystick"><div id="knob" class="knob"></div></div><div class="actionPad"><button type="button" class="action" data-action="charge" aria-label="짧게 누르면 할퀴기, 0.25초 이상 길게 누르고 떼면 박치기"><strong>🐾</strong><small>탭 할퀴기 · 홀드 박치기</small><span class="chargeTrack"><i id="touchChargeFill"></i></span></button><button type="button" class="action" data-action="jump" aria-label="점프: 1초까지 누르고 떼서 점프"><strong>↥</strong><small>길게 눌러 점프</small><span class="chargeTrack jumpTrack"><i id="touchJumpFill"></i></span></button><button type="button" class="action" data-action="dodge"><strong>↻</strong><small>구르기</small></button></div></div>
  <section id="intro" class="cover" aria-label="게임 메뉴"><div class="hero">
  <div data-screen="main"><div class="eyebrow">MEOW TUMBLE</div><h1>와르르<em>냥</em></h1><p>작은 고양이로 사냥하고 성장해<br>거대한 젠가탑을 무너뜨리세요.</p><button type="button" class="primary" data-route="modes">시작하기</button><div class="menuLinks"><button data-route="help">게임 방법</button><button data-route="settings">설정</button></div><small>1–4명 · PC / 터치 · 인터넷 연결 필요</small></div>
  <div data-screen="modes" class="hidden"><button class="back" data-route="main">← 타이틀</button><h2>어떻게 놀까요?</h2><p>혼자 탐험하거나 친구와 함께 탑을 무너뜨려요.</p><button id="startBtn" type="button" class="primary">혼자 시작</button><button class="secondary wide" data-route="multi">친구와 함께 · 최대 4명</button></div>
  <div data-screen="multi" class="hidden"><button class="back" id="lobbyBack">← 모드 선택</button><h2>친구와 함께</h2><p class="menuSummary">방을 만들거나 친구의 4자리 코드로 참가하세요.</p><div id="roomEntry"><button id="createRoom" class="primary" type="button">새 방 만들기</button><div class="roomSetup"><label for="roomCode">방 코드 <span>참가할 때 입력</span></label><div class="joinRow"><input id="roomCode" inputmode="numeric" pattern="[0-9]{4}" autocomplete="off" maxlength="4" placeholder="4자리 숫자"><button id="joinRoom" class="secondary" type="button">참가</button></div></div></div><div id="lobbyStatus" role="status" aria-live="polite">방장은 1명부터 시작할 수 있어요.</div><button id="beginRoom" class="primary" type="button" style="display:none">현재 인원으로 시작</button><button id="cancelLobby" class="secondary wide" type="button">연결 취소 / 방 나가기</button></div>
- <div data-screen="help" class="hidden"><button class="back" data-menu-close>← 돌아가기</button><h2>게임 방법</h2><ol class="guide"><li><b>사냥하고 성장</b><br>집 안의 쥐·곤충·거미를 짧게 할퀴세요.</li><li><b>식탁으로 이동</b><br>경사로로 올라가 붉은 공격 범위를 구르기로 피하세요.</li><li><b>탑을 와르르!</b><br>길게 충전한 박치기로 블록을 밀어내세요.</li></ol><details><summary>PC / 터치 조작</summary><p>PC: WASD·방향키 이동 / 마우스 시점<br>F·좌클릭: 탭 할퀴기, 홀드 후 놓기 박치기<br>Space: 홀드 후 놓기 점프 / Shift: 구르기<br>Esc: 마우스 잠금 해제<br><br>터치: 왼쪽 스틱 이동 / 오른쪽 드래그 시점<br>발바닥·점프 버튼: 탭 또는 홀드 후 놓기</p></details><p class="note">체력이 0이 되어도 성장·탑 진행도를 유지하며 부활해요. 게임 중 메뉴를 열어도 세계는 계속 움직여요.</p></div>
+ <div data-screen="help" class="hidden"><button class="back" data-menu-close>← 돌아가기</button><h2>게임 방법</h2><ol class="guide"><li><b>사냥하고 성장</b><br>집 안의 쥐·곤충·거미를 짧게 할퀴세요. 최고 LV <span data-max-level></span>에 도달하면 MAX로 표시돼요. 고양이는 처음 크기의 2배까지 자라요.</li><li><b>식탁으로 이동</b><br>경사로로 올라가 붉은 공격 범위를 구르기로 피하세요.</li><li><b>탑을 와르르!</b><br>길게 충전한 박치기로 블록을 밀어내세요.</li></ol><details><summary>PC / 터치 조작</summary><p>PC: WASD·방향키 이동 / 마우스 시점<br>F·좌클릭: 탭 할퀴기, 홀드 후 놓기 박치기<br>Space: 홀드 후 놓기 점프 / Shift: 구르기<br>Esc: 마우스 잠금 해제<br><br>터치: 왼쪽 스틱 이동 / 오른쪽 드래그 시점<br>발바닥·점프 버튼: 탭 또는 홀드 후 놓기</p></details><p class="note">사망하면 현재 레벨 구간 XP의 10%를 잃고, 경계 아래면 레벨도 내려가요 (최저 LV 1). MAX에서는 마지막 레벨 구간을 기준으로 잃으며, 초과 XP는 쌓이지 않아요. 탑 진행도는 유지해요. 게임 중 메뉴를 열어도 세계는 계속 움직여요.</p></div>
  <div data-screen="settings" class="hidden"><button class="back" data-menu-close>← 돌아가기</button><h2>설정</h2><button id="soundBtn" class="secondary wide" aria-pressed="true">효과음 켜짐</button><p class="note">화면 크기에 맞춰 조작 버튼이 자동으로 바뀝니다.</p></div>
  </div></section>
  <section id="ending" class="cover hidden"><div class="hero"><div class="eyebrow">오늘의 대참사</div><h1 id="endingTitle" class="endTitle">대참사 성공! 🐾</h1><p id="endingSub">거대한 탑이 무너졌어요!</p><div class="statsEnd" id="endingStats"></div><button id="retryBtn" type="button" class="primary">한 판 더</button><p id="replayStatus" class="note hidden">방장이 다음 판을 시작하면 함께 시작해요.</p><button id="titleBtn" class="secondary wide" type="button">타이틀로 돌아가기</button></div></section>
@@ -356,13 +356,13 @@ const RAMP=(()=>{
 const CAT_SLOPE=Object.freeze({probeLength:.82,probeLift:.08,contactHeight:.69,maxAngleRad:Math.PI*48/180,steerVerticalRatio:.95});
 function catGroundContact(body=tower.catBody,collider=tower.catCollider){
  if(!body||!tower.world)return null;
- const p=body.translation();
- const ray=new RAPIER.Ray({x:p.x,y:p.y+CAT_SLOPE.probeLift,z:p.z},{x:0,y:-1,z:0});
- const hit=tower.world.castRayAndGetNormal(ray,CAT_SLOPE.probeLength,true,
+ const p=body.translation(),scale=collider.radius()/DEF.cat.size.baseRadius;
+ const ray=new RAPIER.Ray({x:p.x,y:p.y+CAT_SLOPE.probeLift*scale,z:p.z},{x:0,y:-1,z:0});
+ const hit=tower.world.castRayAndGetNormal(ray,CAT_SLOPE.probeLength*scale,true,
   undefined,undefined,collider,body);
  if(!hit||!Number.isFinite(hit.timeOfImpact)||!hit.normal||hit.normal.y<Math.cos(CAT_SLOPE.maxAngleRad))return null;
- const distance=hit.timeOfImpact-CAT_SLOPE.probeLift;
- if(distance>CAT_SLOPE.contactHeight)return null;
+ const distance=hit.timeOfImpact-CAT_SLOPE.probeLift*scale;
+ if(distance>CAT_SLOPE.contactHeight*scale)return null;
  return {normal:hit.normal,distance,surfaceY:p.y-distance};
 }
 const vec3=([x,y,z])=>({x,y,z});
@@ -402,9 +402,9 @@ class PhysicsTower {
   this.houseFixedBody=fixed;
   for(let i=0;i<TOWER.initialLayers;i++)this.addLayer();
   this.catBody=thisWorld.createRigidBody(r.RigidBodyDesc.dynamic()
-      .setTranslation(ARENA.spawnX,ARENA.floorY+.54,ARENA.spawnZ).setLinearDamping(.36).setAngularDamping(5.4)
+      .setTranslation(ARENA.spawnX,ARENA.floorY+catRadiusForLevel(1)+.04,ARENA.spawnZ).setLinearDamping(.36).setAngularDamping(5.4)
       .setCcdEnabled(true).lockRotations());
-  this.catCollider=thisWorld.createCollider(r.ColliderDesc.ball(.50)
+  this.catCollider=thisWorld.createCollider(r.ColliderDesc.ball(catRadiusForLevel(1))
       .setMass(catMassForLevel(1)).setFriction(.67).setRestitution(.28).setActiveEvents(r.ActiveEvents.COLLISION_EVENTS),this.catBody);
   this.eventQueue=new r.EventQueue(true);
   this.playerBodies.set('local',{body:this.catBody,collider:this.catCollider});
@@ -438,17 +438,23 @@ class PhysicsTower {
  addPlayer(id,position){
   if(this.playerBodies.has(id))return this.playerBodies.get(id);
   const r=RAPIER;
-  const body=this.world.createRigidBody(r.RigidBodyDesc.dynamic().setTranslation(position.x,ARENA.floorY+.54,position.z)
+  const body=this.world.createRigidBody(r.RigidBodyDesc.dynamic().setTranslation(position.x,ARENA.floorY+catRadiusForLevel(1)+.04,position.z)
    .setLinearDamping(.36).setAngularDamping(5.4).setCcdEnabled(true).lockRotations());
-  const collider=this.world.createCollider(r.ColliderDesc.ball(.50).setMass(catMassForLevel(1))
+  const collider=this.world.createCollider(r.ColliderDesc.ball(catRadiusForLevel(1)).setMass(catMassForLevel(1))
    .setFriction(.67).setRestitution(.28).setActiveEvents(r.ActiveEvents.COLLISION_EVENTS),body);
   const actor={body,collider};this.playerBodies.set(id,actor);return actor;
  }
- setCatMass(mass){this.catCollider.setMass(mass);this.catBody.recomputeMassPropertiesFromColliders();}
+ setCatGrowth(actor){
+  const oldRadius=this.catCollider.radius(),radius=catRadiusForLevel(actor.level),p=this.catBody.translation();
+  this.catCollider.setRadius(radius);this.catCollider.setMass(actor.mass);
+  this.catBody.recomputeMassPropertiesFromColliders();
+  // Keep the feet in place when growing or shrinking, including while airborne.
+  this.catBody.setTranslation({x:p.x,y:p.y+radius-oldRadius,z:p.z},true);
+ }
  syncCat(){
   if(!this.catBody||typeof cat==='undefined'||!cat)return;
   const p=this.catBody.translation(),v=this.catBody.linvel();
-  cat.x=p.x;cat.y=p.y-.50;cat.z=p.z;cat.vy=v.y;
+  cat.x=p.x;cat.y=p.y-catRadiusForLevel(cat.level);cat.z=p.z;cat.vy=v.y;
   cat.knockX=v.x-cat.vx;cat.knockZ=v.z-cat.vz;
   cat.speed=Math.hypot(v.x,v.z);
   const support=catGroundContact(this.catBody,this.catCollider);
@@ -486,7 +492,7 @@ class PhysicsTower {
   b.highlight=.19;this.totalImpulses++;this.lastImpact=b.p.slice();
  }
  nearest(cat,maxRange=1.55){
-  const center=[cat.x,cat.y+.72,cat.z],f=[Math.sin(cat.yaw),0,Math.cos(cat.yaw)];
+  const center=[cat.x,cat.y+.72*catScaleForLevel(cat.level),cat.z],f=[Math.sin(cat.yaw),0,Math.cos(cat.yaw)];
   let best=null,score=Infinity,hit=null;
   for(const b of this.blocks){
    const rel=vsub(center,b.p),inverse=[-b.q[0],-b.q[1],-b.q[2],b.q[3]],local=qrotate(inverse,rel);
@@ -532,16 +538,17 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
 const DEF={
-  build:'20261014-menu-hierarchy-v0102',version:'0.10.2',
+  build:'20261014-level-cap-v0103',version:'0.10.3',
   // After the success threshold, physics keeps stepping until the debris is quiet.
   // These are PRESENTATION timings only; they never influence Rapier impulses.
   round:{durationMs:0,winBlocks:TOWER.winScattered,
     collapseMinMs:2800,collapseQuietMs:1350,collapseMaxMs:11800,collapseMovingTolerance:2},
-  cat:{moveSpeed:6.3,mass:{base:1,growthFactor:1.5},jump:{baseVelocity:10,maxMultiplier:2,durationMs:1000},charge:{durationMs:1500,baseSpeed:{min:5,max:10},maxMultiplier:2,minDashMs:250,maxDashMs:560,cooldownMs:1550},claw:{tapMaxMs:250,cooldownMs:320,animationMs:260,hitAtMs:65,reach:2.55,queryRadius:1.46,queryForward:1.16,minFacingDot:.18,damageBase:1,knockback:1.7},dodgeCooldownMs:1350,dodgeDurationMs:650,rollSpeed:12.5,rollIFrameStartMs:70,rollIFrameEndMs:495,launchAirControl:1.05,stunDurationMs:820,recoverDurationMs:550,maxHp:100,hitInvulnMs:1250},
+  cat:{size:{min:.6,max:1.2,baseRadius:.5},moveSpeed:6.3,mass:{base:1,growthFactor:1.5},jump:{baseVelocity:10,maxMultiplier:2,durationMs:1000},charge:{durationMs:1500,baseSpeed:{base:5,perLevel:5/7},maxMultiplier:2,minDashMs:250,maxDashMs:560,cooldownMs:1550},claw:{tapMaxMs:250,cooldownMs:320,animationMs:260,hitAtMs:65,reach:2.55,queryRadius:1.46,queryForward:1.16,minFacingDot:.18,damageBase:1,knockback:1.7},dodgeCooldownMs:1350,dodgeDurationMs:650,rollSpeed:12.5,rollIFrameStartMs:70,rollIFrameEndMs:495,launchAirControl:1.05,stunDurationMs:820,recoverDurationMs:550,maxHp:100,hitInvulnMs:1250},
   humans:{buildDurationMs:3200,attackWarningMs:1180,attackDurationMs:780,attackRadius:1.6,attackRecoveryMs:1900,intervalMs:2200,waveSpeed:15.2,impulse:11.8,slamUpSpeed:21.0,slamOutSpeed:14.5,otherUpSpeed:6.4,otherOutSpeed:10.2,launchMassExponent:.32},
-  farming:{maxLevel:8,levelXp:[0,2,5,9,14,20,28,37]},
+  farming:{levelXp:[0,2,5,9,14,20,28,37,47,58,70,83],get maxLevel(){return this.levelXp.length},deathLossRatio:.10},
   graphics:{maxParticles:180,maxCombatBursts:16,maxDamageNumbers:26,mobHudDistance:25}
 };
+document.querySelectorAll('[data-max-level]').forEach(node=>node.textContent=DEF.farming.maxLevel);
 const gameCanvas=document.getElementById('game');
 let renderer;
 const actions=new ActionState();
@@ -622,7 +629,7 @@ class CombatPresentation {
  flush(now){if(!this.pending.length)return;
   for(const e of this.pending){
    if(e.kind==='level'){
-    this.popup('LEVEL '+e.level+' ↑',e.p,'level',now,0);
+    this.popup('LEVEL '+levelLabel(e.level)+' ↑',e.p,'level',now,0);
     particle(e.p,'mint',22,3.1);sfx('win',.62);
     if(this.bursts.length<DEF.graphics.maxCombatBursts)this.bursts.push({p:e.p,at:now,ms:580,kind:'level',seq:e.sequence});
     continue;
@@ -631,7 +638,7 @@ class CombatPresentation {
    if(plate){this.paint(plate,e.hp);plate.flashUntil=now+240;}
    const heavy=e.source==='dash';
    this.popup('−'+e.amount,e.p,heavy?'heavy':'damage',now,heavy?12:-9);
-   if(e.fatal)this.popup('처치! +'+e.xp+' XP',[e.p[0],e.p[1]+.85,e.p[2]],'ko',now,13);
+   if(e.fatal)this.popup((e.xp>0?'처치! +'+e.xp+' XP':'처치! MAX'),[e.p[0],e.p[1]+.85,e.p[2]],'ko',now,13);
    if(this.bursts.length>=DEF.graphics.maxCombatBursts)this.bursts.shift();
    this.bursts.push({p:e.p,at:now,ms:e.fatal?440:heavy?290:225,kind:e.fatal?'kill':heavy?'heavy':'claw',seq:e.sequence});
    particle(e.p,e.fatal?'yellow':heavy?'pink':'white',e.fatal?17:heavy?13:8,e.fatal?3.3:heavy?2.8:1.8);
@@ -767,30 +774,32 @@ function damageMob(mob,requestedDamage,source,impact,staggerMs){
  mob.hp=before-damage;mob.hitMs=Math.max(mob.hitMs,staggerMs);
  mob.dead=mob.hp===0;if(mob.dead)mob.killerId=cat.id;
  const d=MOB_TYPES[mob.type];
- combatUI.queue({kind:'hit',tick:nowTicks,entityId:mob.id,sequence:++mob.hitSequence,
+ const event={kind:'hit',tick:nowTicks,entityId:mob.id,sequence:++mob.hitSequence,
   source,amount:damage,hp:mob.hp,maxHp:d.maxHp,fatal:mob.dead,xp:mob.dead?d.xp:0,
-  p:[impact.x,impact.y,impact.z]});
+  p:[impact.x,impact.y,impact.z]};
+ // Fatal reward text is confirmed with the actual capped XP award during collection.
+ if(mob.dead)mob.defeatEvent=event;else combatUI.queue(event);
  return damage;
 }
 
 // Do not treat a claw as a dash: the short attack uses its own Rapier overlap query.
 function resolveClawHit(){
- const claw=cat.claw,config=DEF.cat.claw;
+ const claw=cat.claw,config=DEF.cat.claw,scale=catScaleForLevel(cat.level);
  if(!claw.pendingHit||claw.animation.leftMs>config.animationMs-config.hitAtMs)return;
  claw.pendingHit=false;
  if(phase!=='play'||CAT_DISABLED_STATES.has(cat.motion.state)||cat.motion.state==='roll')return;
  const body=tower.catBody,origin=body.translation(),fx=Math.sin(cat.aimYaw),fz=Math.cos(cat.aimYaw);
- const center={x:origin.x+fx*config.queryForward,y:origin.y+.10,z:origin.z+fz*config.queryForward};
+ const center={x:origin.x+fx*config.queryForward*scale,y:origin.y+.10*scale,z:origin.z+fz*config.queryForward*scale};
  const hitIds=new Set();let hits=0;
  // Rapier's exact shape-overlap query, not a custom distance-only damage trigger.
- tower.world.intersectionsWithShape(center,{x:0,y:0,z:0,w:1},new RAPIER.Ball(config.queryRadius),collider=>{
+ tower.world.intersectionsWithShape(center,{x:0,y:0,z:0,w:1},new RAPIER.Ball(config.queryRadius*scale),collider=>{
   const handle=typeof collider==='number'?collider:collider.handle;
   if(hitIds.has(handle))return true;
   const mob=mobs.find(candidate=>candidate.collider.handle===handle&&!candidate.dead);
   if(!mob)return true;
   const p=mob.body.translation(),dx=p.x-origin.x,dz=p.z-origin.z,dy=p.y-origin.y;
   const planar=Math.hypot(dx,dz),radius=MOB_TYPES[mob.type].radius;
-  if(planar>config.reach+radius||Math.abs(dy)>1.25+radius||
+  if(planar>config.reach*scale+radius||Math.abs(dy)>1.25*scale+radius||
      (planar>.05&&(dx*fx+dz*fz)/planar<config.minFacingDot))return true;
   // A fixed wall/counter must block a swipe; other dynamic mobs remain targetable.
   const range=Math.hypot(dx,dy,dz);
@@ -840,27 +849,24 @@ function collectMobsAfterStep(){if(tower.world.contactPairsWith){
   const p=m.body.translation(),def=MOB_TYPES[m.type],killer=roomCats.get(m.killerId)??cat;
   combatUI.markDefeated(m,p);
   tower.world.removeRigidBody(m.body);mobs.splice(i,1);
-  killer.xp+=def.xp;kills[m.type]++;
-  const next=Math.min(DEF.farming.maxLevel,1+DEF.farming.levelXp.slice(1).filter(v=>killer.xp>=v).length);
-  if(next>killer.level){
-   killer.level=next;
-   // Rapier collider ownership and level-up source belong to the killer, never whichever cat is currently ticking.
-   withCatActor(killer.id,()=>tower.setCatMass(killer.mass));
-   if(killer===localCat)announce('✨ LV '+next+'! 질량 '+killer.mass.toFixed(2)+' · 박치기 운동량 증가!',1900);
-   combatUI.queue({kind:'level',tick:nowTicks,entityId:killer.id,sequence:next,level:next,p:[killer.x,killer.y+.9,killer.z]});
-  }else if(killer===localCat&&(kills.mouse+kills.beetle+kills.spider)%3===0)announce(def.label+' 사냥 성공! 경험치 +'+def.xp,1000);
+  const previousLevel=killer.level,gained=setCatXp(killer,killer.xp+def.xp);kills[m.type]++;
+  combatUI.queue({...m.defeatEvent,xp:gained});
+  if(killer.level>previousLevel){
+   if(killer===localCat)announce('✨ LV '+levelLabel(killer.level)+'! 질량 '+killer.mass.toFixed(2)+' · 박치기 운동량 증가!',1900);
+   combatUI.queue({kind:'level',tick:nowTicks,entityId:killer.id,sequence:++killer.growthSequence,level:killer.level,p:[killer.x,killer.y+.9,killer.z]});
+  }else if(killer===localCat&&(kills.mouse+kills.beetle+kills.spider)%3===0)announce(def.label+' 사냥 성공! '+(gained>0?'경험치 +'+gained:'최고 레벨 MAX'),1000);
  }
 }
 function damageCat(amount,reason){if(cat.invuln>0||cat.motion.state==='dead'||phase!=='play')return;
  cat.hp=Math.max(0,cat.hp-amount);cat.invuln=DEF.cat.hitInvulnMs;if(cat===localCat){announce(reason+' −'+amount+' HP',1100);sfx('hit',.65);}
- if(cat.hp<=0){cat.respawn.leftMs=1050;setCatMotion('dead');cancelCharge();cancelJumpCharge();cat.dash.leftMs=0;cat.claw.pendingHit=false;if(cat===localCat){ui.respawn.classList.remove('hidden');announce('🐾 잠시 후 잠자리에서 다시 시작! 레벨·젠가 유지',1600);}}
+ if(cat.hp<=0){const loss=-setCatXp(cat,cat.xp-deathXpLoss(cat));cat.respawn.leftMs=1050;setCatMotion('dead');cancelCharge();cancelJumpCharge();cat.dash.leftMs=0;cat.claw.pendingHit=false;if(cat===localCat){ui.respawn.classList.remove('hidden');announce(deathNotice(loss,cat.level),2200);}}
 }
 function respawnCat(){const body=tower.catBody;
  const spawnIndex=net.room?net.room.players.indexOf(cat.id):-1;
  const spawnX=spawnIndex<0?ARENA.spawnX:(spawnIndex-(net.room.players.length-1)/2)*3.4;
- body.setTranslation({x:spawnX,y:ARENA.floorY+.54,z:ARENA.spawnZ},true);body.setLinvel({x:0,y:0,z:0},true);body.setAngvel({x:0,y:0,z:0},true);
+ body.setTranslation({x:spawnX,y:ARENA.floorY+catRadiusForLevel(cat.level)+.04,z:ARENA.spawnZ},true);body.setLinvel({x:0,y:0,z:0},true);body.setAngvel({x:0,y:0,z:0},true);
  cat.hp=DEF.cat.maxHp;cat.invuln=2200;cat.respawn.leftMs=0;cat.x=spawnX;cat.y=ARENA.floorY;cat.z=ARENA.spawnZ;cat.yaw=Math.PI;cat.aimYaw=Math.PI;cat.vx=cat.vz=0;setCatMotion('respawn');cancelCharge();cancelJumpCharge();cat.trail=[];
- if(cat===localCat){camera.yaw=Math.PI;camera.pitch=.06;camera.eye=[spawnX,ARENA.floorY+LOOK.eyeHeight,ARENA.spawnZ+LOOK.followDistance];camera.armLength=LOOK.followDistance;ui.respawn.classList.add('hidden');announce('🐾 부활 완료! 체력 회복 · 성장과 젠가 그대로',1800);}
+ if(cat===localCat){camera.yaw=Math.PI;camera.pitch=.06;camera.eye=[spawnX,ARENA.floorY+LOOK.eyeHeight,ARENA.spawnZ+LOOK.followDistance];camera.armLength=LOOK.followDistance;ui.respawn.classList.add('hidden');announce('🐾 부활 완료! 체력 회복 · 젠가 진행도 유지',1800);}
  particle([cat.x,cat.y+.5,cat.z],'mint',34,3);sfx('jump');
 }
 
@@ -868,7 +874,7 @@ let cat,localCat,human,particles,shockwaves=[],phase='intro',seconds=0,nowTicks=
 const roomCats=new Map();
 let hapticEnabled=true;
 const rand=(a,b)=>a+(b-a)*rng.nextUint32()/4294967296;
-function makeCat(){return {id:"local",x:ARENA.spawnX,z:ARENA.spawnZ,y:ARENA.floorY,surfaceY:ARENA.floorY,vy:0,vx:0,vz:0,knockX:0,knockZ:0,aimYaw:Math.PI,get mass(){return catMassForLevel(this.level)},yaw:Math.PI,targetYaw:Math.PI,speed:0,hp:DEF.cat.maxHp,xp:0,level:1,openingMs:0,invuln:0,respawn:{leftMs:0},
+function makeCat(){return {id:"local",x:ARENA.spawnX,z:ARENA.spawnZ,y:ARENA.floorY,surfaceY:ARENA.floorY,vy:0,vx:0,vz:0,knockX:0,knockZ:0,aimYaw:Math.PI,get mass(){return catMassForLevel(this.level)},yaw:Math.PI,targetYaw:Math.PI,speed:0,hp:DEF.cat.maxHp,xp:0,level:1,growthSequence:0,openingMs:0,invuln:0,respawn:{leftMs:0},
  charge:{held:false,elapsedMs:0,ratio:0},claw:{cooldown:{leftMs:0},animation:{leftMs:0},pendingHit:false,side:-1,attacks:0,lastHits:0},jump:{held:false,elapsedMs:0,ratio:0,lastVelocity:0},dash:{cooldown:{leftMs:0},leftMs:0,velocity:0,direction:{x:0,z:1}},dodgeCd:0,dodgeMs:0,ticks:0,
  motion:{state:'idle',elapsedMs:0,rollAxis:[1,0,0],rollDirX:0,rollDirZ:1,spinAxis:[1,0,0],spinRad:0,spinRate:0,wasAirborne:false},trail:[],landings:0,giantHits:0,successfulRolls:0};}
 function makeHuman(id){return {id,x:id===0?-8.4:8.4,z:-8.6,pattern:id===0?'slam':'sweep',mode:'idle',timer:id===0?1600:3100,anim:0,target:[0,0,0],attackApplied:false,buildDone:false,anger:0,noticeMs:0,speech:id===0?'이번엔 진짜 높이 쌓자':'고양이 어디 갔지?',attacks:0,builds:0};}
@@ -878,7 +884,7 @@ function resetWorld(){combatUI.reset();net.resetView();cat=null;roomCats.clear()
    const members=net.room.players;
    const homeIndex=members.indexOf(net.localId);
    const homeX=(homeIndex-(members.length-1)/2)*3.4;
-   tower.catBody.setTranslation({x:homeX,y:ARENA.floorY+.54,z:ARENA.spawnZ},true);
+   tower.catBody.setTranslation({x:homeX,y:ARENA.floorY+catRadiusForLevel(cat.level)+.04,z:ARENA.spawnZ},true);
    tower.playerBodies.clear();tower.playerBodies.set(net.localId,{body:tower.catBody,collider:tower.catCollider});
    roomCats.set(net.localId,cat);
    for(let i=0;i<members.length;i++)if(members[i]!==net.localId){
@@ -918,7 +924,7 @@ function updateCollapse(dt){
    if(net.room&&net.isHost)net.publishState(true);
  }
 }
-function endRound(success){if(phase!=='play'&&phase!=='collapse')return;if(document.pointerLockElement===gameCanvas)document.exitPointerLock?.();phase=success?'win':'lose';winClock=0;navigation.replace({screen:'result'});ui.retryBtn.disabled=!!net.room&&!net.isHost;ui.retryBtn.textContent=ui.retryBtn.disabled?'방장 시작 대기':'한 판 더';document.querySelector('#replayStatus').classList.toggle('hidden',!ui.retryBtn.disabled);ui.end.classList.remove('hidden');ui.endingTitle.textContent=success?'대참사 성공! 🐾':'고양이 작전 실패…';ui.endingSub.textContent=success?'젠가가 끝까지 와르르 무너진 뒤 최종 결과를 집계했어요!':'성장과 회피 타이밍을 활용해 다시 도전하세요!';ui.endingStats.innerHTML=`<span>무너뜨린 블록 <b>${tower.scattered}개</b></span><span>걸린 시간 <b>${Math.round(seconds)}초</b></span><span>최종 성장 <b>LV ${cat.level}</b></span>`;ui.warning.classList.remove('show');sfx(success?'win':'lose');announce(success?'고양이가 이겼다!':'아직 포기하지 마!');}
+function endRound(success){if(phase!=='play'&&phase!=='collapse')return;if(document.pointerLockElement===gameCanvas)document.exitPointerLock?.();phase=success?'win':'lose';winClock=0;navigation.replace({screen:'result'});ui.retryBtn.disabled=!!net.room&&!net.isHost;ui.retryBtn.textContent=ui.retryBtn.disabled?'방장 시작 대기':'한 판 더';document.querySelector('#replayStatus').classList.toggle('hidden',!ui.retryBtn.disabled);ui.end.classList.remove('hidden');ui.endingTitle.textContent=success?'대참사 성공! 🐾':'고양이 작전 실패…';ui.endingSub.textContent=success?'젠가가 끝까지 와르르 무너진 뒤 최종 결과를 집계했어요!':'성장과 회피 타이밍을 활용해 다시 도전하세요!';ui.endingStats.innerHTML=`<span>무너뜨린 블록 <b>${tower.scattered}개</b></span><span>걸린 시간 <b>${Math.round(seconds)}초</b></span><span>최종 성장 <b>LV ${levelLabel(cat.level)}</b></span>`;ui.warning.classList.remove('show');sfx(success?'win':'lose');announce(success?'고양이가 이겼다!':'아직 포기하지 마!');}
 function announce(msg,ms=2000){ui.message.textContent=msg;ui.message.classList.add('show');messageUntil=seconds*1000+ms;}
 function updateHUD(){
  const min=Math.floor(seconds/60),sec=Math.floor(seconds%60);ui.clock.textContent=min+':'+String(sec).padStart(2,'0');
@@ -929,18 +935,23 @@ function updateHUD(){
   :'물리적으로 무너진 블록 '+tower.scattered+' / '+DEF.round.winBlocks;
  ui.dash.style.width=cat.charge.held?Math.round(cat.charge.ratio*100)+'%':cat.dash.cooldown.leftMs>0?Math.round(100*(1-cat.dash.cooldown.leftMs/DEF.cat.charge.cooldownMs))+'%':'100%';
  ui.status.textContent=phase==='collapse'?'🏰 물리 붕괴 관전 중!':cat.motion.state==='dead'?'🐾 리스폰 준비 중':cat.motion.state==='launched'?'💫 공중으로 튕기는 중!':cat.motion.state==='stunned'?'💫 땅에 쓰러져 행동불능!':cat.motion.state==='recover'?'🐈 일어나는 중':cat.motion.state==='roll'?'↻ 구르는 중':cat.charge.held?(cat.charge.elapsedMs<DEF.cat.claw.tapMaxMs?'🐾 지금 놓으면 할퀴기':'💥 박치기 차지 '+Math.round(cat.charge.ratio*100)+'% · 놓으면 발사'):cat.jump.held?'↥ 점프 차지 '+Math.round(cat.jump.ratio*100)+'% · 놓으면 점프':cat.motion.state==='dash'?'💥 돌진 중!':cat.openingMs>0?'✦ 구르기 성공! 반격 기회':cat.claw.animation.leftMs>0?'🐾 할퀴기!':cat.dash.cooldown.leftMs<=0?'짧게 할퀴기 · 길게 박치기 · 점프 차지':'🐾 할퀴기는 가능 · 박치기 재준비 중';
- ui.level.textContent=cat.level;ui.power.textContent='질량 '+cat.mass.toFixed(2)+' · 박치기 '+headbuttBaseSpeed(cat.level).toFixed(1)+'→'+(headbuttBaseSpeed(cat.level)*DEF.cat.charge.maxMultiplier).toFixed(1);
+ ui.level.textContent=levelLabel(cat.level);ui.power.textContent='질량 '+cat.mass.toFixed(2)+' · 박치기 '+headbuttBaseSpeed(cat.level).toFixed(1)+'→'+(headbuttBaseSpeed(cat.level)*DEF.cat.charge.maxMultiplier).toFixed(1);
  const milestone=DEF.farming.levelXp,prev=milestone[cat.level-1],next=milestone[cat.level]??milestone[milestone.length-1];
- ui.xpFill.style.width=cat.level===DEF.farming.maxLevel?'100%':Math.round(100*(cat.xp-prev)/(next-prev))+'%';
+ const maxed=cat.level>=DEF.farming.maxLevel,progress=maxed?100:Math.round(100*(cat.xp-prev)/(next-prev));
+ ui.xpFill.style.width=progress+'%';
+ ui.xpFill.parentElement.setAttribute('aria-valuenow',String(progress));
+ ui.xpFill.parentElement.setAttribute('aria-valuetext',maxed?'MAX · 최고 레벨':(Math.round((cat.xp-prev)*10)/10)+' / '+(next-prev)+' XP');
  ui.area.textContent=zoneAt(cat.x,cat.z)+(cat.y>ARENA.floorY+2.0?' · 높은 곳':'');
  ui.kills.textContent='🐁 '+kills.mouse+'   🪲 '+kills.beetle+'   🕷 '+kills.spider;
- ui.growthHelp.textContent=cat.level<4?'🐁 외곽 파밍: 짧게 눌러 할퀴기!':cat.level<6?'💪 충분히 강해지고 있다. 식탁을 공략해 보자!':'🏰 중앙 식탁의 젠가에 풀차지 박치기!';
+ ui.growthHelp.textContent=cat.level>=DEF.farming.maxLevel?'🏆 최고 레벨 MAX · 젠가를 무너뜨리세요!':cat.level<4?'🐁 외곽 파밍: 짧게 눌러 할퀴기!':cat.level<6?'💪 충분히 강해지고 있다. 식탁을 공략해 보자!':'🏰 중앙 식탁의 젠가에 풀차지 박치기!';
  let aim=null,dist=Infinity;if(cat.level<6){for(const mob of mobs){const p=mob.body.translation(),d=Math.hypot(p.x-cat.x,p.z-cat.z);if(d<dist){dist=d;aim=[p.x,p.z];}}}
  if(!aim){aim=[0,0];dist=Math.hypot(cat.x,cat.z);}
  const dx=aim[0]-cat.x,dz=aim[1]-cat.z;
  const side=-Math.cos(camera.yaw)*dx+Math.sin(camera.yaw)*dz,forward=Math.sin(camera.yaw)*dx+Math.cos(camera.yaw)*dz;
  const angle=Math.atan2(side,forward),arrows=['↑','↗','→','↘','↓','↙','←','↖'];const direction=arrows[(Math.round(angle/(Math.PI/4))+8)%8];
  ui.farmArrow.textContent=direction+(cat.level<6?' 🐁 사냥 '+dist.toFixed(0)+'m':' 🏰 식탁 '+dist.toFixed(0)+'m');ui.farmArrow.style.display='block';
+ // Guests refresh the roster on snapshots; the host must refresh from its own simulation.
+ if(net.room&&net.isHost)net.showRoster();
  drawMinimap();
 }
 function drawMinimap(){const canvas=ui.minimap,ctx=canvas.getContext('2d');if(!ctx)return;
@@ -1048,7 +1059,7 @@ function updateCatMotion(dt){
  }
  // Brief world-space speed streaks: all source poses come from the physics body.
  if((m.state==='launched'||m.state==='roll')&&nowTicks%2===0){
-  cat.trail.push({p:[cat.x,cat.y+.65,cat.z],life:.20,strength:m.state==='launched'?.48:.33});
+  cat.trail.push({p:[cat.x,cat.y+.65*catScaleForLevel(cat.level),cat.z],scale:catScaleForLevel(cat.level),life:.20,strength:m.state==='launched'?.48:.33});
   if(cat.trail.length>12)cat.trail.shift();
  }
  for(let i=cat.trail.length-1;i>=0;i--){cat.trail[i].life-=dt;if(cat.trail[i].life<=0)cat.trail.splice(i,1);}
@@ -1126,8 +1137,24 @@ function updateHumans(dt){for(const h of human){h.anim+=dt;h.anger=lerp(h.anger,
  }}
 
 // Level-based mass and base headbutt speed share one source of truth.
+function catScaleForLevel(level){const size=DEF.cat.size;return lerp(size.min,size.max,(level-1)/(DEF.farming.maxLevel-1));}
+function catRadiusForLevel(level){return DEF.cat.size.baseRadius*catScaleForLevel(level);}
 function catMassForLevel(level){return DEF.cat.mass.base*Math.pow(DEF.cat.mass.growthFactor,level-1);}
-function headbuttBaseSpeed(level){const t=(level-1)/(DEF.farming.maxLevel-1);return lerp(DEF.cat.charge.baseSpeed.min,DEF.cat.charge.baseSpeed.max,t);}
+function headbuttBaseSpeed(level){const speed=DEF.cat.charge.baseSpeed;return speed.base+speed.perLevel*(level-1);}
+function levelLabel(level){return level+(level>=DEF.farming.maxLevel?' MAX':'');}
+function levelForXp(xp){return 1+DEF.farming.levelXp.slice(1).filter(value=>xp>=value).length;}
+function setCatXp(actor,xp){
+ const before=actor.xp;
+ actor.xp=Math.round(clamp(xp,0,DEF.farming.levelXp.at(-1))*10)/10;
+ const level=levelForXp(actor.xp);
+ if(level!==actor.level){actor.level=level;withCatActor(actor.id,()=>tower.setCatGrowth(actor));}
+ return Math.round((actor.xp-before)*10)/10;
+}
+function deathXpLoss(actor){
+ const marks=DEF.farming.levelXp,index=Math.min(actor.level,marks.length-1);
+ return (marks[index]-marks[index-1])*DEF.farming.deathLossRatio;
+}
+function deathNotice(loss,level){return '🐾 사망 −'+loss+' XP · LV '+levelLabel(level)+' · 잠시 후 부활 (젠가 유지)';}
 function jumpLaunchVelocity(ratio){return DEF.cat.jump.baseVelocity*(1+(DEF.cat.jump.maxMultiplier-1)*clamp(ratio,0,1));}
 // A short charge-button tap attacks nearby mobs; a hold becomes a physics headbutt.
 // The claw queries Rapier mob colliders; all Jenga displacement remains rigid-body contact only.
@@ -1142,7 +1169,7 @@ function beginCharge(){
  cat.charge.held=true;cat.charge.elapsedMs=0;cat.charge.ratio=0;
 }
 function triggerClaw(){
- const claw=cat.claw,config=DEF.cat.claw;
+ const claw=cat.claw,config=DEF.cat.claw,scale=catScaleForLevel(cat.level);
  if(claw.cooldown.leftMs>0||cat.motion.state==='dash'||cat.motion.state==='roll'||CAT_DISABLED_STATES.has(cat.motion.state))return;
  claw.cooldown.leftMs=config.cooldownMs;
  claw.animation.leftMs=config.animationMs;
@@ -1151,7 +1178,7 @@ function triggerClaw(){
  claw.attacks++;
  claw.lastHits=0;
  // Visual swipe is independent of movement/jump/charge locomotion state.
- particle([cat.x+Math.sin(cat.aimYaw)*.68,cat.y+.72,cat.z+Math.cos(cat.aimYaw)*.68], 'white',6,1.0);
+ particle([cat.x+Math.sin(cat.aimYaw)*.68,cat.y+.72*catScaleForLevel(cat.level),cat.z+Math.cos(cat.aimYaw)*.68], 'white',6,1.0);
  sfx('claw',.86);
 }
 function releaseCharge(){
@@ -1316,7 +1343,7 @@ function updateGame(dt,frame){if(phase!=='play'&&phase!=='collapse')return;
  updateParticles(dt);
  if(tower.scattered>=DEF.round.winBlocks){beginCollapse();updateHUD();return}
  if(net.isHost&&nowTicks%3===0)net.publishState();
- // No time-out loss: dying costs no XP, level, tower state or round reset.
+ // No time-out loss: death costs XP once; tower state and the ongoing round are preserved.
  if(nowTicks%7===0)updateHUD();
  if(messageUntil&&seconds*1000>messageUntil){ui.message.classList.remove('show');messageUntil=0}
 }
@@ -1660,10 +1687,10 @@ function drawMobs(g){for(const mob of mobs){
 function qYawForMob(mob){const v=mob.body.linvel();return qyaw(Math.atan2(v.x,v.z));}
 function axisAngle(axis,angle){const half=angle*.5,sc=Math.sin(half);return [axis[0]*sc,axis[1]*sc,axis[2]*sc,Math.cos(half)];}
 function drawCatTrail(g,c){for(const t of c.trail){const opacity=clamp(t.life/.20,0,1)*t.strength;
- g.draw('sphere',t.p,[.42,.30,.52],c.motion.state==='roll'?COLOR.mint:COLOR.pink,Q(),opacity,1);
+ g.draw('sphere',t.p,[.42,.30,.52].map(value=>value*t.scale),c.motion.state==='roll'?COLOR.mint:COLOR.pink,Q(),opacity,1);
 }}
 function drawCat(g,c){
- const p=[c.x,c.y,c.z],yaw=c.yaw,m=c.motion,mode=m.state,t=mode==='roll'?clamp(m.elapsedMs/DEF.cat.dodgeDurationMs,0,1):0;
+ const scale=catScaleForLevel(c.level),p=[c.x,c.y,c.z],yaw=c.yaw,m=c.motion,mode=m.state,t=mode==='roll'?clamp(m.elapsedMs/DEF.cat.dodgeDurationMs,0,1):0;
  drawCatTrail(g,c);
  const isFlight=mode==='launched',isRoll=mode==='roll',isJump=mode==='jump',isStunned=mode==='stunned',isRecover=mode==='recover',isDead=mode==='dead',isRespawn=mode==='respawn',isCharge=c.charge.held&&c.charge.elapsedMs>=DEF.cat.claw.tapMaxMs,isDash=mode==='dash';
  const clawT=1-c.claw.animation.leftMs/DEF.cat.claw.animationMs,isClaw=c.claw.animation.leftMs>0&&!isRoll&&!isFlight&&!isStunned&&!isRecover;
@@ -1736,11 +1763,18 @@ function drawCat(g,c){
    lowest=Math.min(lowest,bottom);
   }
   // Render-only ground clearance keeps all rig parts visible during full rotation.
-  centerLift+=Math.max(0,(c.surfaceY+.26)-(c.y+lowest));
+  centerLift+=Math.max(0,(c.surfaceY-c.y)/scale+.26-lowest);
  }
  const shadowStrength=clamp(1-(c.y-c.surfaceY)*.13,.15,.68);
- g.disc([p[0],c.surfaceY+.088,p[2]],.72+Math.min(1.1,c.y*.08),COLOR.shadow,shadowStrength*.34);
- if(c.level>=2&&c.y-c.surfaceY<.80)g.ring([p[0],c.surfaceY+.13,p[2]],.77+(c.level-2)*.13,c.level>=4?COLOR.yellow:COLOR.mint,.24+.09*Math.sin(seconds*6));
+ g.disc([p[0],c.surfaceY+.088,p[2]],(.72+Math.min(1.1,(c.y-c.surfaceY)*.08))*scale,COLOR.shadow,shadowStrength*.34);
+ if(c.level>=2&&c.y-c.surfaceY<.80)g.ring([p[0],c.surfaceY+.13,p[2]],(.77+(c.level-2)*.13)*scale,c.level>=4?COLOR.yellow:COLOR.mint,.24+.09*Math.sin(seconds*6));
+ // One rig-space transform scales every body part, limb, roll and claw effect.
+ // Ground effects keep their world height even when the actor is airborne.
+ const worldRenderer=g,origin=p;
+ g=Object.create(worldRenderer);
+ g.draw=(mesh,position,size,...args)=>worldRenderer.draw(mesh,
+  position.map((value,i)=>origin[i]+(value-origin[i])*scale),size.map(value=>value*scale),...args);
+ const groundY=offset=>c.y+(c.surfaceY-c.y)/scale+offset;
  const actorIndex=net.room?net.room.players.indexOf(c.id):0;
  const catCoats=[COLOR.wood2,COLOR.cream,COLOR.pink,COLOR.mint],catAccent=[COLOR.wood3,COLOR.wood,COLOR.red,COLOR.navy];
  const fur=catCoats[Math.max(0,actorIndex)]||COLOR.wood2,belly=COLOR.cream,stripe=catAccent[Math.max(0,actorIndex)]||COLOR.wood3;
@@ -1762,7 +1796,7 @@ function drawCat(g,c){
   const arc=(Math.min(1,t)*Math.PI*2),rx=c.motion.rollDirX,rz=c.motion.rollDirZ;
   for(let i=0;i<3;i++){
    const a=arc-i*.60;
-   g.orb([c.x-rx*(.36+i*.24)+Math.sin(a)*.16,c.surfaceY+.18,c.z-rz*(.36+i*.24)+Math.cos(a)*.16],
+   g.orb([c.x-rx*(.36+i*.24)+Math.sin(a)*.16,groundY(.18),c.z-rz*(.36+i*.24)+Math.cos(a)*.16],
     [.12-i*.024,.065,.12-i*.024],i===0?COLOR.cream:COLOR.mint);
   }
  }
@@ -1814,16 +1848,16 @@ function drawCat(g,c){
  }
  if(isCharge){
   const ratio=c.charge.ratio,pulse=.08*Math.sin(seconds*17);
-  g.ring([c.x,c.surfaceY+.16,c.z],.9+ratio*.40,COLOR.yellow,.35+ratio*.40+pulse);
+  g.ring([c.x,groundY(.16),c.z],.9+ratio*.40,COLOR.yellow,.35+ratio*.40+pulse);
   g.orb(part(0,.86,1.04),[.08+ratio*.15,.07+ratio*.09,.09+ratio*.15],ratio>.7?COLOR.red:COLOR.yellow);
  }
  if(c.jump.held){
   const power=c.jump.ratio;
-  g.ring([c.x,c.surfaceY+.145,c.z],.63+power*.28,COLOR.purple,.25+power*.46);
+  g.ring([c.x,groundY(.145),c.z],.63+power*.28,COLOR.purple,.25+power*.46);
   g.orb(part(0,.31,.26),[.07+power*.14,.045,.07+power*.14],COLOR.purple);
  }
  if(isDash){
-  g.ring([c.x,c.surfaceY+.16,c.z],.9+Math.sin(seconds*24)*.1,COLOR.mint,.35);
+  g.ring([c.x,groundY(.16),c.z],.9+Math.sin(seconds*24)*.1,COLOR.mint,.35);
  }
  if(isStunned){
   for(let i=0;i<3;i++){
@@ -1832,9 +1866,9 @@ function drawCat(g,c){
   }
  }
  if(isFlight){const pulse=.2+.2*Math.sin(seconds*27)**2;
-  g.ring([c.x,c.surfaceY+.16,c.z],.82+Math.min(1.0,Math.max(0,c.y-c.surfaceY)*.13),COLOR.pink,pulse);
+  g.ring([c.x,groundY(.16),c.z],.82+Math.min(1.0,Math.max(0,c.y-c.surfaceY)*.13),COLOR.pink,pulse);
  }
- if(c.invuln>0&&!isRoll&&mode!=='launched')g.ring([c.x,c.surfaceY+.12,c.z],.83,COLOR.pink,.22+Math.sin(seconds*25)*.12);
+ if(c.invuln>0&&!isRoll&&mode!=='launched')g.ring([c.x,groundY(.12),c.z],.83,COLOR.pink,.22+Math.sin(seconds*25)*.12);
 }
 const HUMAN_STYLES=Object.freeze([
  {shirt:rgb('#75afa4'),light:rgb('#9bcac1'),trim:rgb('#3d777a'),pants:rgb('#4e6478'),shoe:rgb('#384253'),hair:rgb('#4d4748'),skin:rgb('#ecc29f'),accent:rgb('#fff0cc')},
@@ -1969,7 +2003,7 @@ function chooseCameraBoom(c,pitch,preferred){
  for(let i=0;i<candidates.length;i++){
   const [offset,height]=candidates[i],yaw=camera.yaw+offset;
   const dir=norm([-Math.sin(yaw)*Math.cos(pitch),.15-Math.sin(pitch)*.42,-Math.cos(yaw)*Math.cos(pitch)]);
-  const pivot=[c.x,c.y+height,c.z];
+  const pivot=[c.x,c.y+height*catScaleForLevel(c.level),c.z];
   const available=cameraClearDistance(pivot,dir,preferred);
   const score=available-Math.abs(offset)*.30-i*.07;
   const candidate={pivot,dir,available,score};
@@ -2007,7 +2041,7 @@ function drawWorld(){if(!renderer)return;net.sampleViews(performance.now());cons
   const armTarget=Math.max(minArm,available);
   const currentArm=camera.armLength??desiredArm;
   camera.armLength=lerp(currentArm,armTarget,armTarget<currentArm?1:LOOK.collisionOutRate);
-  const pivot=selected?.pivot??[c.x,c.y+1.32,c.z];
+  const pivot=selected?.pivot??[c.x,c.y+1.32*catScaleForLevel(c.level),c.z];
   const boomDir=selected?.dir??norm([-sy,.10,-cy]);
   const wanted=vadd(pivot,vmul(boomDir,camera.armLength));
   wanted[1]=Math.max(ARENA.floorY+.75,Math.min(ARENA.floorY+11,wanted[1]));
@@ -2021,7 +2055,7 @@ function drawWorld(){if(!renderer)return;net.sampleViews(performance.now());cons
   const eye=vadd(camera.eye,cameraNoise);
   // Framing targets the cat plus a modest look-ahead; aiming only from the eye
   // along a fixed ray puts the cat below the bottom edge at close range.
-  const focus=[c.x+sy*2.7,c.y+.95+Math.sin(pitch)*3.0,c.z+cy*2.7];
+  const focus=[c.x+sy*2.7,c.y+.95*catScaleForLevel(c.level)+Math.sin(pitch)*3.0,c.z+cy*2.7];
   g.frame(eye,focus);
  }
  // no global reliance on 2D Renderer2D — gamekit's 2D renderer is not used for 3D meshes
@@ -2030,7 +2064,7 @@ function drawWorld(){if(!renderer)return;net.sampleViews(performance.now());cons
  drawHumanWarning(g);drawTower(g);
  // When a wall pushes the camera toward the avatar, progressively fade only
  // the local rendered rig so the room remains readable. Rapier body remains.
- const catCamDist=len(vsub(camera.eye,[c.x,c.y+.72,c.z]));
+ const catCamDist=len(vsub(camera.eye,[c.x,c.y+.72*catScaleForLevel(c.level),c.z]));
  // The old distance fade reached zero whenever the spring arm shortened. That
  // made the rolling cat disappear behind furniture or a wall. Rolls and hits
  // always draw fully opaque, with regular depth testing to keep world contacts.
@@ -2210,7 +2244,7 @@ const net={
   const roster=this.roster();
   this.rosterNode.innerHTML='<b>🐾 '+roster.length+'/4명'+(phase==='play'?' 협동 플레이':' 대기실')+'</b>'+
    roster.map((id,i)=>'<div class="'+(id===this.localId?'self':'guest')+'">'+
-    (id===this.localId?'● 내 고양이':'○ 고양이 '+(i+1))+' · '+(roomCats.get(id)?.level??1)+'Lv</div>').join('');
+    (id===this.localId?'● 내 고양이':'○ 고양이 '+(i+1))+' · LV '+levelLabel(roomCats.get(id)?.level??1)+'</div>').join('');
  },
  close(){
   this.joining=false;this.accepting=false;this.active=false;this.controller?.abort();this.controller=null;
@@ -2315,6 +2349,7 @@ const net={
    // Authoritative pose stays untouched by the render timeline.
    const teleported=actor.motion.state==='dead'&&visual.motion.state!=='dead';
    actor.x=x;actor.y=y;actor.z=z;actor.yaw=yaw;
+   if(actor===localCat&&actor.motion.state!=='dead'&&visual.motion.state==='dead')announce('🐾 사망 · LV '+levelLabel(level)+' · 잠시 후 부활 (젠가 유지)',2200);
    actor.viewTeleport=teleported;actor.hp=hp;actor.level=level;actor.xp=xp;actor.vy=vy;
    actor.dash.leftMs=dashMs;actor.charge={...visual.charge};actor.jump={...visual.jump};
    actor.motion={...visual.motion};actor.speed=visual.speed;actor.surfaceY=visual.surfaceY;
@@ -2370,9 +2405,9 @@ const net={
   for(let i=0;i<this.labels.children.length;i++){
    const el=this.labels.children[i],id=ids[i],actor=roomCats.has(id)?this.viewFor(roomCats.get(id)):null;
    if(!actor){el.style.display='none';continue;}
-   const point=g.screen([actor.x,actor.y+2.5,actor.z]);if(!point){el.style.display='none';continue;}
+   const point=g.screen([actor.x,actor.y+2.5*catScaleForLevel(actor.level),actor.z]);if(!point){el.style.display='none';continue;}
    el.style.display='block';el.style.left=point.x+'px';el.style.top=point.y+'px';
-   el.textContent='🐈 '+(this.room.players.indexOf(id)+1)+' · LV'+actor.level;
+   el.textContent='🐈 '+(this.room.players.indexOf(id)+1)+' · LV '+levelLabel(actor.level);
   }
  },
  sendReset(){if(!this.room||!this.isHost)return;
