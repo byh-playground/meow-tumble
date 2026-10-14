@@ -42,4 +42,4 @@ Actions는 PR에서 배포 파일을 준비하고, main 병합 후 Pages에 같�
 
 ## GameKit 0.3.1 후보 검증
 
-0.10.1은 SDK 배포 pin과 공식 모듈 해시만 갱신한 호환 PATCH입니다. 게임 규칙·30TPS·기존 방 namespace를 유지합니다. [현재 로컬 결과](docs/verification-sdk031.json)는 Chromium 시작 단계의 실행 환경 차단이며 게임 PASS가 아닙니다. 기존 Edge 검증은 위에 별도 역사 기록으로 유지합니다. 실제 브라우저 검증이 끝난 뒤 Stable로 승격합니다.
+0.10.1은 SDK 배포 pin과 공식 모듈 해시만 갱신한 호환 PATCH입니다. 게임 규칙·30TPS·기존 방 namespace를 유지합니다. [현재 로컬 결과](docs/verification-sdk031.json)는 Chromium 시작 단계의 실행 환경 차단이며 게임 PASS가 아닙니다. 기존 Edge 검증은 위에 별도 역사 기록으로 유지합니다. 사용자 요청에 따라 이번 호환 PATCH는 정적 코드·빌드 검증으로 배포하며, 실제 브라우저 재검증은 추후 사용자 확인으로 남깁니다.
