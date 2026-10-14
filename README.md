@@ -2,7 +2,7 @@
 
 집 안을 누비는 작은 고양이가 쥐·곤충을 사냥하며 성장하고, 거인의 공격을 피하며 거대한 젠가탑을 무너뜨리는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.12.0** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.12.1** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -80,3 +80,9 @@ GameKit ActionState의 press/release 보존 위에 게임이 소유하는 짧은
 멀티 입력의 남은 bit에 명시적 취소 edge를 추가해 게스트의 메뉴·입력 취소가 호스트 예약까지 비웁니다. 기존 입력/스냅샷 크기는 유지하지만 새 취소 계약 때문에 방 namespace와 제품 MINOR를 0.12.0으로 분리합니다. 구버전 방과 섞이지 않습니다. SDK·Rapier pin과 기존 main→Pages 배포는 유지합니다.
 
 설계 참고: [BLOOM 시각 UX의 입력·예고·실행·회복 및 취소 계약](https://github.com/byh-playground/bloom-reference/blob/main/rules/visual-ux.html), [GameKit 입력 소유권](https://github.com/byh-playground/bloom-gamekit/blob/main/modules/input/README.md), [Celeste 개발자 공개 코드의 점프 유예](https://github.com/NoelFB/Celeste/blob/master/Source/Player/Player.cs). 외부 모델/이미지/코드를 복사하지 않았습니다. 실제 Edge PC·390px·RTC 검증 결과와 한계는 해당 PR에 기록합니다.
+
+## 모바일 가로 플레이 0.12.1
+
+터치 기기는 가로 화면 기준으로 HUD와 104px 이동 스틱, 64px 점프·60px 구르기·92px 공격 버튼을 배치합니다. 화면 안전 영역을 피하고 상세 HUD는 중앙의 스크롤 패널에서 확인합니다. 세로 진입에는 회전 안내를 제공하며 진행 중 회전에서는 눌린 입력과 입력 버퍼만 취소합니다. 본게임·멀티 시뮬레이션, 방 연결과 카메라 방향은 유지합니다. 캔버스를 CSS로 회전하지 않고 실제 뷰포트 비율로 투영합니다.
+
+방향 잠금은 지원 브라우저에서 사용자가 가로 전환 버튼을 누를 때 전체 화면과 함께 시도합니다. API가 없거나 거절되면 수동 회전 안내를 유지합니다. 모든 모바일 브라우저의 강제 회전을 보장하지 않습니다. 네트워크·저장 계약은 그대로인 호환 PATCH이며 0.12.0 방 namespace와 SDK·Rapier pin을 유지합니다. 실제 Edge 가로·세로 전환, 작은 가로, PC 및 RTC 검증 결과는 해당 PR에 기록합니다. 물리 모바일 기기의 센서·노치·브라우저 검증은 별도이며 데스크톱 터치 에뮬레이션과 구분합니다.
