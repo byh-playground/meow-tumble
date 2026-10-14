@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"/>
 <meta name="theme-color" content="#182438"/>
-<title>와르르냥 / Meow Tumble · 집 전체 사냥과 젠가 결전 · v0.11.0</title>
+<title>와르르냥 / Meow Tumble · 집 전체 사냥과 젠가 결전 · v0.11.1</title>
 <style>
 :root{color-scheme:dark;--bg:#17283c;--ink:#fffaf0;--sub:#c8d1da;--mint:#93edcb;--pink:#ffaaa6;--yellow:#ffe49e}
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:ui-rounded,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}button,input,summary{font:inherit}button,summary{cursor:pointer;touch-action:manipulation}button{color:inherit;min-height:48px}button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}button:disabled{opacity:.55;cursor:default}.hidden{display:none!important}
@@ -83,7 +83,7 @@
  <div class="bottomRight"><div id="status" class="status"></div><div class="dashbar"><i id="dashReady"></i></div></div>
  </div>
  <div id="netRoster" aria-label="멀티플레이 참가자"></div><div id="netLabels" aria-hidden="true"></div>
- <div id="buildTag">v0.11.0 · MEOW TUMBLE</div>
+ <div id="buildTag">v0.11.1 · MEOW TUMBLE</div>
  <div id="touch"><div id="stick" class="joystick"><div id="knob" class="knob"></div></div><div class="actionPad"><button type="button" class="action" data-action="charge" aria-label="짧게 누르면 할퀴기, 0.25초 이상 길게 누르고 떼면 박치기"><strong>🐾</strong><small>탭 할퀴기 · 홀드 박치기</small><span class="chargeTrack"><i id="touchChargeFill"></i></span></button><button type="button" class="action" data-action="jump" aria-label="점프: 1초까지 누르고 떼서 점프"><strong>↥</strong><small>길게 눌러 점프</small><span class="chargeTrack jumpTrack"><i id="touchJumpFill"></i></span></button><button type="button" class="action" data-action="dodge"><strong>↻</strong><small>구르기</small></button></div></div>
  <section id="intro" class="cover" aria-label="게임 메뉴"><div class="hero">
  <div data-screen="main"><div class="eyebrow">MEOW TUMBLE</div><h1>와르르<em>냥</em></h1><p>작은 고양이로 사냥하고 성장해<br>거대한 젠가탑을 무너뜨리세요.</p><button type="button" class="primary" data-route="modes">시작하기</button><div class="menuLinks"><button data-route="help">게임 방법</button><button data-route="settings">설정</button></div><small>1–4명 · PC / 터치 · 인터넷 연결 필요</small></div>
@@ -95,21 +95,21 @@
  <section id="ending" class="cover hidden"><div class="hero"><div class="eyebrow">오늘의 대참사</div><h1 id="endingTitle" class="endTitle">대참사 성공! 🐾</h1><p id="endingSub">거대한 탑이 무너졌어요!</p><div class="statsEnd" id="endingStats"></div><button id="retryBtn" type="button" class="primary">한 판 더</button><p id="replayStatus" class="note hidden">방장이 다음 판을 시작하면 함께 시작해요.</p><button id="titleBtn" class="secondary wide" type="button">타이틀로 돌아가기</button></div></section>
 </div>
 <script type="module">
-/* Bloom GameKit · v0.3.1 pinned published dist commit (2026-10-14). No duplicate input/loop/PRNG engine.
+/* Bloom GameKit · v0.3.2 pinned published dist commit (2026-10-14). No duplicate input/loop/PRNG engine.
  * The 3D renderer, Rapier physics, gameplay and presentation remain owned by Meow Tumble.
  * Browser WebRTC uses the official group-room transport, never a second signaling stack. */
-const GAMEKIT_PIN='72b09b260edf9650353017acb49c06873fe9f5a1';
+const GAMEKIT_PIN='280e86650abec73cb9333379999a6bcadbb9234d';
 const GAMEKIT_CDN=`https://cdn.jsdelivr.net/gh/byh-playground/bloom-gamekit@${GAMEKIT_PIN}/`;
-let ActionState,SeededPRNG,createLoop,createNostrDynamicRoom,createRoomSession,profiles,InterpolationTimeline,PresentationEventQueue,createNavigation;
+let ActionState,SeededPRNG,createLoop,createNostrDynamicRoom,createRoomSession,profiles,PresentationRuntime,RenderObject,PresentationEventQueue,createNavigation,CollisionBoom;
 try{
- const [inputModule,deterministicModule,loopModule,transportModule,sessionModule,interpolationModule,eventModule,navigationModule]=await Promise.all([
+ const [inputModule,deterministicModule,loopModule,transportModule,sessionModule,interpolationModule,eventModule,navigationModule,cameraModule]=await Promise.all([
   import(GAMEKIT_CDN+'input.js'),import(GAMEKIT_CDN+'deterministic.js'),
-  import(GAMEKIT_CDN+'simloop.js'),import(GAMEKIT_CDN+'transport.js'),import(GAMEKIT_CDN+'rollback.js'),import(GAMEKIT_CDN+'interpolation.js'),import(GAMEKIT_CDN+'presentation-events.js'),import(GAMEKIT_CDN+'navigation.js')]);
- ({createNavigation}=navigationModule);
- ({InterpolationTimeline}=interpolationModule);({PresentationEventQueue}=eventModule);
+  import(GAMEKIT_CDN+'simloop.js'),import(GAMEKIT_CDN+'transport.js'),import(GAMEKIT_CDN+'rollback.js'),import(GAMEKIT_CDN+'interpolation.js'),import(GAMEKIT_CDN+'presentation-events.js'),import(GAMEKIT_CDN+'navigation.js'),import(GAMEKIT_CDN+'camera.js')]);
+ ({createNavigation}=navigationModule);({CollisionBoom}=cameraModule);
+ ({PresentationRuntime,RenderObject}=interpolationModule);({PresentationEventQueue}=eventModule);
  ({ActionState}=inputModule);({SeededPRNG}=deterministicModule);
  ({createLoop}=loopModule);({createNostrDynamicRoom}=transportModule);({createRoomSession,profiles}=sessionModule);
- if(!createNavigation||!InterpolationTimeline||!PresentationEventQueue||!ActionState||!SeededPRNG||!createLoop||!createNostrDynamicRoom||!createRoomSession||!profiles)throw new Error('Bloom GameKit 공개 API가 누락됨');
+ if(!CollisionBoom||!createNavigation||!PresentationRuntime||!RenderObject||!PresentationEventQueue||!ActionState||!SeededPRNG||!createLoop||!createNostrDynamicRoom||!createRoomSession||!profiles)throw new Error('Bloom GameKit 공개 API가 누락됨');
 }catch(error){
  document.querySelector('#boot').textContent='Bloom GameKit 로드 실패 · 인터넷/CORS 확인';
  const panel=document.querySelector('#error');panel.textContent=String(error.stack||error);panel.classList.add('show');throw error;
@@ -334,8 +334,8 @@ const PHYS={gravity:17.5,solverIterations:10,friction:1.1,restitution:0.025};
 const TOWER={width:1.07,length:3.48,height:.70,gap:.025,initialLayers:22,maxLayers:26,mass:20,winScattered:32};
 const ARENA={halfX:10.9,halfZ:8.6,edgeX:10.35,edgeZ:8.0,floorY:-3.05,houseHalfX:46,houseHalfZ:36,spawnX:0,spawnZ:23.5};
 const LOOK={mouseRadPerPx:.0029,touchRadPerPx:.0062,pitchMin:-.86,pitchMax:1.22,
- followDistance:4.85,eyeHeight:1.42,followRate:.25,
- cameraRadius:.31,armCollisionMargin:.28,collisionInRate:1,collisionOutRate:.16};
+ followDistance:4.85,eyeHeight:1.42,
+ cameraRadius:.22,armCollisionMargin:.08,boomHoldMs:150,boomReleaseHalfLifeMs:180};
 // SSOT: the visible ramp and its Rapier fixed collider MUST use the same
 // pose. The upper walking surface meets the dining table at y=0; the lower
 // walking surface meets the floor at ARENA.floorY. A short overlap prevents
@@ -540,7 +540,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
 const DEF={
-  build:'20261014-robot-vacuum-v0110',version:'0.11.0',
+  build:'20261014-presentation-jitter-v0111',version:'0.11.1',
   // After the success threshold, physics keeps stepping until the debris is quiet.
   // These are PRESENTATION timings only; they never influence Rapier impulses.
   round:{durationMs:0,winBlocks:TOWER.winScattered,
@@ -677,7 +677,8 @@ class CombatPresentation {
   const W=gameCanvas.clientWidth,H=gameCanvas.clientHeight;
   for(const [id,p] of this.plates){
    if(!p.mob&&now>=p.deadUntil){p.node.remove();this.plates.delete(id);continue;}
-   const src=p.mob?.body.translation()||{x:p.p[0],y:p.p[1],z:p.p[2]};
+   const src=p.mob?sceneView.mob(p.mob.id):{x:p.p[0],y:p.p[1],z:p.p[2]};
+   if(!src){p.node.style.display='none';continue;}
    const radius=MOB_TYPES[p.type].radius,dist=Math.hypot(src.x-camera.eye[0],src.y-camera.eye[1],src.z-camera.eye[2]);
    const range=DEF.graphics.mobHudDistance+(now<p.flashUntil?5:0);
    if(dist>range){p.node.style.display='none';continue;}
@@ -695,7 +696,7 @@ class CombatPresentation {
    if(p.occluded){p.node.style.display='none';continue;}
    p.node.style.display='block';p.node.style.left=spot.x+'px';p.node.style.top=spot.y+'px';
    p.node.classList.toggle('hit',now<p.flashUntil);
-   if(p.mob)this.paint(p,p.mob.hp);
+   if(p.mob)this.paint(p,src.hp);
   }
   for(const f of this.floats){if(now>=f.endMs){if(f.node.style.display!=='none')f.node.style.display='none';continue;}
    const spot=g.screen(f.p);if(!spot||spot.x<-65||spot.x>W+65||spot.y<-65||spot.y>H+65){f.node.style.display='none';continue;}
@@ -838,20 +839,20 @@ function mixin(first,...rest){
 const PatrolCharger=mixin(Patrolling,TelegraphCharging);
 class RobotVacuum extends mixin(PhysicsAppliance,PatrolCharger) {}
 function prepareVacuums(){vacuums=VACUUM_ROUTES.map((route,i)=>new RobotVacuum('vacuum-'+i,VACUUM_CONFIG,route));}
-function drawVacuums(g){for(const vacuum of vacuums){
- const body=vacuum.body.translation(),view=net.applianceViews.get(vacuum.id),p=net.room&&!net.isHost&&view?view:body;
+function drawVacuums(g){for(const vacuum of sceneView.vacuums){
+ const p=vacuum;
  if((p.x-camera.eye[0])**2+(p.z-camera.eye[2])**2>39**2)continue;
- const yaw=view?.yaw??vacuum.yaw,base=[p.x,p.y,p.z],state=vacuum.attack.state,r=vacuum.config.radius;
- const lamp=state==='windup'?(Math.sin(seconds*24)>0?COLOR.red:COLOR.yellow):state==='charge'?COLOR.red:state==='recover'?COLOR.yellow:COLOR.mint;
+ const yaw=vacuum.yaw,base=[p.x,p.y,p.z],state=vacuum.attack.state,r=vacuum.radius;
+ const lamp=state==='windup'?(Math.sin(sceneView.displaySeconds*24)>0?COLOR.red:COLOR.yellow):state==='charge'?COLOR.red:state==='recover'?COLOR.yellow:COLOR.mint;
  g.disc([p.x,ARENA.floorY+.035,p.z],r*1.16,COLOR.shadow,.22);
  g.tube(base,[r*2,.26,r*2],COLOR.navy); // rubber bumper, full circular silhouette
  g.tube([p.x,p.y+.075,p.z],[r*1.88,.23,r*1.88],COLOR.cream);
  g.tube([p.x,p.y+.20,p.z],[.34,.075,.34],COLOR.white); // small ordinary power button
  g.orb(yawPart(base,yaw,0,.22,.37),[.09,.035,.13],lamp);
- const brush=yawPart(base,yaw,r*.77,-.12,.38),spin=seconds*(state==='recover'?1:12);
+ const brush=yawPart(base,yaw,r*.77,-.12,.38),spin=sceneView.displaySeconds*(state==='recover'?1:12);
  for(let i=0;i<3;i++)g.cube(brush,[.65,.035,.055],COLOR.dark,qyaw(spin+i*Math.PI/3));
  if(state==='windup'){
-  g.ring([p.x,ARENA.floorY+.055,p.z],r+(.2+.15*Math.sin(seconds*18)),COLOR.yellow,.9);
+  g.ring([p.x,ARENA.floorY+.055,p.z],r+(.2+.15*Math.sin(sceneView.displaySeconds*18)),COLOR.yellow,.9);
   // Visible committed direction: this mark never follows the cat during windup.
   for(let i=1;i<=4;i++)g.disc([p.x+vacuum.attack.dx*i*.65,ARENA.floorY+.05,p.z+vacuum.attack.dz*i*.65],.10,COLOR.yellow,.8);
  }
@@ -984,8 +985,8 @@ function respawnCat(){const body=tower.catBody;
  const spawnIndex=net.room?net.room.players.indexOf(cat.id):-1;
  const spawnX=spawnIndex<0?ARENA.spawnX:(spawnIndex-(net.room.players.length-1)/2)*3.4;
  body.setTranslation({x:spawnX,y:ARENA.floorY+catRadiusForLevel(cat.level)+.04,z:ARENA.spawnZ},true);body.setLinvel({x:0,y:0,z:0},true);body.setAngvel({x:0,y:0,z:0},true);
- cat.hp=DEF.cat.maxHp;cat.invuln=2200;cat.respawn.leftMs=0;cat.x=spawnX;cat.y=ARENA.floorY;cat.z=ARENA.spawnZ;cat.yaw=Math.PI;cat.aimYaw=Math.PI;cat.vx=cat.vz=0;setCatMotion('respawn');cancelCharge();cancelJumpCharge();cat.trail=[];
- if(cat===localCat){camera.yaw=Math.PI;camera.pitch=.06;camera.eye=[spawnX,ARENA.floorY+LOOK.eyeHeight,ARENA.spawnZ+LOOK.followDistance];camera.armLength=LOOK.followDistance;ui.respawn.classList.add('hidden');announce('🐾 부활 완료! 체력 회복 · 젠가 진행도 유지',1800);}
+ cat.hp=DEF.cat.maxHp;cat.invuln=2200;cat.respawn.leftMs=0;cat.x=spawnX;cat.y=ARENA.floorY;cat.z=ARENA.spawnZ;cat.yaw=Math.PI;cat.aimYaw=Math.PI;cat.vx=cat.vz=0;setCatMotion('respawn');cat.viewTeleport=true;cancelCharge();cancelJumpCharge();cat.trail=[];
+ if(cat===localCat){camera.yaw=Math.PI;camera.pitch=.06;camera.eye=[spawnX,ARENA.floorY+LOOK.eyeHeight,ARENA.spawnZ+LOOK.followDistance];camera.armLength=LOOK.followDistance;camera.boom?.reset(LOOK.followDistance);ui.respawn.classList.add('hidden');announce('🐾 부활 완료! 체력 회복 · 젠가 진행도 유지',1800);}
  particle([cat.x,cat.y+.5,cat.z],'mint',34,3);sfx('jump');
 }
 
@@ -1012,7 +1013,7 @@ function resetWorld(){combatUI.reset();net.resetView();cat=null;roomCats.clear()
     if(net.isHost) tower.addPlayer(other.id,{x:other.x,z:ARENA.spawnZ});
    }
  }else{roomCats.set('local',cat);tower.playerBodies.clear();tower.playerBodies.set('local',{body:tower.catBody,collider:tower.catCollider});}
- tower.syncCat();prepareMobs();prepareVacuums();human=[makeHuman(0),makeHuman(1)];particles=[];shockwaves=[];camera={yaw:Math.PI,pitch:.09,eye:[0,ARENA.floorY+LOOK.eyeHeight,ARENA.spawnZ+LOOK.followDistance],shake:0,armLength:LOOK.followDistance};seconds=0;nowTicks=0;cat.respawn.leftMs=0;ui.respawn.classList.add('hidden');toastKey='';messageUntil=0;winClock=0;collapseState=null;ui.end.classList.add('hidden');ui.warning.classList.remove('show');ui.humanA.textContent='';ui.humanB.textContent='';updateHUD();}
+ tower.syncCat();prepareMobs();prepareVacuums();human=[makeHuman(0),makeHuman(1)];particles=[];shockwaves=[];camera={yaw:Math.PI,pitch:.09,eye:[0,ARENA.floorY+LOOK.eyeHeight,ARENA.spawnZ+LOOK.followDistance],shake:0,armLength:LOOK.followDistance};seconds=0;nowTicks=0;cat.respawn.leftMs=0;ui.respawn.classList.add('hidden');toastKey='';messageUntil=0;winClock=0;collapseState=null;ui.end.classList.add('hidden');ui.warning.classList.remove('show');ui.humanA.textContent='';ui.humanB.textContent='';sceneView.reset();sceneView.capture(net.room&&!net.isHost?performance.now():0,true);updateHUD();}
 function beginCollapse(remote=false){
  if(phase!=='play')return;
  phase='collapse';
@@ -1780,18 +1781,18 @@ function buildHouse(g){
 }
 
 let cachedHouse=null;function renderHouse(g){if(!cachedHouse){cachedHouse=new HouseScene();buildHouse(cachedHouse);cachedHouse.bake(g)}cachedHouse.render(g);}
-function drawMobs(g){for(const mob of mobs){
+function drawMobs(g){for(const mob of sceneView.mobs){
   // Camera-relative distance culling affects only render work: all mob AI,
   // collision and XP remain in the one authoritative fixed simulation.
-  const pos=mob.body.translation();
+  const pos=mob;
   if((pos.x-camera.eye[0])**2+(pos.z-camera.eye[2])**2>39**2)continue;
-  const type=mob.type,d=MOB_TYPES[type],p=mob.body.translation(),wobble=Math.sin(mob.wobble)*.05,rotation=qYawForMob(mob),c=mob.hitMs>90?COLOR.cream:COLOR[d.color];
+  const type=mob.type,d=MOB_TYPES[type],p=mob,wobble=Math.sin(sceneView.displaySeconds*(mob.type==='beetle'?12:8))*.05,rotation=qyaw(mob.yaw),c=mob.hitMs>90?COLOR.cream:COLOR[d.color];
   g.disc([p.x,ARENA.floorY+.06,p.z],d.radius*1.5,COLOR.shadow,.17);
   if(type==='mouse'){
    g.draw('sphere',[p.x,p.y+wobble,p.z],[.48,.33,.68],c,rotation);
    g.orb([p.x-.22,p.y+.27,p.z+.27],[.23,.26,.13],COLOR.pink);g.orb([p.x+.22,p.y+.27,p.z+.27],[.23,.26,.13],COLOR.pink);
    g.orb([p.x,p.y+.03,p.z+.65],[.13,.10,.14],COLOR.pink);
-   const a=seconds*6+mob.id;g.tube([p.x+Math.sin(a)*.3,p.y+.08,p.z-.75],[.14,.08,.65],COLOR.wood3,qyaw(a));
+   const a=sceneView.displaySeconds*6+mob.id;g.tube([p.x+Math.sin(a)*.3,p.y+.08,p.z-.75],[.14,.08,.65],COLOR.wood3,qyaw(a));
   }else if(type==='beetle'){
    g.orb([p.x,p.y+wobble,p.z],[.34,.20,.39],c);
    g.cube([p.x,p.y+.19,p.z],[.09,.15,.62],COLOR.dark);
@@ -1799,12 +1800,11 @@ function drawMobs(g){for(const mob of mobs){
   }else{
    g.orb([p.x,p.y,p.z],[.44,.31,.48],c);g.orb([p.x,p.y+.08,p.z+.33],[.24,.24,.24],COLOR.dark);
    for(const sx of [-1,1])for(let k=0;k<4;k++){
-    const base=[p.x+sx*.24,p.y,p.z+(k-1.5)*.18];const end=[p.x+sx*(.68+.05*Math.sin(seconds*12+k)),p.y-.17,p.z+(k-1.5)*.37];limb(g,base,end,.055,COLOR.dark);
+    const base=[p.x+sx*.24,p.y,p.z+(k-1.5)*.18];const end=[p.x+sx*(.68+.05*Math.sin(sceneView.displaySeconds*12+k)),p.y-.17,p.z+(k-1.5)*.37];limb(g,base,end,.055,COLOR.dark);
    }
   }
   if(mob.hitMs>0)g.ring([p.x,ARENA.floorY+.12,p.z],.65,COLOR.yellow,.7);
  }}
-function qYawForMob(mob){const v=mob.body.linvel();return qyaw(Math.atan2(v.x,v.z));}
 function axisAngle(axis,angle){const half=angle*.5,sc=Math.sin(half);return [axis[0]*sc,axis[1]*sc,axis[2]*sc,Math.cos(half)];}
 function drawCatTrail(g,c){for(const t of c.trail){const opacity=clamp(t.life/.20,0,1)*t.strength;
  g.draw('sphere',t.p,[.42,.30,.52].map(value=>value*t.scale),c.motion.state==='roll'?COLOR.mint:COLOR.pink,Q(),opacity,1);
@@ -1858,7 +1858,7 @@ function drawCat(g,c){
  if(isClaw){squash+=.065*clawSwing;centerLift+=.025*clawSwing;}
  if(c.jump.held&&!isFlight&&!isRoll&&!isDash&&!isJump){squash+=.08+.17*c.jump.ratio;}
  const walking=!isRoll&&!isFlight&&!isRecover&&!isStunned&&!isDead&&!isRespawn&&!isDash&&c.speed>.7;
- const bob=walking?Math.sin(seconds*18)*.029:Math.sin(seconds*3)*.012;
+ const bob=walking?Math.sin(sceneView.displaySeconds*18)*.029:Math.sin(sceneView.displaySeconds*3)*.012;
  // During a full-body roll, front features and the tucked tail sweep below
  // the body pivot. A table depth test then hides those meshes (looks like culling).
  // Lift only the *visual rig* by its sampled lowest point, never its Rapier body.
@@ -1887,7 +1887,7 @@ function drawCat(g,c){
  }
  const shadowStrength=clamp(1-(c.y-c.surfaceY)*.13,.15,.68);
  g.disc([p[0],c.surfaceY+.088,p[2]],(.72+Math.min(1.1,(c.y-c.surfaceY)*.08))*scale,COLOR.shadow,shadowStrength*.34);
- if(c.level>=2&&c.y-c.surfaceY<.80)g.ring([p[0],c.surfaceY+.13,p[2]],(.77+(c.level-2)*.13)*scale,c.level>=4?COLOR.yellow:COLOR.mint,.24+.09*Math.sin(seconds*6));
+ if(c.level>=2&&c.y-c.surfaceY<.80)g.ring([p[0],c.surfaceY+.13,p[2]],(.77+(c.level-2)*.13)*scale,c.level>=4?COLOR.yellow:COLOR.mint,.24+.09*Math.sin(sceneView.displaySeconds*6));
  // One rig-space transform scales every body part, limb, roll and claw effect.
  // Ground effects keep their world height even when the actor is airborne.
  const worldRenderer=g,origin=p;
@@ -1934,7 +1934,7 @@ function drawCat(g,c){
  if(net.room){g.orb(part(0,.51,.31),[.35,.068,.31],catAccent[Math.max(0,actorIndex)]||COLOR.yellow);g.orb(part(0,.40,.62),[.095,.12,.06],COLOR.yellow);}
  if(c.level>=3)g.orb(part(0,.49,.51),[.22,.09,.13],c.level===5?COLOR.yellow:COLOR.mint);
  for(const side of [-1,1])for(let n=0;n<2;n++)limb(g,part(side*.085,.66-n*.055,1.03),part(side*.49,.72-n*.14,1.04),.015,COLOR.cream);
- const legMove=walking?Math.sin(seconds*19)*.13:0;
+ const legMove=walking?Math.sin(sceneView.displaySeconds*19)*.13:0;
  for(const side of [-1,1])for(const back of [-1,1]){
   const legZ=back*.45,step=(back===1?1:-1)*side*legMove;
   const rise=isJump?Math.min(.18,Math.abs(c.vy)*.025):0;
@@ -1943,7 +1943,7 @@ function drawCat(g,c){
   const swipe=slashing?clawSwing:0;
   g.orb(part(side*(.35-tuck*.5+.09*swipe),.27+Math.max(0,step)+rise+tuck+.23*swipe,legZ+step*.7+.72*swipe),[.18,.25*(1-tuck),.23],fur);
  }
- const tailWiggle=isFlight?seconds*18:seconds*5;
+ const tailWiggle=isFlight?sceneView.displaySeconds*18:sceneView.displaySeconds*5;
  const tail=isRoll?tailPoints.map(v=>part(...v)):[
   part(...tailPoints[0]),
   part(tailPoints[1][0]+Math.sin(tailWiggle)*.08,tailPoints[1][1],tailPoints[1][2]),
@@ -1967,7 +1967,7 @@ function drawCat(g,c){
   }
  }
  if(isCharge){
-  const ratio=c.charge.ratio,pulse=.08*Math.sin(seconds*17);
+  const ratio=c.charge.ratio,pulse=.08*Math.sin(sceneView.displaySeconds*17);
   g.ring([c.x,groundY(.16),c.z],.9+ratio*.40,COLOR.yellow,.35+ratio*.40+pulse);
   g.orb(part(0,.86,1.04),[.08+ratio*.15,.07+ratio*.09,.09+ratio*.15],ratio>.7?COLOR.red:COLOR.yellow);
  }
@@ -1977,18 +1977,18 @@ function drawCat(g,c){
   g.orb(part(0,.31,.26),[.07+power*.14,.045,.07+power*.14],COLOR.purple);
  }
  if(isDash){
-  g.ring([c.x,groundY(.16),c.z],.9+Math.sin(seconds*24)*.1,COLOR.mint,.35);
+  g.ring([c.x,groundY(.16),c.z],.9+Math.sin(sceneView.displaySeconds*24)*.1,COLOR.mint,.35);
  }
  if(isStunned){
   for(let i=0;i<3;i++){
-   const a=seconds*5+i*Math.PI*2/3;
-   g.orb([c.x+Math.sin(a)*.52,c.y+1.9+Math.sin(seconds*10+i)*.10,c.z+Math.cos(a)*.52],[.12,.12,.12],i%2?COLOR.yellow:COLOR.white);
+   const a=sceneView.displaySeconds*5+i*Math.PI*2/3;
+   g.orb([c.x+Math.sin(a)*.52,c.y+1.9+Math.sin(sceneView.displaySeconds*10+i)*.10,c.z+Math.cos(a)*.52],[.12,.12,.12],i%2?COLOR.yellow:COLOR.white);
   }
  }
- if(isFlight){const pulse=.2+.2*Math.sin(seconds*27)**2;
+ if(isFlight){const pulse=.2+.2*Math.sin(sceneView.displaySeconds*27)**2;
   g.ring([c.x,groundY(.16),c.z],.82+Math.min(1.0,Math.max(0,c.y-c.surfaceY)*.13),COLOR.pink,pulse);
  }
- if(c.invuln>0&&!isRoll&&mode!=='launched')g.ring([c.x,groundY(.12),c.z],.83,COLOR.pink,.22+Math.sin(seconds*25)*.12);
+ if(c.invuln>0&&!isRoll&&mode!=='launched')g.ring([c.x,groundY(.12),c.z],.83,COLOR.pink,.22+Math.sin(sceneView.displaySeconds*25)*.12);
 }
 const HUMAN_STYLES=Object.freeze([
  {shirt:rgb('#75afa4'),light:rgb('#9bcac1'),trim:rgb('#3d777a'),pants:rgb('#4e6478'),shoe:rgb('#384253'),hair:rgb('#4d4748'),skin:rgb('#ecc29f'),accent:rgb('#fff0cc')},
@@ -2056,14 +2056,14 @@ function drawHuman(g,h){
    g.cube([lerp(x,next.p[0],t),lerp(base+2.9*scale,next.p[1]+.7,t),lerp(z+.5,next.p[2],t)],next.size,COLOR.wood2,next.q);}
  }
 }
-function drawTower(g){for(const b of tower.blocks){if(b.p[1]<ARENA.floorY-12)continue;
+function drawTower(g,viewCat){for(const b of tower.blocks){if(b.p[1]<ARENA.floorY-12)continue;
   let col=b.color===0?COLOR.wood:b.color===1?COLOR.wood2:COLOR.wood3;
   if(b.fallen)col=b.color===0?COLOR.wood2:COLOR.wood;
   const n=b.spawn>0?1+Math.sin(b.spawn*12)*.016:1;
   g.cube(b.p,b.size.map(v=>v*n),col,b.q);
   if(b.highlight>0){g.cube(b.p,b.size.map(v=>v+(.012+b.highlight*.07)),COLOR.yellow,b.q,Math.min(.24,b.highlight*.85));}
  }
- if(phase==='play'){const aim=tower.nearest(cat,1.60);if(aim){g.ring([aim.hit[0],.12,aim.hit[2]],.63,COLOR.yellow,.55);}}
+ if(phase==='play'){const aim=tower.nearest(viewCat,1.60);if(aim){g.ring([aim.hit[0],.12,aim.hit[2]],.63,COLOR.yellow,.55);}}
 }
 
 function drawHumanWarning(g){for(const h of human){if(h.mode!=='warning'&&h.mode!=='strike')continue;
@@ -2085,60 +2085,23 @@ function drawHumanWarning(g){for(const h of human){if(h.mode!=='warning'&&h.mode
 }
 
 function drawParticles(g){for(const p of particles){if(p.p[1]<-5)continue;g.orb(p.p,[p.size,p.size,p.size],COLOR[p.color]||COLOR.white)}}
-// Low shoulder-follow view only: the camera never switches to an aerial perspective.
-// Orientation follows the look input immediately; only position is smoothed.
-// Reference: Godot SpringArm3D / Unity Cinemachine Third Person Follow.
-// The physical camera is resolved from the cat's shoulder pivot toward an ideal orbit
-// using static Rapier ray queries. Movement toward obstructions is immediate;
-// returning to a longer arm is damped. A separate CatClearance push MUST NOT bypass the wall.
-function cameraClearDistance(pivot, direction, preferred){
- if(!tower.world||!RAPIER?.Ray)return preferred;
- const radius=LOOK.cameraRadius;let hitDist=preferred;
- const right=norm([direction[2],0,-direction[0]]);
- const offsets=[[0,0,0],[right[0]*radius,0,right[2]*radius],[-right[0]*radius,0,-right[2]*radius],
-  [0,radius*.8,0],[0,-radius*.55,0]];
- const staticOnly=RAPIER.QueryFilterFlags?.EXCLUDE_DYNAMIC;
- for(const offset of offsets){
-  const point={x:pivot[0]+offset[0],y:pivot[1]+offset[1],z:pivot[2]+offset[2]};
-  const hit=tower.world.castRay(new RAPIER.Ray(point,vec3(direction)),preferred,true,staticOnly,
-   undefined,tower.catCollider,tower.catBody);
-  if(hit&&Number.isFinite(hit.timeOfImpact)&&hit.timeOfImpact<hitDist)hitDist=hit.timeOfImpact;
- }
- return Math.max(.10,Math.min(preferred,hitDist-LOOK.armCollisionMargin));
-}
-
-// A third-person follow camera MUST preserve an avatar-sized visual clearance.
-// Starting the ray inside household furniture can return TOI=0; collapsing the
-// spring arm to 0.1m then projects the cat completely off screen. Try alternative
-// boom pivots at higher and lateral positions before shortening the arm.
-// This affects presentation only; the Rapier cat body/inputs never move.
-function chooseCameraBoom(c,pitch,preferred){
- // Low-angle camera first; only spend extra raycasts when something occludes it.
- // Seven fallback samples are bounded even for an interior room full of props.
- const candidates=[
-  [0,1.32],[0,2.55],[0,3.45],
-  [-.72,1.9],[.72,1.9],[-1.25,2.55],[1.25,2.55],
- ];
- let chosen=null;
- for(let i=0;i<candidates.length;i++){
-  const [offset,height]=candidates[i],yaw=camera.yaw+offset;
-  const dir=norm([-Math.sin(yaw)*Math.cos(pitch),.15-Math.sin(pitch)*.42,-Math.cos(yaw)*Math.cos(pitch)]);
-  const pivot=[c.x,c.y+height*catScaleForLevel(c.level),c.z];
-  const available=cameraClearDistance(pivot,dir,preferred);
-  const score=available-Math.abs(offset)*.30-i*.07;
-  const candidate={pivot,dir,available,score};
-  if(!chosen||score>chosen.score)chosen=candidate;
-  // The spring arm normally reserves ~0.28m for camera collision clearance.
-  // Once that room exists, a higher-angle search is unnecessary.
-  if(available>=preferred-.36)return candidate;
- }
- return chosen;
+// Direction-preserving spring arm: the game owns the pivot and Rapier sphere cast;
+// GameKit owns temporal boom distance. Never choose another yaw/height automatically.
+// Primary references: Unity Cinemachine Deoccluder (Pull Camera Forward),
+// ThirdPersonFollow collision damping, and Unreal USpringArmComponent sphere probe.
+function cameraClearDistance(pivot,direction,preferred){
+ const hit=tower.world.castShape(vec3(pivot),quat(Q()),vec3(direction),new RAPIER.Ball(LOOK.cameraRadius),
+  LOOK.armCollisionMargin,preferred,true,RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC,
+  undefined,tower.catCollider,tower.catBody);
+ return hit?Math.max(0,Math.min(preferred,hit.time_of_impact)):preferred;
 }
 function rotateLook(dx,dy,sensitivity){
  camera.yaw=(camera.yaw-dx*sensitivity+Math.PI*3)%(Math.PI*2)-Math.PI;
  camera.pitch=clamp(camera.pitch-dy*sensitivity,LOOK.pitchMin,LOOK.pitchMax);
 }
-function drawWorld(){if(!renderer)return;net.sampleViews(performance.now());const g=renderer,c=net.viewFor(cat);
+function drawWorld({alpha=0}={}){if(!renderer)return;const frameNow=performance.now();sceneView.sample(alpha,frameNow);const g=renderer,c=sceneView.cat(localCat.id);if(!c)return;
+ const frameDt=camera.lastFrameAt===undefined?1/60:Math.min(.1,Math.max(0,(frameNow-camera.lastFrameAt)/1000));camera.lastFrameAt=frameNow;
+ const followFraction=rate=>1-Math.pow(1-rate,frameDt*60);
  if(phase==='collapse'){
   // Follow the actual Rapier collapse with an unobstructed wide shot of the
   // dining table. Camera motion is presentation-only, not a physics event.
@@ -2146,33 +2109,25 @@ function drawWorld(){if(!renderer)return;net.sampleViews(performance.now());cons
   const theta=.71+.42*t;
   const targetEye=[Math.sin(theta)*19.5,11.5+1.3*t,Math.cos(theta)*19.5];
   if(!camera.eye)camera.eye=targetEye.slice();
-  for(let i=0;i<3;i++)camera.eye[i]=lerp(camera.eye[i],targetEye[i],.12);
+  for(let i=0;i<3;i++)camera.eye[i]=lerp(camera.eye[i],targetEye[i],followFraction(.12));
   const focus=[0,Math.max(3.2,Math.min(6.0,5.0-t*.9)),0];
   g.frame(camera.eye,focus);
  }else{
   const sy=Math.sin(camera.yaw),cy=Math.cos(camera.yaw),pitch=camera.pitch;
   const inFlight=c.motion.state==='launched',inRoll=c.motion.state==='roll';
-  const inRespawn=c.motion.state==='dead'||c.motion.state==='respawn';
   const desiredArm=LOOK.followDistance+(inFlight?1.55:inRoll?1.25:0);
-  const selected=chooseCameraBoom(c,pitch,desiredArm);
-  // A fallback overhead/side camera is preferable to an invisible cat.
-  const minArm=(inRoll||inRespawn)?2.6:2.15;
-  const available=selected?.available??desiredArm;
-  const armTarget=Math.max(minArm,available);
-  const currentArm=camera.armLength??desiredArm;
-  camera.armLength=lerp(currentArm,armTarget,armTarget<currentArm?1:LOOK.collisionOutRate);
-  const pivot=selected?.pivot??[c.x,c.y+1.32*catScaleForLevel(c.level),c.z];
-  const boomDir=selected?.dir??norm([-sy,.10,-cy]);
-  const wanted=vadd(pivot,vmul(boomDir,camera.armLength));
-  wanted[1]=Math.max(ARENA.floorY+.75,Math.min(ARENA.floorY+11,wanted[1]));
-  // Camera position may be updated immediately when turning/rolling near furniture;
-  // returning to its baseline distance remains smoothed.
-  if(!camera.eye)camera.eye=wanted.slice();
-  const rate=(inRoll||inRespawn||available<currentArm)?1:inFlight?.62:LOOK.followRate;
-  for(let i=0;i<3;i++)camera.eye[i]=lerp(camera.eye[i],wanted[i],rate);
+  const pivot=[c.x,c.y+1.32*catScaleForLevel(c.level),c.z];
+  const boomDir=norm([-sy*Math.cos(pitch),.15-Math.sin(pitch)*.42,-cy*Math.cos(pitch)]);
+  const available=cameraClearDistance(pivot,boomDir,desiredArm);
+  if(!camera.boom)camera.boom=new CollisionBoom({distance:desiredArm,holdMs:LOOK.boomHoldMs,releaseHalfLifeMs:LOOK.boomReleaseHalfLifeMs});
+  camera.armLength=camera.boom.update(desiredArm,available,frameDt*1000);
+  camera.eye=vadd(pivot,vmul(boomDir,camera.armLength));
   const sh=camera.shake,cameraNoise=sh>0?[visualRand(-1,1)*sh,visualRand(-1,1)*sh*.65,visualRand(-1,1)*sh]:[0,0,0];
-  camera.shake=Math.max(0,sh-.018);
-  const eye=vadd(camera.eye,cameraNoise);
+  camera.shake=Math.max(0,sh-1.08*frameDt);
+  let eye=camera.eye;
+  if(sh>0){const requested=vsub(vadd(camera.eye,cameraNoise),pivot),distance=len(requested);
+   if(distance>0){const direction=vmul(requested,1/distance);eye=vadd(pivot,vmul(direction,cameraClearDistance(pivot,direction,distance)));}
+  }
   // Framing targets the cat plus a modest look-ahead; aiming only from the eye
   // along a fixed ray puts the cat below the bottom edge at close range.
   const focus=[c.x+sy*2.7,c.y+.95*catScaleForLevel(c.level)+Math.sin(pitch)*3.0,c.z+cy*2.7];
@@ -2181,7 +2136,7 @@ function drawWorld(){if(!renderer)return;net.sampleViews(performance.now());cons
  // no global reliance on 2D Renderer2D — gamekit's 2D renderer is not used for 3D meshes
  renderHouse(g);
  drawMobs(g);drawVacuums(g);for(const h of human)drawHuman(g,h);
- drawHumanWarning(g);drawTower(g);
+ drawHumanWarning(g);drawTower(g,c);
  // When a wall pushes the camera toward the avatar, progressively fade only
  // the local rendered rig so the room remains readable. Rapier body remains.
  const catCamDist=len(vsub(camera.eye,[c.x,c.y+.72*catScaleForLevel(c.level),c.z]));
@@ -2194,16 +2149,16 @@ function drawWorld(){if(!renderer)return;net.sampleViews(performance.now());cons
  g.gl.depthMask(localFade>=.999);
  drawCat(g,c);
  g.localOpacity=1;g.gl.depthMask(true);
- if(net.room)for(const [id,actor] of roomCats)if(id!==net.localId)drawCat(g,net.viewFor(actor));
+ for(const actor of sceneView.cats)if(actor.id!==localCat.id)drawCat(g,actor);
  drawParticles(g);
  // Render-only event consumer after camera projection; no gameplay feedback loop.
- const visualNow=performance.now();combatUI.flush(visualNow);combatUI.drawBursts(g,visualNow);combatUI.update(g,visualNow);
+ const visualNow=frameNow;combatUI.flush(visualNow);combatUI.drawBursts(g,visualNow);combatUI.update(g,visualNow);
  net.updateLabels(g);
  if(phase==='win'){for(let i=0;i<10;i++){let a=i/10*Math.PI*2;g.orb([Math.cos(a)*2,1.5+Math.sin(seconds*5+i)*.5,Math.sin(a)*2],[.12,.12,.12],i%2?COLOR.yellow:COLOR.pink)}}
  ui.chargeFill.style.width=(cat.charge.held&&cat.charge.elapsedMs<DEF.cat.claw.tapMaxMs?12:Math.round(cat.charge.ratio*100))+'%';ui.chargeButton.classList.toggle('charging',cat.charge.held&&cat.charge.elapsedMs>=DEF.cat.claw.tapMaxMs);ui.jumpFill.style.width=Math.round(cat.jump.ratio*100)+'%';ui.jumpButton.classList.toggle('charging',cat.jump.held);
- const danger=human.some(h=>h.mode==='warning');ui.warning.classList.toggle('show',danger&&phase==='play');const target=tower.nearest(cat,1.38);ui.targetText.textContent=cat.charge.held?(cat.charge.elapsedMs<DEF.cat.claw.tapMaxMs?'🐾 지금 놓으면 할퀴기':'💥 '+Math.round(cat.charge.ratio*100)+'% · 놓으면 박치기!'):target?'💥 물리 충돌로 젠가 공략':cat.level<6?'🐁 짧게 눌러 할퀴기':'🏰 식탁으로 올라가 젠가 공략';ui.target.classList.toggle('active',!!target);
+ const danger=human.some(h=>h.mode==='warning');ui.warning.classList.toggle('show',danger&&phase==='play');const target=tower.nearest(c,1.38);ui.targetText.textContent=cat.charge.held?(cat.charge.elapsedMs<DEF.cat.claw.tapMaxMs?'🐾 지금 놓으면 할퀴기':'💥 '+Math.round(cat.charge.ratio*100)+'% · 놓으면 박치기!'):target?'💥 물리 충돌로 젠가 공략':cat.level<6?'🐁 짧게 눌러 할퀴기':'🏰 식탁으로 올라가 젠가 공략';ui.target.classList.toggle('active',!!target);
  let mobInAim=false;
- for(const mob of mobs){const p=mob.body.translation(),dx=p.x-cat.x,dz=p.z-cat.z,dist=Math.hypot(dx,dz);
+ for(const mob of sceneView.mobs){const p=mob,dx=p.x-c.x,dz=p.z-c.z,dist=Math.hypot(dx,dz);
   if(dist<3.9&&(dx*Math.sin(cat.aimYaw)+dz*Math.cos(cat.aimYaw))/Math.max(.01,dist)>.48){mobInAim=true;break;}}
  ui.target.classList.toggle('mobFocus',mobInAim);
  for(const h of human){const node=h.id===0?ui.humanA:ui.humanB,p=g.screen([h.x,12.25,h.z]);if(p&&p.x>-120&&p.x<gameCanvas.clientWidth+100){node.style.left=p.x+'px';node.style.top=p.y+'px';node.style.display='block';node.textContent=h.mode==='warning'?'⚠️ '+({slam:'내려찍기',sweep:'쓸어버리기',grab:'붙잡기'}[h.pattern]):h.mode==='build'?'🧱 탑 쌓는 중':h.mode==='recover'?'💫 빈틈!':h.noticeMs>0?h.speech:h.id?'거인 B':'거인 A';node.classList.toggle('angry',h.mode==='warning'||h.mode==='strike')}else node.style.display='none';}
@@ -2269,6 +2224,57 @@ function createGameRoomFacade(room){
   disconnect(id){return room.disconnect?.(id)},close(){room.close()}
  };
 }
+// One official GameKit frame owns display poses for camera, bodies and attached labels.
+// Rapier/HP/inputs remain authoritative; no render interpolation writes back to them.
+class CatRenderModel extends RenderObject {
+ static renderSchema={id:this.STEP,x:this.POSITION_X,y:this.POSITION_Y,z:this.POSITION_Z,yaw:this.ANGLE,
+  level:this.STEP,speed:this.LINEAR,surfaceY:this.LINEAR,vy:this.LINEAR,invuln:this.DECAY,trail:this.STEP,
+  'motion.state':this.STATE_KEY,'motion.elapsedMs':this.LINEAR,'motion.rollAxis':this.STEP,
+  'motion.rollDirX':this.LINEAR,'motion.rollDirZ':this.LINEAR,'motion.spinAxis':this.STEP,
+  'motion.spinRad':this.LINEAR,'motion.tiltSide':this.STEP,'motion.chargeRatio':this.LINEAR,
+  'charge.held':this.STATE_KEY,'charge.elapsedMs':this.LINEAR,'charge.ratio':this.LINEAR,
+  'jump.held':this.STATE_KEY,'jump.ratio':this.LINEAR,
+  'claw.animation.leftMs':this.COUNTDOWN_MS,'claw.side':this.STEP};
+}
+class MobRenderModel extends RenderObject {
+ static renderSchema={id:this.STEP,type:this.STEP,x:this.POSITION_X,y:this.POSITION_Y,z:this.POSITION_Z,
+  yaw:this.ANGLE,hp:this.STEP,hitMs:this.DECAY};
+}
+class VacuumRenderModel extends RenderObject {
+ static renderSchema={id:this.STEP,x:this.POSITION_X,y:this.POSITION_Y,z:this.POSITION_Z,yaw:this.ANGLE,
+  radius:this.STEP,'attack.state':this.STATE_KEY,'attack.dx':this.LINEAR,'attack.dz':this.LINEAR};
+}
+const sceneView={
+ runtime:null,frame:null,cats:[],mobs:[],vacuums:[],remoteReady:false,displaySeconds:0,
+ reset(){const stepMs=net.room&&!net.isHost?100:1000/NET_DEF.stepHz;
+  this.runtime=new PresentationRuntime({stepMs,delayMs:stepMs});this.frame=null;this.remoteReady=false;
+ },
+ // A loop timing discontinuity discards alpha's old interval, not simulation state.
+ resetLocalClock(){if(!this.runtime||(net.room&&!net.isHost))return;
+  this.reset();this.capture(nowTicks*1000/NET_DEF.stepHz,true);
+ },
+ capture(now,reset=false){
+  const entities=[...roomCats].map(([id,c])=>({id:'cat:'+id,generation:0,type:CatRenderModel,source:c,teleport:!!c.viewTeleport}));
+  for(const m of mobs){const p=m.body.translation(),v=m.body.linvel();entities.push({id:'mob:'+m.id,generation:0,type:MobRenderModel,
+   source:{id:m.id,type:m.type,x:p.x,y:p.y,z:p.z,yaw:Math.atan2(v.x,v.z),hp:m.hp,hitMs:m.hitMs}});}
+  for(const v of vacuums){const p=v.body.translation();entities.push({id:v.id,generation:0,type:VacuumRenderModel,
+   source:{id:v.id,x:p.x,y:p.y,z:p.z,yaw:v.yaw,radius:v.config.radius,attack:{state:v.attack.state,dx:v.attack.dx,dz:v.attack.dz}}});}
+  this.runtime.capture({revision:0,sequence:nowTicks,timeMs:seconds*1000,mode:reset?'reset':'continuous',entities},now);
+  for(const c of roomCats.values())c.viewTeleport=false;
+ },
+ sample(alpha,now){
+  // Local fixed-step alpha is the SDK's residual fraction, not another simulation.
+  // Guests use the SDK's receipt-clock mapping and the same frame/model API.
+  const localClock=(nowTicks+((phase==='play'||phase==='collapse')?alpha:1))*1000/NET_DEF.stepHz;
+  this.frame=this.runtime.frame(net.room&&!net.isHost?now:localClock);
+  this.displaySeconds=Math.max(0,this.frame.timeMs/1000);
+  this.cats.length=this.mobs.length=this.vacuums.length=0;
+  this.frame.forEach((model,id)=>{if(id.startsWith('cat:'))this.cats.push(model);else if(id.startsWith('mob:'))this.mobs.push(model);else this.vacuums.push(model);});
+ },
+ cat(id){return this.frame?.sample('cat:'+id,0)??null;},
+ mob(id){return this.frame?.sample('mob:'+id,0)??null;}
+};
+
 const net={
  room:null,memberSession:null,isHost:false,localId:'local',joining:false,controller:null,removed:[],
  accepting:false,active:false,pendingStart:false,remote:new Map(),lastInput:null,lastSentMs:0,lastReceiveMs:0,snapshotVersion:-1,
@@ -2373,6 +2379,7 @@ const net={
   for(const peer of this.remote.values())peer.remove?.();
   this.room?.close();this.room=null;this.remote.clear();this.isHost=false;this.localId='local';
   this.resetView();this.pendingStart=false;
+  if(sceneView.runtime&&cat){sceneView.reset();sceneView.capture(nowTicks*1000/NET_DEF.stepHz,true);}
   this.rosterNode.style.display='none';this.rosterNode.textContent='';this.labels.innerHTML='';
   this.startButton.style.display='none';
   document.querySelector('#cancelLobby').style.display='none';
@@ -2474,6 +2481,7 @@ const net={
    const teleported=actor.motion.state==='dead'&&visual.motion.state!=='dead';
    actor.x=x;actor.y=y;actor.z=z;actor.yaw=yaw;
    if(actor===localCat&&actor.motion.state!=='dead'&&visual.motion.state==='dead')announce('🐾 사망 · LV '+levelLabel(level)+' · 잠시 후 부활 (젠가 유지)',2200);
+   if(teleported&&actor===localCat)camera.boom?.reset(LOOK.followDistance);
    actor.viewTeleport=teleported;actor.hp=hp;actor.level=level;actor.xp=xp;actor.vy=vy;
    actor.dash.leftMs=dashMs;actor.charge={...visual.charge};actor.jump={...visual.jump};
    actor.motion={...visual.motion};actor.speed=visual.speed;actor.surfaceY=visual.surfaceY;
@@ -2499,36 +2507,18 @@ const net={
   if(cat?.motion.state==='dead')ui.respawn.classList.remove('hidden');else ui.respawn.classList.add('hidden');
   for(const event of state.events)combatUI.queue(event,true);
   if(state.collapse)collapseState={...state.collapse};
-  this.view.accept({revision:0,sequence:state.t,timeMs:state.s*1000,entities:[...roomCats].map(([id,c])=>({
-   id,generation:0,teleport:!!c.viewTeleport,values:{x:c.x,y:c.y,z:c.z,yaw:c.yaw}})).concat(vacuums.map(v=>({id:v.id,generation:0,values:{...v.body.translation(),yaw:v.yaw}})))},performance.now());
+  const receiptNow=performance.now();
+  if(!sceneView.remoteReady){sceneView.reset();sceneView.remoteReady=true;sceneView.capture(receiptNow,true);}
+  else sceneView.capture(receiptNow);
   this.showRoster();updateHUD();
  },
- // Display poses are detached from the host snapshot. No second movement simulation.
- resetView(){
-  this.snapshotVersion=-1;this.lastReceiveMs=0;
-  this.view=new InterpolationTimeline({schema:{x:'number',y:'number',z:'number',yaw:'angle'},stepMs:100});
-  this.views=new Map();this.applianceViews=new Map();this.lastInput=null;this.sentInputEdges=0;
- },
- sampleViews(now){
-  if(!this.room||this.isHost)return;
-  for(const appliance of vacuums){const pose={};if(this.view.sampleInto(appliance.id,0,now,pose))this.applianceViews.set(appliance.id,pose);}
-  for(const [id,actor] of roomCats){
-   const pose={};if(!this.view.sampleInto(id,0,now,pose))continue;
-   const elapsed=Math.min(100,Math.max(0,now-this.lastReceiveMs));
-   const view={...actor,...pose,motion:{...actor.motion},claw:{...actor.claw,animation:{...actor.claw.animation}}};
-   if(['jump','dash','launched','roll','recover','stunned','respawn'].includes(view.motion.state))view.motion.elapsedMs+=elapsed;
-   if(view.motion.state==='launched')view.motion.spinRad+=view.motion.spinRate*elapsed/1000;
-   view.claw.animation.leftMs=Math.max(0,view.claw.animation.leftMs-elapsed);
-   this.views.set(id,view);
-  }
- },
- viewFor(actor){return (!this.isHost&&this.room?this.views.get(actor.id):null)??actor;},
+ resetView(){this.snapshotVersion=-1;this.lastReceiveMs=0;this.lastInput=null;this.sentInputEdges=0;},
  updateLabels(g){
   if(!this.room)return;
   const ids=[...roomCats.keys()].filter(id=>id!==this.localId);
   while(this.labels.children.length<ids.length){const el=document.createElement('div');el.className='netName';this.labels.appendChild(el);}
   for(let i=0;i<this.labels.children.length;i++){
-   const el=this.labels.children[i],id=ids[i],actor=roomCats.has(id)?this.viewFor(roomCats.get(id)):null;
+   const el=this.labels.children[i],id=ids[i],actor=sceneView.cat(id);
    if(!actor){el.style.display='none';continue;}
    const point=g.screen([actor.x,actor.y+2.5*catScaleForLevel(actor.level),actor.z]);if(!point){el.style.display='none';continue;}
    el.style.display='block';el.style.left=point.x+'px';el.style.top=point.y+'px';
@@ -2551,8 +2541,10 @@ function withCatActor(id,callback){
 const session={profile:{tickRate:30,maxCatchupSteps:4},inputSize:5,closed:false,resimulating:false,pace:1,metrics:{pace:1},poll(){},
  submitInput(input){net.submitInput(input);return{commandSequences:[]}},
  releaseInput(){actions.releaseAll();joy.x=0;joy.y=0;net.releaseInput();},
- advance(input){net.pollMembership();if(!net.room||net.isHost)updateGame(1/30,input);else updateParticles(1/30);pendingInputEdges=0;net.sentInputEdges=0;return{status:'advanced'}}};
-const simLoop=createLoop({session,getInput:sampleControls,render:drawWorld,onError:e=>{console.error(e);document.querySelector('#error').textContent='게임 실행 오류: '+e.message;document.querySelector('#error').classList.add('show');},onInputRelease:()=>{joy.x=joy.y=0;look.id=null;cancelCharge();cancelJumpCharge();actions.consume();ui.chargeButton.classList.remove('pressed');ui.jumpButton.classList.remove('pressed');}});
+ advance(input){net.pollMembership();if(!net.room||net.isHost){const before=nowTicks;updateGame(1/30,input);if(nowTicks!==before)sceneView.capture(nowTicks*1000/NET_DEF.stepHz);}else updateParticles(1/30);pendingInputEdges=0;net.sentInputEdges=0;return{status:'advanced'}}};
+const simLoop=createLoop({session,getInput:sampleControls,render:drawWorld,onBacklogDrop:()=>sceneView.resetLocalClock(),onError:e=>{console.error(e);document.querySelector('#error').textContent='게임 실행 오류: '+e.message;document.querySelector('#error').classList.add('show');},onInputRelease:()=>{joy.x=joy.y=0;look.id=null;cancelCharge();cancelJumpCharge();actions.consume();ui.chargeButton.classList.remove('pressed');ui.jumpButton.classList.remove('pressed');}});
+// Match createLoop's visibility reset; ordinary blur only releases input.
+document.addEventListener('visibilitychange',()=>{if(document.hidden)sceneView.resetLocalClock();});
 const navigation=createNavigation({normalize:route=>({screen:['main','modes','multi','help','settings','play','result'].includes(route.screen)?route.screen:'main'})});
 function renderMenu(route){
  const active=phase==='play'||phase==='collapse',ended=phase==='win'||phase==='lose';

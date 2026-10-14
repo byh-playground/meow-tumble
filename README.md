@@ -2,7 +2,7 @@
 
 집 안을 누비는 작은 고양이가 쥐·곤충을 사냥하며 성장하고, 거인의 공격을 피하며 거대한 젠가탑을 무너뜨리는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.11.0 후보** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.11.1** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -22,7 +22,7 @@ A small cat hunts around a house, grows heavier, dodges giants, and topples a to
 
 `index.html` 하나가 현행 소스이자 배포 파일입니다. 빌드가 없습니다. 저장소에서 `python -m http.server 8080`을 실행한 뒤 http://localhost:8080 에 접속합니다. WebGL 및 외부 GameKit·Rapier CDN 접속이 필요합니다. 멀티플레이에는 공개 Nostr relay와 WebRTC 연결이 필요합니다.
 
-GameKit **v0.3.1**, dist `72b09b260edf9650353017acb49c06873fe9f5a1`에 고정합니다. 입력·루프·PRNG·방/세션·보간·확정 표시 이벤트를 SDK가 맡고, 호스트의 Rapier 월드가 싱글/멀티의 같은 게임 규칙을 실행합니다. 게스트 보간은 표시 전용이며 별도 이동 시뮬레이션을 만들지 않습니다. 의존성 해시는 [dependencies.json](docs/dependencies.json)에 있습니다.
+GameKit **v0.3.2**, dist `280e86650abec73cb9333379999a6bcadbb9234d`에 고정합니다. 입력·루프·PRNG·방/세션·보간·확정 표시 이벤트를 SDK가 맡고, 호스트의 Rapier 월드가 싱글/멀티의 같은 게임 규칙을 실행합니다. 게스트 보간은 표시 전용이며 별도 이동 시뮬레이션을 만들지 않습니다. 의존성 해시는 [dependencies.json](docs/dependencies.json)에 있습니다.
 
 ## 검증과 배포
 
@@ -54,8 +54,17 @@ Actions는 PR에서 배포 파일을 준비하고, main 병합 후 Pages에 같�
 
 고양이 외형·충돌 반지름은 기존 기본 크기 대비 LV1 60%에서 LV12 120%까지 선형 성장합니다. 레벨 하락도 같은 크기·질량 경로를 사용하며 발 위치를 유지합니다. 할퀴기 판정·그림자·전신 회전·이름표·카메라 주시 높이도 크기를 따릅니다.
 
-## 로봇청소기 장애물 0.11.0 (후보)
+## 로봇청소기 장애물 0.11.0
 
 서쪽·동쪽 사냥 통로에 낮고 둥근 로봇청소기가 한 대씩 순찰합니다. 불빛·경고음과 바닥 방향 표시를 보고 옆으로 피하거나 구르세요. 1초 예고 뒤 방향을 바꾸지 않고 짧게 돌진하며, 맞으면 5 HP 피해와 작은 밀침을 받습니다. 벽에 부딪히면 2.4초 멈추므로 그 틈에 사냥할 수 있습니다. 청소기는 XP를 빼앗거나 사냥 보상을 바꾸지 않습니다. 시작 직후 5초와 부활 무적 중에는 대상을 잡지 않으며 시작 구역을 보호합니다.
 
 순찰·돌진 능력이 전용 상태와 설정을 소유하고 기존 Rapier 접촉·공통 HP 경로를 사용합니다. 호스트만 물리를 실행하며 게스트는 GameKit 보간과 확정 표시 이벤트로 청소기·경고음을 표시합니다. 새 청소기 스냅샷은 기존 방과 호환되지 않으므로 MINOR 0.11.0 및 전용 방 namespace를 사용합니다. GameKit·Rapier 의존성 및 기존 배포 경로는 유지합니다. 실제 브라우저 검증과 배포 상태는 해당 PR에서 확인합니다.
+
+
+## 이동 표시와 벽 카메라 0.11.1
+
+카메라·고양이·먹이·로봇청소기·월드 체력바가 GameKit PresentationRuntime의 같은 표시 프레임을 읽습니다. 싱글/호스트는 완료된 30 TPS 물리 표본과 공식 loop alpha를, 게스트는 수신한 표본을 사용합니다. 표시 좌표는 물리·HP·입력에 되쓰지 않으며 부활·재시작은 이전 경로와 연결하지 않습니다. 기존 게스트 전용 보간과 원본 좌표 fallback은 제거했습니다. 공식 loop가 긴 프레임 공백의 누적 시간이나 숨김 상태의 타이밍을 버릴 때에는 로컬 표시 구간도 현재 권위 표본으로 재설정합니다. 게스트 수신 시계와 일반 프레임의 보간 연속성은 유지합니다.
+
+벽 카메라는 사용자가 정한 방향과 어깨 기준점을 유지합니다. Rapier 구체 스윕으로 반경과 여유를 포함한 안전거리를 구하고 GameKit camera의 CollisionBoom이 즉시 안쪽으로 줄인 뒤 잠시 유지하고 시간 기준으로 복원합니다. 옆·위쪽 후보로 카메라를 자동 전환하거나 최소 보기 거리를 이유로 벽을 통과하지 않습니다. 피격 흔들림의 최종 위치도 충돌을 다시 검사합니다.
+
+설계 근거: [Unity Deoccluder의 Pull Camera Forward·Smoothing Time](https://docs.unity3d.com/Packages/com.unity.cinemachine@3.1/manual/CinemachineDeoccluder.html), [Third Person Follow 충돌 감쇠](https://docs.unity3d.com/Packages/com.unity.cinemachine@3.1/manual/CinemachineThirdPersonFollow.html), [Unreal SpringArm의 구체 충돌 검사](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Engine/USpringArmComponent), [Rapier 장면 쿼리](https://rapier.rs/docs/user_guides/javascript/scene_queries/). 실제 검증 범위·미검증 조건·배포 상태는 해당 PR에 기록합니다.

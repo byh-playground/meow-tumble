@@ -1,7 +1,7 @@
 {
   "gamekit": {
-    "version": "0.3.1",
-    "commit": "72b09b260edf9650353017acb49c06873fe9f5a1",
+    "version": "0.3.2",
+    "commit": "280e86650abec73cb9333379999a6bcadbb9234d",
     "modules": [
       {
         "file": "interpolation.js",
@@ -34,10 +34,14 @@
       {
         "file": "navigation.js",
         "sha256": "92c387dcfa8af47beb3544f4a16121bbfc8fa9831052b33ce07076dd733c81d3"
+      },
+      {
+        "file": "camera.js",
+        "sha256": "3fd1c8a61b49e22b50606dbf472495775419640a8487f3a0ec079cb4d3522cb7"
       }
     ],
-    "sourceCommit": "baa96876876a08013ad28b5a71c83bfadd285fab",
-    "manifestSha256": "c713809653043e8eb1d9b629c0c2734e9526217f69e04b49283d068c1b5d7da7"
+    "sourceCommit": "c6ed3685cdad35dbe65fb99a1b6e1297c9c60ce4",
+    "manifestSha256": "565ccd33d69492902965a7689e82338c657e051b50091d04f2edfa4c306a0465"
   },
   "rapier": {
     "package": "@dimforge/rapier3d-compat",
