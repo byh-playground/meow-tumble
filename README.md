@@ -2,7 +2,7 @@
 
 집 안을 누비는 작은 고양이가 쥐·곤충을 사냥하며 성장하고, 거인의 공격을 피하며 거대한 젠가탑을 무너뜨리는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.11.1** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.12.0** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -14,7 +14,7 @@ A small cat hunts around a house, grows heavier, dodges giants, and topples a to
 | --- | --- | --- |
 | 이동 / 시점 | WASD·방향키 / 마우스 이동 | 왼쪽 스틱 / 오른쪽 드래그 |
 | 할퀴기 / 박치기 | F·좌클릭 짧게 / 길게 누른 뒤 놓기 | 발바닥 버튼 탭 / 홀드 |
-| 점프 / 구르기 | Space 홀드 후 놓기 / Shift | 점프 홀드 / 구르기 버튼 |
+| 점프 / 구르기 | Space 홀드 후 놓기 / Shift (지상·공중) | 점프 홀드 / 구르기 버튼 (지상·공중) |
 
 시작하기 → 혼자 시작, 또는 친구와 함께 → 방 만들기·4자리 코드 참가 → 방장이 시작합니다. 도움말·설정은 별도 화면이며, 플레이 중 지도·상세 버튼으로 추가 HUD를 확인합니다. 결과 화면에서는 방장이 다시 시작하거나 각자 타이틀로 돌아갈 수 있습니다. 최고 레벨은 12이며 도달하면 MAX로 표시합니다. HP가 0이면 현재 레벨 구간 XP의 10%를 잃고 경계를 넘으면 레벨이 내려갑니다 (최저 1). 만렙에서는 11→12 구간을 기준으로 차감하고 초과 XP는 쌓이지 않습니다. 탑 진행도는 유지하며 부활합니다. Esc로 마우스 잠금을 해제합니다.
 
@@ -68,3 +68,15 @@ Actions는 PR에서 배포 파일을 준비하고, main 병합 후 Pages에 같�
 벽 카메라는 사용자가 정한 방향과 어깨 기준점을 유지합니다. Rapier 구체 스윕으로 반경과 여유를 포함한 안전거리를 구하고 GameKit camera의 CollisionBoom이 즉시 안쪽으로 줄인 뒤 잠시 유지하고 시간 기준으로 복원합니다. 옆·위쪽 후보로 카메라를 자동 전환하거나 최소 보기 거리를 이유로 벽을 통과하지 않습니다. 피격 흔들림의 최종 위치도 충돌을 다시 검사합니다.
 
 설계 근거: [Unity Deoccluder의 Pull Camera Forward·Smoothing Time](https://docs.unity3d.com/Packages/com.unity.cinemachine@3.1/manual/CinemachineDeoccluder.html), [Third Person Follow 충돌 감쇠](https://docs.unity3d.com/Packages/com.unity.cinemachine@3.1/manual/CinemachineThirdPersonFollow.html), [Unreal SpringArm의 구체 충돌 검사](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Engine/USpringArmComponent), [Rapier 장면 쿼리](https://rapier.rs/docs/user_guides/javascript/scene_queries/). 실제 검증 범위·미검증 조건·배포 상태는 해당 PR에 기록합니다.
+
+## 몹 모델과 조작 연계 0.12.0
+
+쥐의 코·귀·눈·수염·마디 꼬리, 딱정벌레의 두 날개껍질·촉수·여섯 다리, 거미의 배·머리·여덟 관절 다리를 기존 절차적 메시로 구별합니다. 발과 꼬리는 같은 표시 프레임의 이동 속도·방향을 따르며 멀리 있는 몹은 세부 묘사를 줄입니다. 거인의 얼굴·옷과 둥근 청소기의 범퍼·센서·상판도 다듬었습니다. 충돌 반지름·HP·보상·기존 카메라와 고양이의 기본 외형은 유지합니다.
+
+점프·낙하 중에도 기존 구르기를 사용합니다. 지상·공중이 1.35초 쿨다운과 650ms 행동·기존 무적 구간을 공유하며, 공중 구르기는 수직 속도에 충격을 주지 않습니다. 피격 행동불능은 유지합니다. 전신 회전 동안 귀·팔다리·꼬리가 말렸다가 펴지고 착지 후 180ms 동안 자세를 정리합니다. 모두 호스트의 같은 상태 전이와 게스트 표시 모델을 사용합니다.
+
+GameKit ActionState의 press/release 보존 위에 게임이 소유하는 짧은 유예를 적용합니다: 점프 150ms, 발판을 벗어난 점프 유예 100ms, 구르기 쿨다운 경계 150ms, 발톱 쿨다운 경계 120ms. 점프 홀드 차징과 최고 초기 속도 20은 그대로이며 한 요청은 한 번만 실행합니다. 일찍 누른 요청이 만료되면 나중 착지·쿨다운 완료에서 실행하지 않습니다. 사망·재시작·메뉴·취소·긴 타이밍 공백에서 요청을 정리합니다. 터치 capture 실패 시에도 화면 밖 해제가 수집되며 취소는 공격/점프 release로 취급하지 않습니다.
+
+멀티 입력의 남은 bit에 명시적 취소 edge를 추가해 게스트의 메뉴·입력 취소가 호스트 예약까지 비웁니다. 기존 입력/스냅샷 크기는 유지하지만 새 취소 계약 때문에 방 namespace와 제품 MINOR를 0.12.0으로 분리합니다. 구버전 방과 섞이지 않습니다. SDK·Rapier pin과 기존 main→Pages 배포는 유지합니다.
+
+설계 참고: [BLOOM 시각 UX의 입력·예고·실행·회복 및 취소 계약](https://github.com/byh-playground/bloom-reference/blob/main/rules/visual-ux.html), [GameKit 입력 소유권](https://github.com/byh-playground/bloom-gamekit/blob/main/modules/input/README.md), [Celeste 개발자 공개 코드의 점프 유예](https://github.com/NoelFB/Celeste/blob/master/Source/Player/Player.cs). 외부 모델/이미지/코드를 복사하지 않았습니다. 실제 Edge PC·390px·RTC 검증 결과와 한계는 해당 PR에 기록합니다.

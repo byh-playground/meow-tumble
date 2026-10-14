@@ -83,13 +83,13 @@
  <div class="bottomRight"><div id="status" class="status"></div><div class="dashbar"><i id="dashReady"></i></div></div>
  </div>
  <div id="netRoster" aria-label="멀티플레이 참가자"></div><div id="netLabels" aria-hidden="true"></div>
- <div id="buildTag">v0.11.1 · MEOW TUMBLE</div>
+ <div id="buildTag">v0.12.0 · MEOW TUMBLE</div>
  <div id="touch"><div id="stick" class="joystick"><div id="knob" class="knob"></div></div><div class="actionPad"><button type="button" class="action" data-action="charge" aria-label="짧게 누르면 할퀴기, 0.25초 이상 길게 누르고 떼면 박치기"><strong>🐾</strong><small>탭 할퀴기 · 홀드 박치기</small><span class="chargeTrack"><i id="touchChargeFill"></i></span></button><button type="button" class="action" data-action="jump" aria-label="점프: 1초까지 누르고 떼서 점프"><strong>↥</strong><small>길게 눌러 점프</small><span class="chargeTrack jumpTrack"><i id="touchJumpFill"></i></span></button><button type="button" class="action" data-action="dodge"><strong>↻</strong><small>구르기</small></button></div></div>
  <section id="intro" class="cover" aria-label="게임 메뉴"><div class="hero">
  <div data-screen="main"><div class="eyebrow">MEOW TUMBLE</div><h1>와르르<em>냥</em></h1><p>작은 고양이로 사냥하고 성장해<br>거대한 젠가탑을 무너뜨리세요.</p><button type="button" class="primary" data-route="modes">시작하기</button><div class="menuLinks"><button data-route="help">게임 방법</button><button data-route="settings">설정</button></div><small>1–4명 · PC / 터치 · 인터넷 연결 필요</small></div>
  <div data-screen="modes" class="hidden"><button class="back" data-route="main">← 타이틀</button><h2>어떻게 놀까요?</h2><p>혼자 탐험하거나 친구와 함께 탑을 무너뜨려요.</p><button id="startBtn" type="button" class="primary">혼자 시작</button><button class="secondary wide" data-route="multi">친구와 함께 · 최대 4명</button></div>
  <div data-screen="multi" class="hidden"><button class="back" id="lobbyBack">← 모드 선택</button><h2>친구와 함께</h2><p class="menuSummary">방을 만들거나 친구의 4자리 코드로 참가하세요.</p><div id="roomEntry"><button id="createRoom" class="primary" type="button">새 방 만들기</button><div class="roomSetup"><label for="roomCode">방 코드 <span>참가할 때 입력</span></label><div class="joinRow"><input id="roomCode" inputmode="numeric" pattern="[0-9]{4}" autocomplete="off" maxlength="4" placeholder="4자리 숫자"><button id="joinRoom" class="secondary" type="button">참가</button></div></div></div><div id="lobbyStatus" role="status" aria-live="polite">방장은 1명부터 시작할 수 있어요.</div><button id="beginRoom" class="primary" type="button" style="display:none">현재 인원으로 시작</button><button id="cancelLobby" class="secondary wide" type="button">연결 취소 / 방 나가기</button></div>
- <div data-screen="help" class="hidden"><button class="back" data-menu-close>← 돌아가기</button><h2>게임 방법</h2><ol class="guide"><li><b>사냥하고 성장</b><br>집 안의 쥐·곤충·거미를 짧게 할퀴세요. 최고 LV <span data-max-level></span>에 도달하면 MAX로 표시돼요. 고양이는 처음 크기의 2배까지 자라요. 청소기가 깜빡이며 삐 소리를 내면 옆으로 피하세요. 벽에 부딪힌 뒤 잠시 멈추면 사냥할 기회예요.</li><li><b>식탁으로 이동</b><br>경사로로 올라가 붉은 공격 범위를 구르기로 피하세요.</li><li><b>탑을 와르르!</b><br>길게 충전한 박치기로 블록을 밀어내세요.</li></ol><details><summary>PC / 터치 조작</summary><p>PC: WASD·방향키 이동 / 마우스 시점<br>F·좌클릭: 탭 할퀴기, 홀드 후 놓기 박치기<br>Space: 홀드 후 놓기 점프 / Shift: 구르기<br>Esc: 마우스 잠금 해제<br><br>터치: 왼쪽 스틱 이동 / 오른쪽 드래그 시점<br>발바닥·점프 버튼: 탭 또는 홀드 후 놓기</p></details><p class="note">사망하면 현재 레벨 구간 XP의 10%를 잃고, 경계 아래면 레벨도 내려가요 (최저 LV 1). MAX에서는 마지막 레벨 구간을 기준으로 잃으며, 초과 XP는 쌓이지 않아요. 탑 진행도는 유지해요. 게임 중 메뉴를 열어도 세계는 계속 움직여요.</p></div>
+ <div data-screen="help" class="hidden"><button class="back" data-menu-close>← 돌아가기</button><h2>게임 방법</h2><ol class="guide"><li><b>사냥하고 성장</b><br>집 안의 쥐·곤충·거미를 짧게 할퀴세요. 최고 LV <span data-max-level></span>에 도달하면 MAX로 표시돼요. 고양이는 처음 크기의 2배까지 자라요. 청소기가 깜빡이며 삐 소리를 내면 옆으로 피하세요. 벽에 부딪힌 뒤 잠시 멈추면 사냥할 기회예요.</li><li><b>식탁으로 이동</b><br>경사로로 올라가 붉은 공격 범위를 지상·공중 구르기로 피하세요.</li><li><b>탑을 와르르!</b><br>길게 충전한 박치기로 블록을 밀어내세요.</li></ol><details><summary>PC / 터치 조작</summary><p>PC: WASD·방향키 이동 / 마우스 시점<br>F·좌클릭: 탭 할퀴기, 홀드 후 놓기 박치기<br>Space: 홀드 후 놓기 점프 / Shift: 지상·공중 구르기<br>Esc: 마우스 잠금 해제<br><br>터치: 왼쪽 스틱 이동 / 오른쪽 드래그 시점<br>발바닥·점프 버튼: 탭 또는 홀드 후 놓기</p></details><p class="note">사망하면 현재 레벨 구간 XP의 10%를 잃고, 경계 아래면 레벨도 내려가요 (최저 LV 1). MAX에서는 마지막 레벨 구간을 기준으로 잃으며, 초과 XP는 쌓이지 않아요. 탑 진행도는 유지해요. 게임 중 메뉴를 열어도 세계는 계속 움직여요.</p></div>
  <div data-screen="settings" class="hidden"><button class="back" data-menu-close>← 돌아가기</button><h2>설정</h2><button id="soundBtn" class="secondary wide" aria-pressed="true">효과음 켜짐</button><p class="note">화면 크기에 맞춰 조작 버튼이 자동으로 바뀝니다.</p></div>
  </div></section>
  <section id="ending" class="cover hidden"><div class="hero"><div class="eyebrow">오늘의 대참사</div><h1 id="endingTitle" class="endTitle">대참사 성공! 🐾</h1><p id="endingSub">거대한 탑이 무너졌어요!</p><div class="statsEnd" id="endingStats"></div><button id="retryBtn" type="button" class="primary">한 판 더</button><p id="replayStatus" class="note hidden">방장이 다음 판을 시작하면 함께 시작해요.</p><button id="titleBtn" class="secondary wide" type="button">타이틀로 돌아가기</button></div></section>
@@ -540,13 +540,14 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
 const DEF={
-  build:'20261014-presentation-jitter-v0111',version:'0.11.1',
+  build:'20261014-mob-air-roll-v0120',version:'0.12.0',
   // After the success threshold, physics keeps stepping until the debris is quiet.
   // These are PRESENTATION timings only; they never influence Rapier impulses.
   round:{durationMs:0,winBlocks:TOWER.winScattered,
     collapseMinMs:2800,collapseQuietMs:1350,collapseMaxMs:11800,collapseMovingTolerance:2},
-  cat:{size:{min:.6,max:1.2,baseRadius:.5},moveSpeed:6.3,mass:{base:1,growthFactor:1.5},jump:{baseVelocity:10,maxMultiplier:2,durationMs:1000},charge:{durationMs:1500,baseSpeed:{base:5,perLevel:5/7},maxMultiplier:2,minDashMs:250,maxDashMs:560,cooldownMs:1550},claw:{tapMaxMs:250,cooldownMs:320,animationMs:260,hitAtMs:65,reach:2.55,queryRadius:1.46,queryForward:1.16,minFacingDot:.18,damageBase:1,knockback:1.7},dodgeCooldownMs:1350,dodgeDurationMs:650,rollSpeed:12.5,rollIFrameStartMs:70,rollIFrameEndMs:495,launchAirControl:1.05,stunDurationMs:820,recoverDurationMs:550,maxHp:100,hitInvulnMs:1250},
+  cat:{size:{min:.6,max:1.2,baseRadius:.5},moveSpeed:6.3,mass:{base:1,growthFactor:1.5},jump:{baseVelocity:10,maxMultiplier:2,durationMs:1000},charge:{durationMs:1500,baseSpeed:{base:5,perLevel:5/7},maxMultiplier:2,minDashMs:250,maxDashMs:560,cooldownMs:1550},claw:{tapMaxMs:250,cooldownMs:320,animationMs:260,hitAtMs:65,reach:2.55,queryRadius:1.46,queryForward:1.16,minFacingDot:.18,damageBase:1,knockback:1.7},dodgeCooldownMs:1350,dodgeDurationMs:650,rollRecoveryMs:180,rollSpeed:12.5,rollIFrameStartMs:70,rollIFrameEndMs:495,launchAirControl:1.05,stunDurationMs:820,recoverDurationMs:550,maxHp:100,hitInvulnMs:1250},
   humans:{buildDurationMs:3200,attackWarningMs:1180,attackDurationMs:780,attackRadius:1.6,attackRecoveryMs:1900,intervalMs:2200,waveSpeed:15.2,impulse:11.8,slamUpSpeed:21.0,slamOutSpeed:14.5,otherUpSpeed:6.4,otherOutSpeed:10.2,launchMassExponent:.32},
+  input:{jumpBufferMs:150,coyoteMs:100,rollBufferMs:150,clawBufferMs:120},
   farming:{levelXp:[0,2,5,9,14,20,28,37,47,58,70,83],get maxLevel(){return this.levelXp.length},deathLossRatio:.10},
   graphics:{maxParticles:180,maxCombatBursts:16,maxDamageNumbers:26,mobHudDistance:25}
 };
@@ -847,8 +848,14 @@ function drawVacuums(g){for(const vacuum of sceneView.vacuums){
  g.disc([p.x,ARENA.floorY+.035,p.z],r*1.16,COLOR.shadow,.22);
  g.tube(base,[r*2,.26,r*2],COLOR.navy); // rubber bumper, full circular silhouette
  g.tube([p.x,p.y+.075,p.z],[r*1.88,.23,r*1.88],COLOR.cream);
- g.tube([p.x,p.y+.20,p.z],[.34,.075,.34],COLOR.white); // small ordinary power button
- g.orb(yawPart(base,yaw,0,.22,.37),[.09,.035,.13],lamp);
+ g.tube([p.x,p.y+.205,p.z],[r*1.52,.026,r*1.52],COLOR.white); // inset lid and low sensor turret
+ g.tube([p.x,p.y+.245,p.z],[.34,.08,.34],COLOR.navy);
+ g.tube([p.x,p.y+.292,p.z],[.27,.022,.27],COLOR.cream);
+ g.orb(yawPart(base,yaw,0,.23,.45),[.09,.035,.13],lamp);
+ for(const side of [-1,1]){
+  g.draw('sphere',yawPart(base,yaw,side*.36,.02,.70),[.14,.065,.055],COLOR.dark,qyaw(yaw));
+  for(let i=0;i<3;i++)g.cube(yawPart(base,yaw,side*(.48+i*.055),.215,-.30),[.025,.014,.16],COLOR.navy,qyaw(yaw));
+ }
  const brush=yawPart(base,yaw,r*.77,-.12,.38),spin=sceneView.displaySeconds*(state==='recover'?1:12);
  for(let i=0;i<3;i++)g.cube(brush,[.65,.035,.055],COLOR.dark,qyaw(spin+i*Math.PI/3));
  if(state==='windup'){
@@ -862,7 +869,7 @@ function prepareMobs(){for(const [x,z,type] of MOB_SPAWNS)spawnMob(type,x,z);mob
 function spawnMob(type,x,z){if(mobs.length>=26)return false;
  const def=MOB_TYPES[type],r=RAPIER,body=tower.world.createRigidBody(r.RigidBodyDesc.dynamic().setTranslation(x,ARENA.floorY+def.radius+.22,z).lockRotations().setLinearDamping(1.8).setCcdEnabled(true));
  const collider=tower.world.createCollider(r.ColliderDesc.ball(def.radius).setMass(def.mass).setFriction(.82).setRestitution(.12).setActiveEvents(r.ActiveEvents.COLLISION_EVENTS),body);
- const mob={id:nextMobId++,type,body,collider,hp:def.maxHp,hitSequence:0,ai:{state:'wander',thinkMs:0,dirX:0,dirZ:1},hitMs:0,biteMs:700,wobble:0};
+ const mob={id:nextMobId++,type,body,collider,hp:def.maxHp,hitSequence:0,ai:{state:'wander',thinkMs:0,dirX:0,dirZ:1},hitMs:0,biteMs:700,wobble:0,visualVelocity:{x:0,z:0}};
  mobs.push(mob);combatUI.register(mob);return true;
 }
 function updateMobs(dt){const ms=dt*1000;
@@ -979,13 +986,13 @@ function collectMobsAfterStep(){if(tower.world.contactPairsWith){
 }
 function damageCat(amount,reason){if(cat.invuln>0||cat.motion.state==='dead'||phase!=='play')return;
  cat.hp=Math.max(0,cat.hp-amount);cat.invuln=DEF.cat.hitInvulnMs;if(cat===localCat){announce(reason+' −'+amount+' HP',1100);sfx('hit',.65);}
- if(cat.hp<=0){const loss=-setCatXp(cat,cat.xp-deathXpLoss(cat));cat.respawn.leftMs=1050;setCatMotion('dead');cancelCharge();cancelJumpCharge();cat.dash.leftMs=0;cat.claw.pendingHit=false;if(cat===localCat){ui.respawn.classList.remove('hidden');announce(deathNotice(loss,cat.level),2200);}}
+ if(cat.hp<=0){const loss=-setCatXp(cat,cat.xp-deathXpLoss(cat));cat.respawn.leftMs=1050;setCatMotion('dead');cancelCharge();clearBufferedInputs();cat.dash.leftMs=0;cat.claw.pendingHit=false;if(cat===localCat){ui.respawn.classList.remove('hidden');announce(deathNotice(loss,cat.level),2200);}}
 }
 function respawnCat(){const body=tower.catBody;
  const spawnIndex=net.room?net.room.players.indexOf(cat.id):-1;
  const spawnX=spawnIndex<0?ARENA.spawnX:(spawnIndex-(net.room.players.length-1)/2)*3.4;
  body.setTranslation({x:spawnX,y:ARENA.floorY+catRadiusForLevel(cat.level)+.04,z:ARENA.spawnZ},true);body.setLinvel({x:0,y:0,z:0},true);body.setAngvel({x:0,y:0,z:0},true);
- cat.hp=DEF.cat.maxHp;cat.invuln=2200;cat.respawn.leftMs=0;cat.x=spawnX;cat.y=ARENA.floorY;cat.z=ARENA.spawnZ;cat.yaw=Math.PI;cat.aimYaw=Math.PI;cat.vx=cat.vz=0;setCatMotion('respawn');cat.viewTeleport=true;cancelCharge();cancelJumpCharge();cat.trail=[];
+ cat.hp=DEF.cat.maxHp;cat.invuln=2200;cat.respawn.leftMs=0;cat.x=spawnX;cat.y=ARENA.floorY;cat.z=ARENA.spawnZ;cat.yaw=Math.PI;cat.aimYaw=Math.PI;cat.vx=cat.vz=0;setCatMotion('respawn');cat.viewTeleport=true;cancelCharge();clearBufferedInputs();cat.trail=[];
  if(cat===localCat){camera.yaw=Math.PI;camera.pitch=.06;camera.eye=[spawnX,ARENA.floorY+LOOK.eyeHeight,ARENA.spawnZ+LOOK.followDistance];camera.armLength=LOOK.followDistance;camera.boom?.reset(LOOK.followDistance);ui.respawn.classList.add('hidden');announce('🐾 부활 완료! 체력 회복 · 젠가 진행도 유지',1800);}
  particle([cat.x,cat.y+.5,cat.z],'mint',34,3);sfx('jump');
 }
@@ -995,8 +1002,8 @@ const roomCats=new Map();
 let hapticEnabled=true;
 const rand=(a,b)=>a+(b-a)*rng.nextUint32()/4294967296;
 function makeCat(){return {id:"local",x:ARENA.spawnX,z:ARENA.spawnZ,y:ARENA.floorY,surfaceY:ARENA.floorY,vy:0,vx:0,vz:0,knockX:0,knockZ:0,aimYaw:Math.PI,get mass(){return catMassForLevel(this.level)},yaw:Math.PI,targetYaw:Math.PI,speed:0,hp:DEF.cat.maxHp,xp:0,level:1,growthSequence:0,openingMs:0,invuln:0,respawn:{leftMs:0},
- charge:{held:false,elapsedMs:0,ratio:0},claw:{cooldown:{leftMs:0},animation:{leftMs:0},pendingHit:false,side:-1,attacks:0,lastHits:0},jump:{held:false,elapsedMs:0,ratio:0,lastVelocity:0},dash:{cooldown:{leftMs:0},leftMs:0,velocity:0,direction:{x:0,z:1}},dodgeCd:0,dodgeMs:0,ticks:0,
- motion:{state:'idle',elapsedMs:0,rollAxis:[1,0,0],rollDirX:0,rollDirZ:1,spinAxis:[1,0,0],spinRad:0,spinRate:0,wasAirborne:false},trail:[],landings:0,giantHits:0,successfulRolls:0};}
+ charge:{held:false,elapsedMs:0,ratio:0},claw:{cooldown:{leftMs:0},animation:{leftMs:0},pendingHit:false,bufferMs:0,side:-1,attacks:0,lastHits:0},jump:{held:false,elapsedMs:0,ratio:0,lastVelocity:0,requestMs:0,releaseQueued:false,bufferRatio:0,coyoteMs:0,canJump:false},dash:{cooldown:{leftMs:0},leftMs:0,velocity:0,direction:{x:0,z:1}},dodgeCd:0,dodgeMs:0,dodgeBuffer:{leftMs:0,dx:0,dz:1},ticks:0,
+ motion:{state:'idle',elapsedMs:0,rollAxis:[1,0,0],rollDirX:0,rollDirZ:1,spinAxis:[1,0,0],spinRad:0,spinRate:0,wasAirborne:false,airborneRoll:false,fromRoll:false,rollRecoveryMs:0},trail:[],landings:0,giantHits:0,successfulRolls:0};}
 function makeHuman(id){return {id,x:id===0?-8.4:8.4,z:-8.6,pattern:id===0?'slam':'sweep',mode:'idle',timer:id===0?1600:3100,anim:0,target:[0,0,0],attackApplied:false,buildDone:false,anger:0,noticeMs:0,speech:id===0?'이번엔 진짜 높이 쌓자':'고양이 어디 갔지?',attacks:0,builds:0};}
 function resetWorld(){combatUI.reset();net.resetView();cat=null;roomCats.clear();mobs=[];vacuums=[];nextMobId=1;kills={mouse:0,beetle:0,spider:0};rng.state=702104;vfxRng.state=91011;tower.init();cat=makeCat();localCat=cat;
  if(net.room){
@@ -1106,7 +1113,7 @@ function createShockwave(h,x,z,scale=1){shockwaves.push({id:nowTicks*10+h.id+sho
 // Rapier remains the sole owner of linear velocity, contact and gravity.
 function setCatMotion(state,more={}){
  cat.motion={state,elapsedMs:0,rollAxis:[1,0,0],rollDirX:0,rollDirZ:1,
-  spinAxis:[1,0,0],spinRad:0,spinRate:0,wasAirborne:false,...more};
+  spinAxis:[1,0,0],spinRad:0,spinRate:0,wasAirborne:false,airborneRoll:false,fromRoll:false,rollRecoveryMs:0,...more};
 }
 function isRollInvulnerable(){
  const m=cat.motion;
@@ -1122,7 +1129,7 @@ function launchCat(nx,nz,impulse){
  const v=tower.catBody.linvel();
  setCatMotion('launched',{spinAxis:axis,spinRate:clamp(5.0+impulse/Math.max(.25,tower.catBody.mass())*.24,7.0,15),wasAirborne:false,previousVelocity:[v.x,v.z],bounceAtMs:-1000});
  cat.giantHits++;
- cat.dash.leftMs=0;cat.dodgeMs=0;cat.claw.pendingHit=false;cancelCharge();cancelJumpCharge();
+ cat.dash.leftMs=0;cat.dodgeMs=0;cat.claw.pendingHit=false;cancelCharge();clearBufferedInputs();
  camera.shake=Math.max(camera.shake,.46);
  particle([cat.x,cat.y+.55,cat.z],'pink',26,5.1);
 }
@@ -1140,6 +1147,7 @@ function enterGroundStun(velocity){
 }
 function updateCatMotion(dt){
  const m=cat.motion,ms=dt*1000,body=tower.catBody,position=body.translation(),velocity=body.linvel();
+ m.rollRecoveryMs=Math.max(0,(m.rollRecoveryMs||0)-ms);
  if(m.state==='launched'){
   m.elapsedMs+=ms;
   m.spinRad+=m.spinRate*dt;
@@ -1162,11 +1170,12 @@ function updateCatMotion(dt){
   }
  }else if(m.state==='roll'){
   m.elapsedMs+=ms;
-  if(m.elapsedMs>=DEF.cat.dodgeDurationMs)setCatMotion(!isCatSupported(position)?'jump':'idle');
+  if(m.elapsedMs>=DEF.cat.dodgeDurationMs){const airborne=!isCatSupported(position);
+   setCatMotion(airborne?'jump':'idle',{fromRoll:true,rollRecoveryMs:airborne?0:DEF.cat.rollRecoveryMs});}
  }else if(m.state==='jump'){
   m.elapsedMs+=ms;
   if(m.elapsedMs>110&&isCatSupported(position)&&velocity.y<=.6){
-   setCatMotion('idle');particle([cat.x,.16,cat.z],'white',9,.9);sfx('land',.5);
+   setCatMotion('idle',{rollRecoveryMs:m.fromRoll?DEF.cat.rollRecoveryMs:0});particle([cat.x,cat.surfaceY+.16,cat.z],'white',9,.9);sfx('land',.5);
   }
  }else if(m.state==='stunned'){
   m.elapsedMs+=ms;
@@ -1291,7 +1300,9 @@ function beginCharge(){
 }
 function triggerClaw(){
  const claw=cat.claw,config=DEF.cat.claw,scale=catScaleForLevel(cat.level);
- if(claw.cooldown.leftMs>0||cat.motion.state==='dash'||cat.motion.state==='roll'||CAT_DISABLED_STATES.has(cat.motion.state))return;
+ if(cat.motion.state==='dash'||cat.motion.state==='roll'||CAT_DISABLED_STATES.has(cat.motion.state))return;
+ if(claw.cooldown.leftMs>0){if(claw.cooldown.leftMs<=DEF.input.clawBufferMs)claw.bufferMs=DEF.input.clawBufferMs;return;}
+ claw.bufferMs=0;
  claw.cooldown.leftMs=config.cooldownMs;
  claw.animation.leftMs=config.animationMs;
  claw.pendingHit=true;
@@ -1325,21 +1336,30 @@ function releaseCharge(){
 function cancelJumpCharge(){
  if(!cat)return;
  cat.jump.held=false;cat.jump.elapsedMs=0;cat.jump.ratio=0;
+ cat.jump.requestMs=0;cat.jump.releaseQueued=false;cat.jump.bufferRatio=0;
 }
+function clearBufferedInputs(actor=cat){if(!actor)return;
+ const jump=actor.jump;jump.held=false;jump.elapsedMs=0;jump.ratio=0;jump.requestMs=0;jump.releaseQueued=false;jump.bufferRatio=0;jump.coyoteMs=0;jump.canJump=false;
+ actor.dodgeBuffer.leftMs=0;actor.claw.bufferMs=0;
+}
+function jumpReady(){return cat.jump.canJump&&cat.jump.coyoteMs>0&&!CAT_DISABLED_STATES.has(cat.motion.state)&&cat.motion.state!=='roll';}
 function beginJumpCharge(){
- if(cat.jump.held||CAT_DISABLED_STATES.has(cat.motion.state)||cat.motion.state==='roll')return;
- // A held jump charges on the ground while moving or while charging headbutt.
- // There is no double jump: airborne starts are ignored until grounded.
- if(!isCatSupported(tower.catBody.translation()))return;
+ if(cat.jump.held||CAT_DISABLED_STATES.has(cat.motion.state))return;
  cat.jump.held=true;cat.jump.elapsedMs=0;cat.jump.ratio=0;
+ cat.jump.releaseQueued=false;cat.jump.requestMs=jumpReady()?0:DEF.input.jumpBufferMs;
 }
 function releaseJumpCharge(){
  if(!cat.jump.held)return;
- const ratio=cat.jump.ratio,velocity=jumpLaunchVelocity(ratio);
- cancelJumpCharge();
- if(CAT_DISABLED_STATES.has(cat.motion.state)||cat.motion.state==='roll')return;
- const body=tower.catBody,p=body.translation(),v=body.linvel();
- if(!isCatSupported(p))return;
+ const ratio=cat.jump.ratio;
+ if(CAT_DISABLED_STATES.has(cat.motion.state)){cancelJumpCharge();return;}
+ if(!jumpReady()){
+  cat.jump.held=false;cat.jump.releaseQueued=true;cat.jump.bufferRatio=ratio;cat.jump.requestMs=DEF.input.jumpBufferMs;return;
+ }
+ executeJump(ratio);
+}
+function executeJump(ratio){
+ const body=tower.catBody,v=body.linvel(),velocity=jumpLaunchVelocity(ratio);
+ cancelJumpCharge();cat.jump.canJump=false;cat.jump.coyoteMs=0;
  // Deliver the requested takeoff *speed*, not an additive velocity boost.
  // Rapier remains the only owner of the rigid body position and contacts.
  body.applyImpulse({x:0,y:body.mass()*Math.max(0,velocity-v.y),z:0},true);
@@ -1350,35 +1370,54 @@ function releaseJumpCharge(){
  particle([cat.x,.16,cat.z], 'white',Math.round(10+ratio*17),1.1+ratio);
  if(ratio>.94)announce('↥ 풀차지 점프! 초기 상승 속도 '+velocity.toFixed(0)+'m/s',900);
 }
+function consumeJumpBuffer(){if(cat.jump.requestMs<=0||!jumpReady())return;
+ cat.jump.requestMs=0;
+ if(cat.jump.releaseQueued)executeJump(cat.jump.bufferRatio);
+}
+function requestDodge(dx,dz){if(CAT_DISABLED_STATES.has(cat.motion.state))return;
+ const length=Math.hypot(dx,dz);cat.dodgeBuffer.dx=length<.2?Math.sin(cat.aimYaw):dx/length;cat.dodgeBuffer.dz=length<.2?Math.cos(cat.aimYaw):dz/length;
+ cat.dodgeBuffer.leftMs=DEF.input.rollBufferMs;
+}
 function beginDodge(directionX,directionZ){
- if(cat.dodgeCd>0||cat.motion.state==='dash'||cat.motion.state==='launched'||cat.motion.state==='stunned'||cat.motion.state==='recover'||cat.motion.state==='roll')return;
- const body=tower.catBody,p=body.translation();if(!isCatSupported(p))return;
+ if(cat.dodgeCd>0||CAT_DISABLED_STATES.has(cat.motion.state)||cat.motion.state==='dash'||cat.motion.state==='roll')return false;
+ const body=tower.catBody,airborne=!isCatSupported(body.translation())||body.linvel().y>.6;
  let dx=directionX,dz=directionZ,magnitude=Math.hypot(dx,dz);
  if(magnitude<.2){dx=Math.sin(cat.yaw);dz=Math.cos(cat.yaw);magnitude=1;}
  dx/=magnitude;dz/=magnitude;
  const side=dx*Math.cos(cat.yaw)-dz*Math.sin(cat.yaw),front=dx*Math.sin(cat.yaw)+dz*Math.cos(cat.yaw);
- setCatMotion('roll',{rollAxis:norm([front,0,-side]),rollDirX:dx,rollDirZ:dz});
+ setCatMotion('roll',{rollAxis:norm([front,0,-side]),rollDirX:dx,rollDirZ:dz,airborneRoll:airborne});
  cat.dodgeCd=DEF.cat.dodgeCooldownMs;cat.dodgeMs=DEF.cat.dodgeDurationMs;
+ cat.dodgeBuffer.leftMs=0;cat.claw.bufferMs=0;cat.claw.pendingHit=false;cancelCharge();cancelJumpCharge();
  const v=body.linvel(),target=DEF.cat.rollSpeed;
- body.applyImpulse({x:body.mass()*(dx*target-v.x*.55),y:0,z:body.mass()*(dz*target-v.z*.55)},true);
- particle([cat.x,.18,cat.z],'white',13,1.9);sfx('roll');
+ // Air dodge changes horizontal intent only: no lift, gravity reset or additive flight boost.
+ const keep=airborne?1:.55;
+ body.applyImpulse({x:body.mass()*(dx*target-v.x*keep),y:0,z:body.mass()*(dz*target-v.z*keep)},true);
+ particle([cat.x,airborne?cat.y+.45:cat.surfaceY+.18,cat.z],'white',airborne?6:13,airborne?1:1.9);sfx('roll');
+ return true;
 }
 function decodeAimYaw(input){return ((input[3]|(input[4]<<8))/65535)*Math.PI*2-Math.PI;}
 function updateCat(dt,input){
  cat.ticks++;const ms=dt*1000,body=tower.catBody;
  cat.invuln=Math.max(0,cat.invuln-ms);cat.openingMs=Math.max(0,cat.openingMs-ms);
  cat.claw.cooldown.leftMs=Math.max(0,cat.claw.cooldown.leftMs-ms);
+ cat.claw.bufferMs=Math.max(0,cat.claw.bufferMs-ms);
  cat.claw.animation.leftMs=Math.max(0,cat.claw.animation.leftMs-ms);
  cat.dash.cooldown.leftMs=Math.max(0,cat.dash.cooldown.leftMs-ms);
  cat.dodgeCd=Math.max(0,cat.dodgeCd-ms);
+ cat.dodgeBuffer.leftMs=Math.max(0,cat.dodgeBuffer.leftMs-ms);
+ const jump=cat.jump;
+ if(jump.requestMs>0){jump.requestMs=Math.max(0,jump.requestMs-ms);if(jump.requestMs===0)cancelJumpCharge();}
+ const grounded=isCatSupported(body.translation())&&body.linvel().y<=.6;
+ if(grounded){jump.canJump=true;jump.coyoteMs=DEF.input.coyoteMs;}
+ else jump.coyoteMs=Math.max(0,jump.coyoteMs-ms);
  let mx=clamp((input[0]-128)/100,-1,1),mz=clamp((input[1]-128)/100,-1,1);
  const mag=Math.hypot(mx,mz);if(mag>1){mx/=mag;mz/=mag;}
  const yaw=decodeAimYaw(input),sn=Math.sin(yaw),cs=Math.cos(yaw);cat.aimYaw=yaw;const dirX=-cs*mx+sn*mz,dirZ=sn*mx+cs*mz;
  // One input byte: charge press/release/held, jump press/release/held, and roll edge.
- const flags=input[2],chargeStart=!!(flags&1),chargeRelease=!!(flags&2),jumpStart=!!(flags&4),rollPressed=!!(flags&8);
+ const flags=input[2];if(flags&INPUT_CANCEL)clearBufferedInputs();
+ const chargeStart=!!(flags&1),chargeRelease=!!(flags&2),jumpStart=!!(flags&4),rollPressed=!!(flags&8);
  const chargeHeld=!!(flags&16),jumpRelease=!!(flags&32),jumpHeld=!!(flags&64);
  if(!['roll','launched','dash','stunned','dead'].includes(cat.motion.state))cat.yaw=cat.aimYaw;
- if(rollPressed){cancelCharge();cat.claw.pendingHit=false;beginDodge(dirX,dirZ);}
  if(chargeStart)beginCharge();
  if(jumpStart)beginJumpCharge();
  // Track charge independently of animation/locomotion and never slow traversal.
@@ -1386,7 +1425,11 @@ function updateCat(dt,input){
  if(chargeHeld) {if(cat.charge.held)tickAttackCharge(ms);} else if(cat.charge.held&&!chargeRelease)cancelCharge();
  if(jumpHeld) {if(cat.jump.held)tickJumpCharge(ms);} else if(cat.jump.held&&!jumpRelease)cancelJumpCharge();
  if(jumpRelease)releaseJumpCharge();
+ consumeJumpBuffer();
+ if(rollPressed)requestDodge(dirX,dirZ);
+ if(cat.dodgeBuffer.leftMs>0)beginDodge(cat.dodgeBuffer.dx,cat.dodgeBuffer.dz);
  if(chargeRelease)releaseCharge();
+ if(cat.claw.bufferMs>0&&cat.claw.cooldown.leftMs===0)triggerClaw();
  const v=body.linvel(),p=body.translation();
  let vx=dirX*DEF.cat.moveSpeed,vz=dirZ*DEF.cat.moveSpeed;
  if(cat.motion.state==='dash'){
@@ -1781,26 +1824,72 @@ function buildHouse(g){
 }
 
 let cachedHouse=null;function renderHouse(g){if(!cachedHouse){cachedHouse=new HouseScene();buildHouse(cachedHouse);cachedHouse.bake(g)}cachedHouse.render(g);}
+const MOB_STYLE=Object.freeze({
+ mouse:{body:rgb('#bd8a64'),belly:rgb('#efdbc0'),ear:rgb('#dfa1a5'),nose:rgb('#c97d8e'),dark:rgb('#664e49')},
+ beetle:{body:rgb('#498e80'),shell:rgb('#7ac3a4'),edge:rgb('#254d50'),eye:rgb('#f2ddac')},
+ spider:{body:rgb('#80719c'),head:rgb('#514563'),leg:rgb('#484359'),eye:rgb('#f1c38e')}
+});
 function drawMobs(g){for(const mob of sceneView.mobs){
   // Camera-relative distance culling affects only render work: all mob AI,
   // collision and XP remain in the one authoritative fixed simulation.
   const pos=mob;
   if((pos.x-camera.eye[0])**2+(pos.z-camera.eye[2])**2>39**2)continue;
-  const type=mob.type,d=MOB_TYPES[type],p=mob,wobble=Math.sin(sceneView.displaySeconds*(mob.type==='beetle'?12:8))*.05,rotation=qyaw(mob.yaw),c=mob.hitMs>90?COLOR.cream:COLOR[d.color];
+  const type=mob.type,d=MOB_TYPES[type],p=mob,style=MOB_STYLE[type],rotation=qyaw(mob.yaw);
+  const detail=(p.x-camera.eye[0])**2+(p.z-camera.eye[2])**2<18**2;
+  const pace=clamp(mob.speed/d.speed,0,1),cycle=sceneView.displaySeconds*(type==='beetle'?18:12)+mob.id*1.7;
+  const bounce=Math.sin(cycle)*.025*pace,hit=mob.hitMs>90;
+  const part=(x,y,z)=>yawPart([p.x,p.y+bounce,p.z],mob.yaw,x,y,z);
+  const orb=(x,y,z,size,color)=>g.draw('sphere',part(x,y,z),size,color,rotation);
   g.disc([p.x,ARENA.floorY+.06,p.z],d.radius*1.5,COLOR.shadow,.17);
   if(type==='mouse'){
-   g.draw('sphere',[p.x,p.y+wobble,p.z],[.48,.33,.68],c,rotation);
-   g.orb([p.x-.22,p.y+.27,p.z+.27],[.23,.26,.13],COLOR.pink);g.orb([p.x+.22,p.y+.27,p.z+.27],[.23,.26,.13],COLOR.pink);
-   g.orb([p.x,p.y+.03,p.z+.65],[.13,.10,.14],COLOR.pink);
-   const a=sceneView.displaySeconds*6+mob.id;g.tube([p.x+Math.sin(a)*.3,p.y+.08,p.z-.75],[.14,.08,.65],COLOR.wood3,qyaw(a));
+   // Pear-shaped fur, round ears and a tapered snout read differently from the cat.
+   orb(0,-.015,-.10,[.40,.29,.54],hit?COLOR.cream:style.body);
+   orb(0,-.12,.12,[.31,.15,.38],style.belly);
+   orb(0,.08,.38,[.27,.27,.29],hit?COLOR.cream:style.body);
+   orb(0,-.015,.63,[.16,.105,.19],style.belly);
+   orb(0,.005,.78,[.065,.055,.055],style.nose);
+   for(const side of [-1,1]){
+    orb(side*.24,.31,.35,[.205,.23,.10],style.body);
+    if(detail){orb(side*.24,.325,.418,[.137,.156,.035],style.ear);
+     orb(side*.17,.14,.585,[.095,.105,.06],COLOR.white);orb(side*.18,.14,.634,[.042,.067,.025],style.dark);
+     orb(side*.165,.175,.651,[.019,.024,.012],COLOR.white);
+     for(let i=0;i<2;i++)limb(g,part(side*.08,-.015-i*.025,.715),part(side*.39,.055-i*.095,.70),.012,style.belly);
+    }
+    for(const back of [-1,1]){const gait=Math.sin(cycle+side*back*Math.PI/2)*.06*pace;
+     orb(side*.25,-.235+Math.max(0,gait),back*.30+gait,[.11,.075,.16],style.ear);}
+   }
+   const sway=Math.sin(sceneView.displaySeconds*5+mob.id)*(.04+.10*pace);
+   const a=part(0,-.04,-.55),b=part(sway,-.07,-.83),c=part(sway*1.7,-.095,-1.03);
+   limb(g,a,b,.045,style.ear);limb(g,b,c,.025,style.ear);
   }else if(type==='beetle'){
-   g.orb([p.x,p.y+wobble,p.z],[.34,.20,.39],c);
-   g.cube([p.x,p.y+.19,p.z],[.09,.15,.62],COLOR.dark);
-   for(const sx of [-1,1])for(let i=0;i<3;i++)g.tube([p.x+sx*.28,p.y-.06,p.z+(i-1)*.27],[.07,.25,.08],COLOR.navy,qyaw(i));
+   // Paired wing cases, six feet and bent antennae instead of a featureless bead.
+   orb(0,-.04,-.05,[.33,.15,.40],style.edge);
+   for(const side of [-1,1])orb(side*.15,.055,-.08,[.18,.22,.34],hit?COLOR.cream:style.shell);
+   orb(0,.015,.31,[.24,.16,.20],style.body);
+   for(const side of [-1,1]){
+    if(detail){orb(side*.13,.075,.456,[.061,.073,.052],style.eye);orb(side*.14,.08,.494,[.024,.037,.018],style.edge);
+     const root=part(side*.12,.11,.39),bend=part(side*.20,.25,.54),tip=part(side*.32,.28,.64);
+     limb(g,root,bend,.025,style.edge);limb(g,bend,tip,.02,style.edge);orb(side*.32,.28,.64,[.035,.035,.035],style.eye);}
+    for(let i=0;i<3;i++){const step=Math.sin(cycle+side*Math.PI/2+i*2.1)*.055*pace;
+     const root=part(side*.24,-.06,(i-1)*.20),foot=part(side*.47,-.19+Math.max(0,step),(i-1)*.26+step);
+     if(detail){const knee=part(side*.38,-.02,(i-1)*.24);limb(g,root,knee,.035,style.edge);limb(g,knee,foot,.027,style.edge);}
+     else limb(g,root,foot,.03,style.edge);
+    }
+   }
   }else{
-   g.orb([p.x,p.y,p.z],[.44,.31,.48],c);g.orb([p.x,p.y+.08,p.z+.33],[.24,.24,.24],COLOR.dark);
-   for(const sx of [-1,1])for(let k=0;k<4;k++){
-    const base=[p.x+sx*.24,p.y,p.z+(k-1.5)*.18];const end=[p.x+sx*(.68+.05*Math.sin(sceneView.displaySeconds*12+k)),p.y-.17,p.z+(k-1.5)*.37];limb(g,base,end,.055,COLOR.dark);
+   // Raised abdomen and articulated eight-leg stance communicate the hunter role.
+   orb(0,.025,-.18,[.40,.30,.42],hit?COLOR.cream:style.body);
+   orb(0,.00,.30,[.26,.215,.26],style.head);
+   if(detail){orb(0,.21,-.24,[.20,.075,.24],style.head);
+    for(const side of [-1,1]){orb(side*.105,.08,.529,[.075,.087,.055],style.eye);orb(side*.105,.08,.568,[.029,.045,.018],COLOR.dark);
+     orb(side*.22,.10,.426,[.036,.04,.025],style.eye);
+     limb(g,part(side*.085,-.08,.51),part(side*.13,-.16,.61),.035,style.eye);}
+   }
+   for(const side of [-1,1])for(let i=0;i<4;i++){
+    const step=Math.sin(cycle+side*Math.PI/2+i*1.7)*.07*pace;
+    const root=part(side*.23,-.015,(i-1.5)*.13),foot=part(side*.73,-.23+Math.max(0,step),(i-1.5)*.33+step);
+    if(detail){const knee=part(side*.52,.16,(i-1.5)*.26);limb(g,root,knee,.049,style.leg);limb(g,knee,foot,.033,style.leg);}
+    else limb(g,root,foot,.04,style.leg);
    }
   }
   if(mob.hitMs>0)g.ring([p.x,ARENA.floorY+.12,p.z],.65,COLOR.yellow,.7);
@@ -1817,13 +1906,13 @@ function drawCat(g,c){
  const clawSwing=isClaw?Math.sin(Math.PI*clamp(clawT,0,1)):0;
  let q=Q(),squash=0,stretch=0,curl=0,centerLift=0,stepHeight=0;
  if(isRoll){
-  // A complete 360-degree rotation; a marked back and tucked limbs make the motion readable.
-  // Crouch → one full somersault along the chosen motion direction → paws land.
-  const revolution=2*Math.PI*clamp((t-.025)/.90,0,1);
+  // Gather paws, accelerate through one turn, then open before the feet meet the ground.
+  const tuck=smooth(0,.16,t)*(1-smooth(.76,1,t));
+  const revolution=2*Math.PI*smooth(.07,.90,t);
   q=axisAngle(m.rollAxis,revolution);
-  squash=.17*(1-smooth(.76,1,t))+.15*Math.sin(Math.PI*t);
-  curl=.45;
-  centerLift=.27*Math.sin(Math.PI*t);
+  squash=.08+.16*tuck;
+  curl=.70*tuck;
+  centerLift=(m.airborneRoll?.06:.17)*Math.sin(Math.PI*t);
  }else if(isFlight){
   // Spin is visual; trajectory, height and rebounds are real Rapier results.
   q=axisAngle(m.spinAxis,m.spinRad);
@@ -1853,6 +1942,8 @@ function drawCat(g,c){
   stretch=.14+.14*(m.chargeRatio??0);
   squash=.035;
  }
+ const rollSettle=Math.sin(Math.PI*clamp((m.rollRecoveryMs||0)/DEF.cat.rollRecoveryMs,0,1));
+ if(!isRoll&&rollSettle>0){squash+=.12*rollSettle;centerLift-=.025*rollSettle;}
  // Headbutt and jump charge are overlays, not exclusive animation states.
  if(isCharge&&!isFlight&&!isRoll&&!isDash){squash+=.05+.10*c.charge.ratio;curl+=.04+.08*c.charge.ratio;}
  if(isClaw){squash+=.065*clawSwing;centerLift+=.025*clawSwing;}
@@ -1863,7 +1954,7 @@ function drawCat(g,c){
  // the body pivot. A table depth test then hides those meshes (looks like culling).
  // Lift only the *visual rig* by its sampled lowest point, never its Rapier body.
  // These landmarks cover the head/eyes/ears, body, four feet, whiskers and tail.
- const tailPoints=isRoll?[[0,.72,-.72],[.09,.88,-.84],[.16,1.03,-.94],[.20,1.13,-.97]]:
+ const tailPoints=isRoll?[[0,.67,-.65],[.15,.73,-.73],[.26,.86,-.60],[.20,.99,-.40]]:
    isStunned?[[0,.66,-.73],[.06,.48,-.91],[.11,.34,-1.12],[.10,.27,-1.30]]:
    [[0,.72,-.73],[.13,.97,-1.0],[.30,1.3,-1.36],[.30,1.6,-1.47]];
  if(isRoll||isStunned||isRecover||isDead||isRespawn){
@@ -1911,7 +2002,7 @@ function drawCat(g,c){
  // A high-contrast back patch is a readable orientation marker during full 360° dodge.
  // This belongs to the same rotated rig, not a floor-fixed effect.
  g.draw('sphere',part(0,.94,-.28),[.41,.075,.39],stripe,poseQuat);
- if(isRoll){
+ if(isRoll&&c.y-c.surfaceY<.65){
   // Circular footwork dust communicates direction and timing without overpowering danger telegraphs.
   const arc=(Math.min(1,t)*Math.PI*2),rx=c.motion.rollDirX,rz=c.motion.rollDirZ;
   for(let i=0;i<3;i++){
@@ -1923,10 +2014,11 @@ function drawCat(g,c){
  g.draw('sphere',part(0,.43,.23),[.40,.31*(1-squash*.4),.46],belly,poseQuat);
  g.draw('sphere',part(0,.79,.55),[.45,.43,.44],fur,poseQuat);
  // Ears fold back during the roll; during knockback the full rig spins.
- const earY=isRoll||isStunned?1.07:1.16,earQuat=qmul(qyaw(yaw),q);
- g.cone(part(-.26,earY,.70),[.28,.44*(isRoll?.62:1),.25],fur,earQuat);
- g.cone(part(.26,earY,.70),[.28,.44*(isRoll?.62:1),.25],fur,earQuat);
- for(const x of [-.26,.26])g.cone(part(x,earY+.02,.785),[.145,.27*(isRoll?.64:1),.07],COLOR.pink,earQuat);
+ const rollTuck=isRoll?smooth(0,.16,t)*(1-smooth(.76,1,t)):0;
+ const earY=isStunned?1.07:1.16-.09*rollTuck,earQuat=qmul(qyaw(yaw),q);
+ g.cone(part(-.26,earY,.70),[.28,.44*(1-.38*rollTuck),.25],fur,earQuat);
+ g.cone(part(.26,earY,.70),[.28,.44*(1-.38*rollTuck),.25],fur,earQuat);
+ for(const x of [-.26,.26])g.cone(part(x,earY+.02,.785),[.145,.27*(1-.36*rollTuck),.07],COLOR.pink,earQuat);
  for(const x of [-.18,.18]){g.orb(part(x,.855,.91),[.14,.17,.13],COLOR.white);
   g.orb(part(x,.855,.994),[.059,.11,.058],COLOR.black);
   g.orb(part(x-.027,.9,1.042),[.027,.04,.024],COLOR.white);}
@@ -1938,7 +2030,7 @@ function drawCat(g,c){
  for(const side of [-1,1])for(const back of [-1,1]){
   const legZ=back*.45,step=(back===1?1:-1)*side*legMove;
   const rise=isJump?Math.min(.18,Math.abs(c.vy)*.025):0;
-  const tuck=isRoll||isFlight?.18:0;
+  const tuck=isFlight?.18:isRoll?.25*rollTuck:0;
   const slashing=isClaw&&back===1&&side===c.claw.side;
   const swipe=slashing?clawSwing:0;
   g.orb(part(side*(.35-tuck*.5+.09*swipe),.27+Math.max(0,step)+rise+tuck+.23*swipe,legZ+step*.7+.72*swipe),[.18,.25*(1-tuck),.23],fur);
@@ -2002,8 +2094,8 @@ function drawHuman(g,h){
  const acting=h.mode==='warning'||h.mode==='strike',building=h.mode==='build',recover=h.mode==='recover';
  const warning=h.mode==='warning'?clamp(1-h.timer/Math.max(1,h.warningMs),0,1):acting?1:0;
  const strike=h.mode==='strike'?clamp(1-h.timer/Math.max(1,h.strikeMs),0,1):0;
- const breathing=Math.sin(h.anim*1.7+h.id)*.02;
- const lightStep=Math.sin(h.anim*1.1+h.id)*.025;
+ const breathing=Math.sin(sceneView.displaySeconds*1.7+h.id)*.02;
+ const lightStep=Math.sin(sceneView.displaySeconds*1.1+h.id)*.025;
  g.disc([x,ARENA.floorY+.045,z],2.25,COLOR.shadow,.20);
  // Boots and articulated trouser legs, with no disproportionate giant feet.
  for(const side of [-1,1]){
@@ -2041,16 +2133,25 @@ function drawHuman(g,h){
   g.cube(wrist,[.30*scale,.26*scale,.23*scale],style.skin);
  }
  g.cube(p(0,2.96,.05),[.32*scale,.25*scale,.29*scale],style.skin);
- // Slightly smaller head, simple eyes and hair mass. No protruding cheeks, jaw or eyebrows.
+ // Soft ears, small nose and eyelids keep the low-poly adults friendly at cat scale.
  g.cube(p(0,3.34,.08),[.91*scale,1.09*scale,.79*scale],style.skin);
  g.cube(p(0,3.79,.02),[.97*scale,.27*scale,.86*scale],style.hair);
  g.cube(p(0,3.70,.40),[.97*scale,.16*scale,.20*scale],style.hair);
  if(h.id===0)g.cube(p(-.31,3.66,-.04),[.37*scale,.24*scale,.76*scale],style.hair);
  else g.cube(p(.22,3.72,-.03),[.50*scale,.25*scale,.81*scale],style.hair);
+ const blink=Math.sin(sceneView.displaySeconds*.85+h.id*1.9)>.994?.18:1;
  for(const side of [-1,1]){
-  g.orb(p(side*.195,3.38,.486),[.043*scale,.055*scale,.025*scale],COLOR.dark);
+  g.orb(p(side*.49,3.35,.07),[.085*scale,.14*scale,.10*scale],style.skin);
+  g.orb(p(side*.195,3.38,.486),[.066*scale,.071*scale*blink,.027*scale],COLOR.cream);
+  g.orb(p(side*.195,3.375,.511),[.034*scale,.046*scale*blink,.018*scale],COLOR.dark);
+  const brow=p(side*.20,3.51+warning*.035,.492);g.cube(brow,[.16*scale,.026*scale,.026*scale],style.hair,qyaw(0));
  }
- g.cube(p(0,3.12,.493),[.16*scale,.023*scale,.027*scale],style.trim);
+ g.orb(p(0,3.25,.493),[.06*scale,.08*scale,.055*scale],style.skin);
+ limb(g,p(-.075,3.12,.493),p(0,3.105-warning*.025,.503),.018*scale,style.trim);
+ limb(g,p(0,3.105-warning*.025,.503),p(.075,3.12,.493),.018*scale,style.trim);
+ // Stitching/pocket/cuffs distinguish fabric from skin without extra particles.
+ g.cube(p(h.id===0?-.28:.28,2.28,-.386),[.30*scale,.25*scale,.024*scale],style.light);
+ for(const side of [-1,1])g.cube(p(side*.49,1.69,-.276),[.08*scale,.12*scale,.026*scale],style.trim);
  if(building){const t=1-h.timer/DEF.humans.buildDurationMs;
   if(t<.62){const next=tower.getNextBlockSpec();
    g.cube([lerp(x,next.p[0],t),lerp(base+2.9*scale,next.p[1]+.7,t),lerp(z+.5,next.p[2],t)],next.size,COLOR.wood2,next.q);}
@@ -2167,14 +2268,16 @@ function drawWorld({alpha=0}={}){if(!renderer)return;const frameNow=performance.
 const samples=Object.fromEntries(['left','right','up','down','charge','jump','dodge'].map(k=>[k,{held:false,pressed:false,released:false}]));
 const canceledTouch=new Set();
 let pendingInputEdges=0;
+const INPUT_CANCEL=128,INPUT_EDGE_MASK=47|INPUT_CANCEL;
 
 const joy={id:null,x:0,y:0};
 const look={id:null,x:0,y:0},mouse={lastX:null,lastY:null};
 const lookZone=document.querySelector('#lookZone');
-function sampleControls(){if(navigation.snapshot().screen!=='play'){actions.consume();pendingInputEdges=0;return DEFAULT_PEER_INPUT.slice();}for(const k in samples)actions.sampleInto(k,samples[k]);for(const action of canceledTouch){samples[action].pressed=false;samples[action].released=false;}canceledTouch.clear();let x=(samples.right.held?1:0)-(samples.left.held?1:0)+joy.x,y=(samples.up.held?1:0)-(samples.down.held?1:0)+joy.y;
+function sampleControls(){if(navigation.snapshot().screen!=='play'){actions.consume();pendingInputEdges=0;return DEFAULT_PEER_INPUT.slice();}for(const k in samples)actions.sampleInto(k,samples[k]);const canceled=canceledTouch.size>0;for(const action of canceledTouch){samples[action].pressed=false;samples[action].released=false;}canceledTouch.clear();let x=(samples.right.held?1:0)-(samples.left.held?1:0)+joy.x,y=(samples.up.held?1:0)-(samples.down.held?1:0)+joy.y;
  const d=Math.max(1,Math.hypot(x,y));x=clamp(x/d,-1,1);y=clamp(y/d,-1,1);
  const flags=(samples.charge.pressed?1:0)|(samples.charge.released?2:0)|(samples.jump.pressed?4:0)|(samples.dodge.pressed?8:0)|(samples.charge.held?16:0)|(samples.jump.released?32:0)|(samples.jump.held?64:0);
- pendingInputEdges|=flags&47;
+ if(canceled)pendingInputEdges=INPUT_CANCEL;
+ pendingInputEdges|=flags&INPUT_EDGE_MASK;
  actions.consume();const yawByte= Math.round((((camera.yaw+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI))/(2*Math.PI)*65535);return new Uint8Array([clamp(Math.round(x*100+128),0,255),clamp(Math.round(y*100+128),0,255),(flags&(16|64))|pendingInputEdges,yawByte&255,yawByte>>>8]);
 }
 
@@ -2184,9 +2287,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'){actions.cons
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
- namespace:'meow-tumble-0.11.0',inputBytes:5,snapshotLimit:15000,
+ namespace:'meow-tumble-0.12.0',inputBytes:5,snapshotLimit:15000,
  inputType:91,snapshotType:92,resetType:93,startType:94,protocol:4});
-const LOBBY_VERSION='meow-tumble-0.11.0';
+const LOBBY_VERSION='meow-tumble-0.12.0';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};
@@ -2232,13 +2335,14 @@ class CatRenderModel extends RenderObject {
   'motion.state':this.STATE_KEY,'motion.elapsedMs':this.LINEAR,'motion.rollAxis':this.STEP,
   'motion.rollDirX':this.LINEAR,'motion.rollDirZ':this.LINEAR,'motion.spinAxis':this.STEP,
   'motion.spinRad':this.LINEAR,'motion.tiltSide':this.STEP,'motion.chargeRatio':this.LINEAR,
+  'motion.airborneRoll':this.STEP,'motion.fromRoll':this.STEP,'motion.rollRecoveryMs':this.COUNTDOWN_MS,
   'charge.held':this.STATE_KEY,'charge.elapsedMs':this.LINEAR,'charge.ratio':this.LINEAR,
   'jump.held':this.STATE_KEY,'jump.ratio':this.LINEAR,
   'claw.animation.leftMs':this.COUNTDOWN_MS,'claw.side':this.STEP};
 }
 class MobRenderModel extends RenderObject {
  static renderSchema={id:this.STEP,type:this.STEP,x:this.POSITION_X,y:this.POSITION_Y,z:this.POSITION_Z,
-  yaw:this.ANGLE,hp:this.STEP,hitMs:this.DECAY};
+  yaw:this.ANGLE,speed:this.LINEAR,hp:this.STEP,hitMs:this.DECAY};
 }
 class VacuumRenderModel extends RenderObject {
  static renderSchema={id:this.STEP,x:this.POSITION_X,y:this.POSITION_Y,z:this.POSITION_Z,yaw:this.ANGLE,
@@ -2255,8 +2359,8 @@ const sceneView={
  },
  capture(now,reset=false){
   const entities=[...roomCats].map(([id,c])=>({id:'cat:'+id,generation:0,type:CatRenderModel,source:c,teleport:!!c.viewTeleport}));
-  for(const m of mobs){const p=m.body.translation(),v=m.body.linvel();entities.push({id:'mob:'+m.id,generation:0,type:MobRenderModel,
-   source:{id:m.id,type:m.type,x:p.x,y:p.y,z:p.z,yaw:Math.atan2(v.x,v.z),hp:m.hp,hitMs:m.hitMs}});}
+  for(const m of mobs){const p=m.body.translation(),v=net.room&&!net.isHost?m.visualVelocity:m.body.linvel();entities.push({id:'mob:'+m.id,generation:0,type:MobRenderModel,
+   source:{id:m.id,type:m.type,x:p.x,y:p.y,z:p.z,yaw:Math.atan2(v.x,v.z),speed:Math.hypot(v.x,v.z),hp:m.hp,hitMs:m.hitMs}});}
   for(const v of vacuums){const p=v.body.translation();entities.push({id:v.id,generation:0,type:VacuumRenderModel,
    source:{id:v.id,x:p.x,y:p.y,z:p.z,yaw:v.yaw,radius:v.config.radius,attack:{state:v.attack.state,dx:v.attack.dx,dz:v.attack.dz}}});}
   this.runtime.capture({revision:0,sequence:nowTicks,timeMs:seconds*1000,mode:reset?'reset':'continuous',entities},now);
@@ -2405,13 +2509,13 @@ const net={
   const out=new Uint8Array(12),view=new DataView(out.buffer);
   out[0]=NET_DEF.inputType;out[1]=NET_DEF.protocol;
   view.setUint32(2,((this.inputSeq=(this.inputSeq||0)+1)>>>0),true);
-  const packet=frame.slice();packet[2]=(packet[2]&(16|64))|((packet[2]&47)&~(this.sentInputEdges??0));
-  this.sentInputEdges=(this.sentInputEdges??0)|(packet[2]&47);
+  const packet=frame.slice();packet[2]=(packet[2]&(16|64))|((packet[2]&INPUT_EDGE_MASK)&~(this.sentInputEdges??0));
+  this.sentInputEdges=(this.sentInputEdges??0)|(packet[2]&INPUT_EDGE_MASK);
   out.set(packet,6);out[11]=0;
   this.transportSend(this.room.coordinatorId,out);
  },
  releaseInput(){if(!this.room||this.isHost)return;this.lastInput=null;
-  const out=new Uint8Array(12);out[0]=NET_DEF.inputType;out[1]=NET_DEF.protocol;new DataView(out.buffer).setUint32(2,++this.inputSeq>>>0,true);out[6]=128;out[7]=128;out[8]=0;out[9]=0;out[10]=128;
+  const out=new Uint8Array(12);out[0]=NET_DEF.inputType;out[1]=NET_DEF.protocol;new DataView(out.buffer).setUint32(2,((this.inputSeq=(this.inputSeq||0)+1)>>>0),true);out[6]=128;out[7]=128;out[8]=INPUT_CANCEL;out[9]=0;out[10]=128;
   this.transportSend(this.room.coordinatorId,out);
  },
  receive(sender,data){
@@ -2421,7 +2525,8 @@ const net={
    const seq=new DataView(data.buffer,data.byteOffset,data.byteLength).getUint32(2,true);
    if(seq<=peer.lastSeq)return;peer.lastSeq=seq;
    const incoming=data.slice(6,11);
-   peer.edges|=incoming[2]&47;peer.bytes=incoming;return;
+   if(incoming[2]&INPUT_CANCEL)peer.edges=0;
+   peer.edges|=incoming[2]&INPUT_EDGE_MASK;peer.bytes=incoming;return;
   }
   if(data[0]===NET_DEF.snapshotType&&!this.isHost&&sender===this.room.coordinatorId){
    try{
@@ -2461,6 +2566,7 @@ const net={
  },
  applyState(state){
   if(!this.room||this.isHost)return;
+  const snapshotDt=Math.max(1/NET_DEF.stepHz,(state.t-nowTicks)/NET_DEF.stepHz);
   nowTicks=state.t;seconds=state.s;
   for(const [id,x,y,z,yaw,mode,leftMs,dx,dz] of state.v){const v=vacuums.find(v=>v.id===id);if(!v)continue;
    v.body.setTranslation({x,y,z},true);v.yaw=yaw;Object.assign(v.attack,{state:mode,leftMs,dx,dz});
@@ -2495,6 +2601,8 @@ const net={
     combatUI.unregister(mob);mob.id=id;combatUI.register(mob);
    }
    mob.hp=hp;mob.hitMs=hitMs;
+   // Guest gait/facing follows snapshot displacement, never another physical simulation.
+   const previous=mob.body.translation();mob.visualVelocity.x=(x-previous.x)/snapshotDt;mob.visualVelocity.z=(z-previous.z)/snapshotDt;
    mob.body.setTranslation({x,y,z},true);mob.body.setLinvel({x:0,y:0,z:0},true);
   }
   for(let i=mobs.length-1;i>=0;i--){if(!alive.has(mobs[i].id)){combatUI.unregister(mobs[i]);tower.world.removeRigidBody(mobs[i].body);mobs.splice(i,1);}}
@@ -2540,9 +2648,9 @@ function withCatActor(id,callback){
 
 const session={profile:{tickRate:30,maxCatchupSteps:4},inputSize:5,closed:false,resimulating:false,pace:1,metrics:{pace:1},poll(){},
  submitInput(input){net.submitInput(input);return{commandSequences:[]}},
- releaseInput(){actions.releaseAll();joy.x=0;joy.y=0;net.releaseInput();},
+ releaseInput(){actions.releaseAll();joy.x=joy.y=0;clearBufferedInputs(localCat);pendingInputEdges=0;net.releaseInput();},
  advance(input){net.pollMembership();if(!net.room||net.isHost){const before=nowTicks;updateGame(1/30,input);if(nowTicks!==before)sceneView.capture(nowTicks*1000/NET_DEF.stepHz);}else updateParticles(1/30);pendingInputEdges=0;net.sentInputEdges=0;return{status:'advanced'}}};
-const simLoop=createLoop({session,getInput:sampleControls,render:drawWorld,onBacklogDrop:()=>sceneView.resetLocalClock(),onError:e=>{console.error(e);document.querySelector('#error').textContent='게임 실행 오류: '+e.message;document.querySelector('#error').classList.add('show');},onInputRelease:()=>{joy.x=joy.y=0;look.id=null;cancelCharge();cancelJumpCharge();actions.consume();ui.chargeButton.classList.remove('pressed');ui.jumpButton.classList.remove('pressed');}});
+const simLoop=createLoop({session,getInput:sampleControls,render:drawWorld,onBacklogDrop:()=>{if(!net.room||net.isHost)for(const actor of roomCats.values())clearBufferedInputs(actor);sceneView.resetLocalClock();},onError:e=>{console.error(e);document.querySelector('#error').textContent='게임 실행 오류: '+e.message;document.querySelector('#error').classList.add('show');},onInputRelease:()=>{joy.x=joy.y=0;look.id=null;cancelCharge();clearBufferedInputs(localCat);pendingInputEdges=0;actions.consume();ui.chargeButton.classList.remove('pressed');ui.jumpButton.classList.remove('pressed');}});
 // Match createLoop's visibility reset; ordinary blur only releases input.
 document.addEventListener('visibilitychange',()=>{if(document.hidden)sceneView.resetLocalClock();});
 const navigation=createNavigation({normalize:route=>({screen:['main','modes','multi','help','settings','play','result'].includes(route.screen)?route.screen:'main'})});
@@ -2560,7 +2668,7 @@ function renderMenu(route){
  ui.start.classList.toggle('hidden',playing||result);ui.end.classList.toggle('hidden',!result);
  document.querySelectorAll('[data-screen]').forEach(el=>el.classList.toggle('hidden',el.dataset.screen!==screen));
  if(!playing){
-  actions.releaseAll();actions.consume();pendingInputEdges=0;net.releaseInput();joy.x=joy.y=0;joy.id=null;look.id=null;cancelCharge();cancelJumpCharge();
+  actions.releaseAll();actions.consume();pendingInputEdges=0;clearBufferedInputs(localCat);net.releaseInput();joy.x=joy.y=0;joy.id=null;look.id=null;cancelCharge();
   ui.knob.style.transform='translate(0px,0px)';ui.chargeButton.classList.remove('pressed');ui.jumpButton.classList.remove('pressed');
   if(document.pointerLockElement===gameCanvas)document.exitPointerLock?.();
  }
@@ -2580,7 +2688,7 @@ function bindControls(){const keyboard={KeyW:'up',ArrowUp:'up',KeyS:'down',Arrow
  const discrete={ShiftLeft:'dodge',ShiftRight:'dodge'};const chargeKeys=new Set(['KeyF']);const jumpKeys=new Set(['Space']);
  document.addEventListener('keydown',e=>{if(e.code==='KeyR'&&!e.repeat&&['win','lose'].includes(phase)&&!net.room){start();return;}if(navigation.snapshot().screen!=='play'||e.target.closest?.('input,textarea,summary')||(e.target.closest?.('button')&&['Space','Enter'].includes(e.code)))return;if(keyboard[e.code]){actions.set(keyboard[e.code],'keyboard-'+e.code,true);e.preventDefault()}else if(chargeKeys.has(e.code)){actions.set('charge','keyboard-'+e.code,true);e.preventDefault()}else if(jumpKeys.has(e.code)){actions.set('jump','keyboard-'+e.code,true);e.preventDefault()}else if(discrete[e.code]){if(!e.repeat)actions.pulse(discrete[e.code]);e.preventDefault()}else if(e.code==='Escape'&&document.pointerLockElement===gameCanvas){document.exitPointerLock?.();e.preventDefault()}});
  document.addEventListener('keyup',e=>{if(keyboard[e.code])actions.set(keyboard[e.code],'keyboard-'+e.code,false);if(chargeKeys.has(e.code))actions.set('charge','keyboard-'+e.code,false);if(jumpKeys.has(e.code))actions.set('jump','keyboard-'+e.code,false)});
- const resetHeld=()=>{actions.releaseAll();actions.consume();cancelCharge();cancelJumpCharge();joy.x=joy.y=0;joy.id=null;look.id=null;mouse.lastX=mouse.lastY=null;ui.chargeButton.classList.remove('pressed');ui.jumpButton.classList.remove('pressed');ui.knob.style.transform='translate(0px,0px)';};
+ const resetHeld=()=>{actions.releaseAll();actions.consume();pendingInputEdges=0;cancelCharge();clearBufferedInputs(localCat);net.releaseInput();joy.x=joy.y=0;joy.id=null;look.id=null;mouse.lastX=mouse.lastY=null;ui.chargeButton.classList.remove('pressed');ui.jumpButton.classList.remove('pressed');ui.knob.style.transform='translate(0px,0px)';};
  window.addEventListener('blur',resetHeld);document.addEventListener('visibilitychange',()=>{if(document.hidden)resetHeld()});
  gameCanvas.addEventListener('contextmenu',e=>e.preventDefault());
  // Desktop mouse look works without holding the button; click captures the cursor
@@ -2598,7 +2706,7 @@ function bindControls(){const keyboard={KeyW:'up',ArrowUp:'up',KeyS:'down',Arrow
   if(e.button===0){actions.set('charge','mouse-primary',true);if(document.pointerLockElement!==gameCanvas){const task=gameCanvas.requestPointerLock?.();task?.catch?.(()=>{});}}
  });
  window.addEventListener('pointerup',e=>{if(e.pointerType==='mouse'&&e.button===0)actions.set('charge','mouse-primary',false)});
- window.addEventListener('pointercancel',e=>{if(e.pointerType==='mouse'){actions.releaseSource('mouse-primary');cancelCharge()}});
+  window.addEventListener('pointercancel',e=>{if(e.pointerType==='mouse'){actions.releaseSource('mouse-primary');canceledTouch.add('charge');cancelCharge()}});
  // Right-side touch look is a dedicated pointer surface under HUD/buttons.
  // Its pointer is independent of the left joystick and can move at the same time.
  lookZone.addEventListener('pointerdown',e=>{
@@ -2626,19 +2734,23 @@ function bindControls(){const keyboard={KeyW:'up',ArrowUp:'up',KeyS:'down',Arrow
    e.preventDefault();e.stopPropagation();if(navigation.snapshot().screen!=='play'||phase!=='play')return;
    if(holdAction){
     if(pointerId!==null)return;
-    pointerId=e.pointerId;button.setPointerCapture(e.pointerId);
+    pointerId=e.pointerId;try{button.setPointerCapture(e.pointerId)}catch{}
     actions.set(action,'touch-'+e.pointerId,true);button.classList.add('pressed');
    }else{actions.pulse(action);button.classList.add('pressed');}
   });
   if(holdAction){
+   const abandon=()=>{if(pointerId!==null){actions.set(action,'touch-'+pointerId,false);pointerId=null;}button.classList.remove('pressed');};
+   window.addEventListener('blur',abandon);document.addEventListener('visibilitychange',()=>{if(document.hidden)abandon()});
+   navigation.subscribe(route=>{if(route.screen!=='play')abandon()});
    const finish=(e,cancel=false)=>{
     if(e.pointerId!==pointerId)return;
     actions.set(action,'touch-'+pointerId,false);pointerId=null;button.classList.remove('pressed');
-    if(cancel){canceledTouch.add(action);if(action==='charge')cancelCharge();else cancelJumpCharge();}
+    if(cancel){actions.sampleInto(action,samples[action]);if(!samples[action].held){canceledTouch.add(action);if(action==='charge')cancelCharge();else cancelJumpCharge();}}
    };
    button.addEventListener('pointerup',e=>finish(e));
    button.addEventListener('pointercancel',e=>finish(e,true));
    button.addEventListener('lostpointercapture',e=>finish(e,true));
+   document.addEventListener('pointerup',e=>finish(e));document.addEventListener('pointercancel',e=>finish(e,true));
   }else{
    const up=()=>button.classList.remove('pressed');
    button.addEventListener('pointerup',up);button.addEventListener('pointercancel',up);button.addEventListener('lostpointercapture',up);
