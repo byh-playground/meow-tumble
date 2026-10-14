@@ -906,31 +906,34 @@ function resolveClawHit(){
  if(phase!=='play'||CAT_DISABLED_STATES.has(cat.motion.state)||cat.motion.state==='roll')return;
  const body=tower.catBody,origin=body.translation(),fx=Math.sin(cat.aimYaw),fz=Math.cos(cat.aimYaw);
  const center={x:origin.x+fx*config.queryForward*scale,y:origin.y+.10*scale,z:origin.z+fz*config.queryForward*scale};
- const hitIds=new Set();let hits=0;
+ const hitIds=new Set(),candidates=[];let hits=0;
  // Rapier's exact shape-overlap query, not a custom distance-only damage trigger.
  tower.world.intersectionsWithShape(center,{x:0,y:0,z:0,w:1},new RAPIER.Ball(config.queryRadius*scale),collider=>{
-  const handle=typeof collider==='number'?collider:collider.handle;
-  if(hitIds.has(handle))return true;
+  candidates.push(typeof collider==='number'?collider:collider.handle);return true;
+ },undefined,undefined,tower.catCollider,tower.catBody);
+ // Rapier borrows its body set for the query. Mutate bodies only after it returns.
+ for(const handle of candidates){
+  if(hitIds.has(handle))continue;
   const mob=mobs.find(candidate=>candidate.collider.handle===handle&&!candidate.dead);
-  if(!mob)return true;
+  if(!mob)continue;
   const p=mob.body.translation(),dx=p.x-origin.x,dz=p.z-origin.z,dy=p.y-origin.y;
   const planar=Math.hypot(dx,dz),radius=MOB_TYPES[mob.type].radius;
   if(planar>config.reach*scale+radius||Math.abs(dy)>1.25*scale+radius||
-     (planar>.05&&(dx*fx+dz*fz)/planar<config.minFacingDot))return true;
+     (planar>.05&&(dx*fx+dz*fz)/planar<config.minFacingDot))continue;
   // A fixed wall/counter must block a swipe; other dynamic mobs remain targetable.
   const range=Math.hypot(dx,dy,dz);
   if(range>.01){
    const ray=new RAPIER.Ray({x:origin.x,y:origin.y,z:origin.z},{x:dx/range,y:dy/range,z:dz/range});
    const obstruction=tower.world.castRay(ray,range,true,RAPIER.QueryFilterFlags.ONLY_FIXED);
-   if(obstruction&&obstruction.timeOfImpact<range-.10)return true;
+   if(obstruction&&obstruction.timeOfImpact<range-.10)continue;
   }
   hitIds.add(handle);
   const damage=config.damageBase+Math.floor((cat.level-1)/3);
-  if(!damageMob(mob,damage,'claw',p,180))return true;
+  if(!damageMob(mob,damage,'claw',p,180))continue;
   const impulse=config.knockback*Math.pow(cat.mass,.32);
   mob.body.applyImpulse({x:fx*impulse,y:impulse*.34,z:fz*impulse},true);
-  hits++;return true;
- },undefined,undefined,tower.catCollider,tower.catBody);
+  hits++;
+ }
  claw.lastHits=hits;
  if(hits>1)announce('🐾 연속 할퀴기 '+hits+'마리 적중!',650);
 }
