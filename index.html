@@ -4,75 +4,21 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"/>
 <meta name="theme-color" content="#182438"/>
-<title>와르르냥 / Meow Tumble · 집 전체 사냥과 젠가 결전 · v0.10.1</title>
+<title>와르르냥 / Meow Tumble · 집 전체 사냥과 젠가 결전 · v0.10.2</title>
 <style>
-:root{color-scheme:dark;--bg:#17283c;--ink:#fffaf0;--sub:#c8d1da;--mint:#93edcb;--pink:#ffaaa6;--yellow:#ffe49e;--shadow:0 10px 55px #0b1228ba}
-*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);font-family:ui-rounded,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:var(--ink);overscroll-behavior:none;-webkit-tap-highlight-color:transparent}button{font:inherit;cursor:pointer;color:inherit;touch-action:manipulation}button:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}.hidden{display:none!important}
-#app{width:100%;height:100%;height:100dvh;overflow:hidden;position:relative;background:radial-gradient(ellipse at 55% 45%,#c2e3df,#9cbbbd 68%,#537a86);isolation:isolate}#game{display:block;width:100%;height:100%;touch-action:none;outline:0;position:absolute;inset:0;cursor:crosshair}
-#app:before{content:"";inset:0;position:absolute;pointer-events:none;z-index:1;background:linear-gradient(to bottom,#14233783 0%,transparent 25%,transparent 63%,#112039a2 100%)}
-.ui{pointer-events:none;position:absolute;z-index:5}.topbar{top:max(14px,env(safe-area-inset-top));left:max(18px,env(safe-area-inset-left));right:max(18px,env(safe-area-inset-right));display:flex;justify-content:space-between;align-items:start;gap:14px}.brand{display:flex;flex-direction:column;gap:1px;filter:drop-shadow(0 3px 9px #172538a9);flex-shrink:0}.brand strong{font-size:clamp(19px,3vw,28px);font-weight:1000;letter-spacing:-1.5px;line-height:1}.brand strong b{font-weight:1000;color:var(--pink)}.brand span{font-size:10px;font-weight:800;letter-spacing:3px;color:#fff2dfbe;margin-top:3px}.stats{display:flex;gap:7px;align-items:center;justify-content:end;flex-wrap:wrap}.stat{background:#1e3448c7;border:1px solid #f9f7ef50;box-shadow:0 8px 18px #10233557;backdrop-filter:blur(12px);border-radius:18px;padding:8px 13px;min-width:88px;text-align:center}.stat .tiny{font-size:10px;font-weight:800;letter-spacing:.6px;color:#d7e9e6;display:block;margin-bottom:1px}.stat strong{font-size:18px;font-weight:950;font-variant-numeric:tabular-nums;line-height:1.2}.stat.heart strong{color:#ffb1b9;letter-spacing:2px;font-size:24px}.stat.clock strong{color:var(--yellow)}
-.centerHead{top:max(89px,calc(env(safe-area-inset-top) + 72px));left:50%;transform:translateX(-50%);width:min(360px,51vw);text-align:center;display:flex;flex-direction:column;gap:6px}.progressTitle{font-size:11px;letter-spacing:1.2px;font-weight:1000;text-shadow:0 2px 10px #1b2439cc}.progressBox{height:16px;background:#1b3741c9;border:2px solid #fffcf8bf;border-radius:99px;overflow:hidden;box-shadow:0 5px 20px #1125339e}.progressFill{height:100%;width:0%;background:linear-gradient(90deg,#87e3b6,#ffda7d,#f98c88);border-radius:99px;transition:width .18s}.progressFraction{font-size:11px;font-weight:900;color:white;text-shadow:0 2px 8px #27384b}
-#targetIndicator{left:50%;top:48%;transform:translate(-50%,-50%);width:28px;height:28px;border:2px solid #ffffffe0;border-radius:50%;box-shadow:0 0 14px #1831457d;display:grid;place-items:center;transition:transform .15s,border-color .15s}#targetIndicator:after{content:'+';font-size:16px;line-height:0;color:white;font-weight:700}#targetIndicator.active{border-color:#ffda7f;transform:translate(-50%,-50%) scale(1.35);box-shadow:0 0 25px #ffd576b2}#targetText{position:absolute;top:calc(100% + 10px);left:50%;white-space:nowrap;transform:translateX(-50%);font-size:10px;background:#182f43a3;padding:5px 9px;border-radius:20px;color:#fff1d4;font-weight:800;box-shadow:0 4px 10px #1723385e}
-#humanA,#humanB{position:absolute;z-index:6;pointer-events:none;min-width:76px;max-width:168px;background:#fffffff0;color:#2c3d54;text-align:center;transform:translate(-50%,-110%);padding:8px 12px;border-radius:12px;font-weight:1000;font-size:12px;box-shadow:0 7px 15px #1c34435e;white-space:nowrap}#humanA:after,#humanB:after{content:'';position:absolute;left:calc(50% - 5px);top:100%;border:5px solid transparent;border-top-color:#fff}#humanA.angry,#humanB.angry{background:#ff877e;color:#4a1627;animation:wiggle .18s infinite alternate}#humanA.angry:after,#humanB.angry:after{border-top-color:#ff877e}@keyframes wiggle{from{margin-left:-2px}to{margin-left:2px}}
-#toast{bottom:clamp(148px,21vh,230px);left:50%;transform:translate(-50%,15px);border-radius:16px;background:#162d40e4;padding:12px 20px;font-size:clamp(12px,1.8vw,16px);font-weight:950;white-space:nowrap;box-shadow:0 15px 35px #081829bd;border:1px solid #a9f4d5a1;opacity:0;transition:opacity .2s,transform .2s;text-align:center;max-width:92vw;overflow:hidden;text-overflow:ellipsis}#toast.show{opacity:1;transform:translate(-50%,0)}
-#warning{top:170px;left:50%;transform:translateX(-50%);text-align:center;background:#fa7f7fd9;border:2px solid #ffe5de;padding:10px 15px;border-radius:18px;box-shadow:0 0 30px #f8546c97;font-size:16px;font-weight:1000;opacity:0;transition:opacity .2s}#warning.show{opacity:1;animation:blink .25s infinite alternate}@keyframes blink{from{filter:brightness(.9)}to{filter:brightness(1.2)}}
-.controlsHint{position:absolute;left:17px;bottom:max(16px,env(safe-area-inset-bottom));z-index:8;display:flex;flex-direction:column;align-items:start;gap:8px;pointer-events:none}.keyHint{background:#112334cf;border:1px solid #cbdad86b;backdrop-filter:blur(10px);padding:9px 12px;border-radius:14px;color:#eff9f3;font-size:12px;line-height:1.8;box-shadow:0 8px 20px #14253b88;pointer-events:auto}.keyHint b{color:var(--yellow)}.bottomRight{position:absolute;right:16px;bottom:max(14px,env(safe-area-inset-bottom));z-index:7;display:flex;flex-direction:column;align-items:end;gap:8px}.tool{pointer-events:auto;border:1px solid #ffffff7c;background:#173247e3;color:#e9fff0;border-radius:12px;padding:7px 11px;box-shadow:0 8px 24px #18283a7b;font-weight:900;font-size:12px}.tool:hover{background:#2d5670}.dashbar{width:118px;height:8px;background:#233847ca;border-radius:50px;border:1px solid #fff4;overflow:hidden}.dashbar>i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#a1f4df,#fff3b0);border-radius:50px}.status{font-size:11px;font-weight:900;text-shadow:0 2px 5px #26333d}
-.cover{position:absolute;inset:0;z-index:20;background:linear-gradient(90deg,#132438b8,#14283c48 68%,#13243879);display:flex;align-items:center;justify-content:center;padding:20px;pointer-events:auto}.hero{width:min(530px,95vw);background:linear-gradient(130deg,#273e58f2,#132b3dec);border:1.5px solid #a4dec985;box-shadow:0 20px 100px #040f27d4,inset 0 1px #fff2;border-radius:28px;padding:30px 33px;position:relative;overflow:hidden;text-align:left;backdrop-filter:blur(18px)}.hero:before{content:'🐾';position:absolute;right:-22px;top:-38px;opacity:.10;font-size:210px;transform:rotate(-24deg)}.hero .eyebrow{color:#adfae5;letter-spacing:3px;font-weight:1000;font-size:11px;text-transform:uppercase}.hero h1{font-size:clamp(39px,7vw,68px);font-weight:1000;line-height:.98;letter-spacing:-3px;margin:13px 0 11px;text-shadow:0 6px 0 #182a3a}.hero h1 em{font-style:normal;color:#ffb1ad}.hero p{font-size:15px;color:#e1f0e9;line-height:1.7;font-weight:700;max-width:420px;margin:12px 0 20px}.hero p b{color:#ffde8f}.pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}.pill{background:#24495c;border:1px solid #9cd3cd73;border-radius:99px;padding:6px 10px;font-size:11px;font-weight:900;color:#def7e6}.primary{border:0;background:linear-gradient(145deg,#ffdeb0,#ffac82);color:#29394d;padding:15px 22px;border-radius:16px;font-size:18px;font-weight:1000;box-shadow:0 8px 0 #b66453,0 15px 30px #0d253c69;transition:transform .09s,box-shadow .09s;display:block;width:100%;position:relative}.primary:active{transform:translateY(4px);box-shadow:0 3px 0 #b66453}.hero small{display:block;text-align:center;color:#bbd0dc;font-size:11px;margin-top:18px;font-weight:700}.introSteps{margin-top:19px;font-size:12px;line-height:1.75;color:#e5f4ec;background:#112a3cc7;padding:12px 14px;border-radius:12px}.introSteps b{color:#ffde9f}.endTitle{font-size:clamp(27px,5vw,49px)!important;letter-spacing:-1.5px!important}.statsEnd{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:22px}.statsEnd span{font-size:11px;color:#e4f3eb;background:#174158;border-radius:9px;padding:9px 6px;text-align:center}.statsEnd b{display:block;font-size:16px;color:#ffe0a6}
-#error{z-index:9999;position:absolute;left:10px;right:10px;bottom:5px;max-height:35vh;overflow:auto;white-space:pre-wrap;color:#ffe5df;background:#8b263df0;font:12px monospace;padding:15px;border-radius:9px;display:none}#error.show{display:block}#boot{position:absolute;inset:0;display:grid;place-items:center;background:#142b3b;color:#fff;font-weight:1000;z-index:30}
+:root{color-scheme:dark;--bg:#17283c;--ink:#fffaf0;--sub:#c8d1da;--mint:#93edcb;--pink:#ffaaa6;--yellow:#ffe49e}
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:ui-rounded,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}button,input,summary{font:inherit}button,summary{cursor:pointer;touch-action:manipulation}button{color:inherit;min-height:48px}button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}button:disabled{opacity:.55;cursor:default}.hidden{display:none!important}
+#app{height:100%;height:100dvh;overflow:hidden;position:relative;background:#537a86;isolation:isolate}#game{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none;outline:0;cursor:crosshair}#app:before{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;background:linear-gradient(#14233770,transparent 30%,transparent 70%,#11203980)}
+#app[data-view=menu] #hud,#app[data-view=menu] #touch,#app[data-view=menu] #lookZone,#app[data-view=menu] #netLabels{display:none!important}
+.ui{position:absolute;z-index:5;pointer-events:none}.topbar{top:max(14px,env(safe-area-inset-top));left:max(14px,env(safe-area-inset-left))}.stats{display:flex;gap:8px}.stat{background:#152d40df;border:1px solid #f9f7ef50;border-radius:12px;padding:8px 12px;min-width:70px}.tiny{display:block;font-size:10px;color:var(--sub)}.stat strong{font-size:17px;font-variant-numeric:tabular-nums}.stat.heart{width:140px}.hpTrack,.growthBar,.progressBox,.dashbar{height:8px;background:#0f2332;border-radius:20px;overflow:hidden;margin:5px 0}.hpTrack i,.growthBar i,.progressFill,.dashbar i{display:block;height:100%;width:0%;background:var(--mint);border-radius:20px}.hpTrack i{background:#ffaaa6;width:100%}.hpLabel{font-size:11px!important}.clock strong{color:var(--yellow)}
+.centerHead{top:max(16px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);width:230px;text-align:center;background:#152d40df;padding:8px 12px;border-radius:12px}.progressTitle{font-size:12px;font-weight:800}.progressFraction{font-size:10px;color:var(--sub)}.growthHud{top:94px;left:14px;width:170px;background:#152d40df;border-radius:12px;padding:9px 12px}.growthTop{display:flex;justify-content:space-between;gap:8px;align-items:center}.growthTop strong{color:var(--yellow);font-size:18px;white-space:nowrap}.growthTop strong span{font:inherit}#power{font-size:10px}.growthHelp{font-size:10px;line-height:1.5}.farmArrow{top:94px;left:50%;transform:translateX(-50%);font-size:12px;background:#152d40df;padding:7px 10px;border-radius:12px}.areaTag,.huntCounter{left:14px;background:#152d40df;padding:7px 10px;border-radius:10px;font-size:11px}.areaTag{top:190px}.huntCounter{top:224px}.minimap{top:260px;left:14px;width:145px;height:111px;border:1px solid #c3f1e999;border-radius:12px;background:#183448ce}
+#power,.growthHelp,.areaTag,.huntCounter,.minimap{display:none}.showDetails #power,.showDetails .growthHelp,.showDetails .areaTag,.showDetails .huntCounter,.showDetails .minimap{display:block}.showDetails .growthHud{width:220px}
+.hudTools{position:absolute;top:max(14px,env(safe-area-inset-top));right:max(14px,env(safe-area-inset-right));z-index:9;display:flex;gap:6px}.tool,.secondary,.back,.menuLinks button{border:1px solid #aacbc866;background:#1b3b50;border-radius:12px;padding:10px 14px;font-weight:800;font-size:13px}.tool{min-width:48px}.back,.menuLinks button{background:transparent}.back{border:0;padding-left:0}.wide{width:100%;margin-top:16px}.bottomRight{position:absolute;bottom:max(16px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:7;text-align:center;pointer-events:none}.status{font-size:12px;font-weight:800;text-shadow:0 2px 5px #000}.dashbar{width:110px;margin:7px auto}.dashbar i{width:100%}
+#targetIndicator{left:50%;top:48%;transform:translate(-50%,-50%);width:25px;height:25px;border:2px solid #ffffffe0;border-radius:50%;display:grid;place-items:center}#targetIndicator:after{content:'+';font-size:16px}#targetIndicator.active{border-color:var(--yellow)}#targetText{position:absolute;top:34px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:10px;background:#182f43c9;padding:5px 9px;border-radius:10px}#humanA,#humanB{position:absolute;z-index:6;pointer-events:none;transform:translate(-50%,-110%);padding:7px 10px;background:#fffffff0;color:#2c3d54;border-radius:12px;font-size:12px;font-weight:900;white-space:nowrap}#humanA.angry,#humanB.angry{background:#ff877e;color:#4a1627}#warning{top:166px;left:50%;transform:translateX(-50%);max-width:85vw;padding:10px 14px;border-radius:12px;background:#af3548ed;font-size:14px;font-weight:900;text-align:center;opacity:0}#warning.show{opacity:1}#toast{bottom:190px;left:50%;transform:translateX(-50%);max-width:90vw;padding:10px 16px;border-radius:12px;background:#162d40ed;font-size:13px;text-align:center;opacity:0;transition:opacity .2s}#toast.show{opacity:1}.respawnBanner{top:42%;left:50%;transform:translate(-50%,-50%);width:max-content;max-width:90vw;text-align:center;background:#14283aed;border:1px solid var(--yellow);border-radius:16px;padding:16px;font-size:20px;font-weight:900}
+.cover{position:absolute;inset:0;z-index:20;background:#102236a8;display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}.hero{width:min(460px,100%);max-height:100%;overflow:auto;overscroll-behavior:contain;background:#193247f5;border:1px solid #a4dec970;border-radius:24px;padding:28px;box-shadow:0 20px 70px #040f2780}.eyebrow{font-size:11px;letter-spacing:2px;color:var(--mint);font-weight:900}h1{font-size:clamp(42px,9vw,64px);line-height:1.05;letter-spacing:-3px;margin:15px 0}h1 em{font-style:normal;color:var(--pink)}h2{font-size:25px;margin:10px 0 12px;letter-spacing:-1px}.hero p{font-size:14px;line-height:1.65;color:#d9e7e4;margin:12px 0 24px}.hero small{display:block;text-align:center;color:#b8c9d2;font-size:11px;margin-top:16px}.primary{width:100%;display:block;border:0;border-radius:14px;background:#ffcf9d;color:#263849;padding:14px 18px;font-size:17px;font-weight:900}.primary:hover{background:#ffe0b8}.menuLinks{display:flex;justify-content:center;gap:12px;margin-top:18px}.menuLinks button{border:0}.roomSetup{margin:24px 0 0}.roomSetup label{display:block;font-size:12px;font-weight:800;margin-bottom:8px}.roomSetup label span{font-weight:400;color:var(--sub);margin-left:6px}.joinRow{display:flex;gap:8px}.joinRow input{width:0;flex:1;min-height:48px;padding:12px;border:1px solid #a3cbbb7c;border-radius:12px;background:#10293d;color:var(--ink);font-size:16px}#lobbyStatus{margin:18px 0;font-size:14px;line-height:1.6;color:var(--yellow);overflow-wrap:anywhere}#cancelLobby{display:none}.guide{padding-left:22px;margin:10px 0 18px;font-size:13px;line-height:1.5}.guide li{padding:5px 0}.guide b{color:var(--yellow)}summary{min-height:48px;display:flex;align-items:center;font-size:14px;color:var(--mint)}summary:before{content:'＋';margin-right:8px}details[open] summary:before{content:'−'}.hero .note{font-size:12px;color:#c2d4dc;margin:16px 0 0}.endTitle{font-size:36px;letter-spacing:-1.5px}.statsEnd{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:24px}.statsEnd span{font-size:11px;padding:10px 4px;text-align:center;background:#23485b;border-radius:10px}.statsEnd b{display:block;font-size:18px;color:var(--yellow);margin-top:5px}
+#netRoster{position:absolute;left:14px;top:380px;z-index:7;pointer-events:none;background:#132b41dd;padding:8px 12px;border-radius:12px;font-size:11px;display:none}#app[data-view=menu] #netRoster{display:none!important}#app[data-view=menu] [data-screen=multi] #netRoster{display:block!important;position:static;margin-top:12px}#app[data-view=menu] [data-screen=multi] #netRoster:empty{display:none!important}#netRoster .self{color:var(--yellow)}#netRoster .guest{color:#b9e9ff}.netName{position:absolute;z-index:7;pointer-events:none;white-space:nowrap;color:#f7fefa;background:#183647cc;border:1px solid #fff6;border-radius:12px;padding:2px 7px;font-size:11px;font-weight:850;transform:translate(-50%,-100%)}#buildTag{position:absolute;right:max(8px,env(safe-area-inset-right));bottom:max(3px,env(safe-area-inset-bottom));z-index:25;font-size:9px;color:#e9eff3b3;pointer-events:none}#boot{position:absolute;inset:0;display:grid;place-items:center;background:#142b3b;z-index:30;font-weight:800}#error{display:none;position:absolute;z-index:99;left:10px;right:10px;bottom:5px;max-height:35vh;overflow:auto;white-space:pre-wrap;background:#8b263df0;padding:15px;font:12px monospace}#error.show{display:block}
 #lookZone{display:none;position:absolute;z-index:3;top:0;bottom:0;right:0;width:70%;touch-action:none;user-select:none;-webkit-user-select:none;pointer-events:auto}#touch{display:none;position:absolute;z-index:10;inset:0;pointer-events:none;touch-action:none}.joystick{position:absolute;bottom:max(30px,calc(env(safe-area-inset-bottom) + 26px));left:max(19px,calc(env(safe-area-inset-left) + 19px));width:138px;height:138px;background:#10293878;border:3px solid #f9fffc88;border-radius:50%;box-shadow:0 7px 28px #142e38ab,inset 0 0 0 1px #fff5;pointer-events:auto;touch-action:none;display:grid;place-items:center}.joystick:before{content:'';width:81px;height:81px;border-radius:50%;border:1px dashed #ffffff45;position:absolute}.knob{height:58px;width:58px;background:linear-gradient(140deg,#e9fff7,#86d9c4);border:3px solid #fdfff3;border-radius:50%;box-shadow:0 5px 16px #0b31459c;position:relative;transition:transform .02s}.knob:after{content:'✣';color:#418f85;display:grid;place-items:center;height:100%;font-size:28px}
 .actionPad{position:absolute;bottom:max(21px,calc(env(safe-area-inset-bottom) + 13px));right:max(15px,calc(env(safe-area-inset-right) + 15px));width:208px;height:188px;pointer-events:none}.action{pointer-events:auto;position:absolute;border:2px solid #fff7d0c2;border-radius:50%;background:linear-gradient(145deg,#fbddb8,#ed9e78);box-shadow:0 7px 0 #99575b,0 11px 30px #10273ba1;display:flex;align-items:center;justify-content:center;flex-direction:column;line-height:1.15;text-shadow:none;color:#32374a;font-weight:1000;touch-action:none;user-select:none}.action strong{font-size:21px}.action small{font-size:10px}.action.pressed{transform:translateY(4px);box-shadow:0 3px 0 #99575b}.action[data-action=charge]{width:111px;height:111px;right:6px;bottom:19px;background:linear-gradient(145deg,#ffe8b1,#f8aa76);border-color:#fff3c6;box-shadow:0 7px 0 #af684e,0 12px 32px #10273ba1}.action[data-action=charge] strong{font-size:29px;margin-top:-7px}.action[data-action=charge] small{font-size:10px}.action[data-action=jump]{width:79px;height:79px;right:121px;bottom:107px;background:linear-gradient(145deg,#e0d6ff,#ab99e3);border-color:#fff}.action[data-action=jump] small{font-size:8px}.action[data-action=jump] strong{font-size:24px;margin-top:-7px}.jumpTrack{width:49px;height:6px;bottom:10px;left:calc(50% - 24.5px)}.jumpTrack>i{background:linear-gradient(90deg,#e8dfff,#806bd4)}.action[data-action=dodge]{width:68px;height:68px;right:129px;bottom:19px;background:linear-gradient(145deg,#ffdee4,#f9aab9)}.action[data-action=dodge] strong{font-size:20px}.chargeTrack{width:71px;height:7px;position:absolute;bottom:12px;left:calc(50% - 35.5px);border-radius:30px;background:#463a4270;overflow:hidden;border:1px solid #fff8}.chargeTrack>i{display:block;width:0;height:100%;background:linear-gradient(90deg,#fff6bf,#fc705e);border-radius:30px;box-shadow:0 0 12px #fff4b8}.action[data-action=charge].pressed{filter:saturate(1.25) brightness(1.06)}.touchTooltip{position:absolute;bottom:max(17px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);font-size:10px;font-weight:1000;background:#17364ab9;border-radius:10px;padding:7px 9px;white-space:nowrap}
-
-.growthHud{top:102px;right:16px;width:218px;background:#152d40dc;border:1px solid #fee7aa88;border-radius:15px;padding:11px 13px;box-shadow:0 10px 24px #162f4499;text-align:left}.growthTop{display:flex;justify-content:space-between;align-items:center;gap:6px}.growthTop strong{font-size:21px;color:#ffe4a9;font-weight:1000}.growthTop span{font-size:10px;color:#cdf8e8;font-weight:900}.growthBar{height:9px;border-radius:20px;margin:6px 0;background:#486076;overflow:hidden}.growthBar i{height:100%;width:0%;display:block;border-radius:15px;background:linear-gradient(90deg,#ffd27d,#fff1b9);transition:width .15s}.growthHelp{font-size:10px;font-weight:900;line-height:1.4;color:#cce9e1}.farmArrow{left:50%;top:73%;transform:translate(-50%,-50%);color:#ffeaa2;background:#173548b8;padding:6px 10px;border-radius:12px;border:1px solid #fbe5a877;white-space:nowrap;font-size:12px;font-weight:1000;text-shadow:0 3px 6px #0007}
-@media(pointer:coarse){#lookZone{display:block}#touch{display:block}.controlsHint{display:none}.bottomRight{bottom:auto;top:140px}.centerHead{top:max(85px,calc(env(safe-area-inset-top) + 79px))}.stat{min-width:68px}.brand span{display:none}}
-@media(max-width:790px){.topbar{gap:5px}.brand strong{font-size:clamp(17px,4vw,24px)}.brand span{font-size:8px}.stats{gap:4px}.stat{padding:7px 8px;min-width:64px;border-radius:11px}.stat .tiny{font-size:9px}.stat strong{font-size:14px}.stat.heart strong{font-size:19px;letter-spacing:0}.centerHead{width:min(300px,50vw)}.progressTitle{font-size:10px}.hero{padding:25px 24px}.hero p{font-size:14px}.introSteps{font-size:11px}}
-@media(max-width:560px){.topbar{align-items:start;left:12px;right:12px}.brand strong{font-size:19px;letter-spacing:-1px}.stats{max-width:67vw}.stat{padding:5px 7px;min-width:52px}.stat .tiny{font-size:8px}.stat strong{font-size:13px}.stat.heart strong{font-size:15px}.centerHead{top:max(91px,calc(env(safe-area-inset-top) + 83px));width:220px}.bottomRight{top:max(144px,calc(env(safe-area-inset-top) + 133px));right:10px}.growthHud{top:286px;right:8px;width:148px;padding:8px 9px;border-radius:12px}.growthTop strong{font-size:17px}.growthTop span{font-size:9px}.growthHelp{font-size:9px}.farmArrow{top:66%;font-size:10px}.bottomRight .status{font-size:9px}.dashbar{width:89px}.actionPad{transform:scale(.86);transform-origin:bottom right}.joystick{width:116px;height:116px}.knob{height:52px;width:52px}#toast{bottom:190px;font-size:12px;padding:10px 12px}#targetIndicator{top:51%}#humanA,#humanB{font-size:10px;padding:5px 7px}#warning{top:229px;font-size:12px;padding:8px 11px}.hero h1{font-size:46px}.pills{gap:4px}.pill{font-size:10px;padding:5px 7px}}
-@media(max-height:525px){.growthHud{top:85px;right:7px;width:140px}.growthHelp{display:none}.farmArrow{display:none}.cover .hero{max-height:94vh;overflow:auto;padding:18px 24px}.hero h1{font-size:35px;margin:5px 0}.hero p{font-size:12px;margin:8px 0}.pills{margin-bottom:9px}.introSteps{display:none}.hero small{margin-top:7px}.centerHead{top:58px}.topbar .brand span{display:none}.actionPad{transform:scale(.76);transform-origin:bottom right}.joystick{width:102px;height:102px;bottom:12px}.bottomRight{display:none}}
-@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
-
-/* v0.6 house-hunt UI: bars, world regions, minimap, persistent respawn. */
-.stat.heart{width:152px;min-width:152px;text-align:left;padding:7px 11px}.stat.heart .tiny{font-size:10px}
-.hpTrack{position:relative;height:11px;background:#0f2332;border:1px solid #ffffff5e;border-radius:30px;overflow:hidden;margin:4px 0 3px}
-.hpTrack i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#ff696f,#ffb2a2);border-radius:30px;transition:width .18s;box-shadow:0 0 9px #fd8e97}
-.stat.heart .hpLabel{font-size:11px;color:#fff3f5;letter-spacing:0}
-.areaTag{top:155px;left:18px;padding:8px 12px;border-radius:13px;background:#163449c9;color:#d8f9e8;font-size:12px;font-weight:950;border:1px solid #b4e7cc80;text-shadow:0 1px 3px #101a2d}
-.huntCounter{top:192px;left:18px;border-radius:11px;background:#163449ab;color:#fff1d6;padding:6px 10px;font-weight:900;font-size:11px;border:1px solid #a0cbd15b}
-.minimap{right:max(16px,env(safe-area-inset-right));top:114px;width:172px;height:132px;border-radius:16px;border:1.5px solid #c3f1e999;background:#183448ce;box-shadow:0 7px 20px #0816258a;pointer-events:none}
-.respawnBanner{top:42%;left:50%;transform:translate(-50%,-50%);background:#14283ae8;border:2px solid #fbe2a7a1;border-radius:20px;padding:17px 23px;font-size:clamp(17px,3vw,26px);font-weight:1000;white-space:nowrap;box-shadow:0 20px 45px #0a152bab;text-align:center}
-@media(max-width:650px){.stat.heart{width:108px;min-width:108px;padding:7px}.stat.heart .tiny{font-size:9px}.hpTrack{height:9px}.stat.heart .hpLabel{font-size:10px}
- .minimap{width:104px;height:80px;top:118px;right:8px}.areaTag{top:170px;left:9px;font-size:10px;padding:5px 7px}.huntCounter{top:197px;left:9px;font-size:10px;padding:5px 7px}
- #warning{top:228px!important;font-size:11px!important;max-width:80vw;padding:7px 9px!important}
- .centerHead{top:93px!important;width:min(310px,70vw)}
-}
-
-/* Gameplay-first HUD hierarchy (no overlay collisions in portrait). */
-@media (min-width:651px) {
- .minimap{top:246px;right:16px}
- .farmArrow{top:172px}
-}
-@media (max-width:650px) {
- .centerHead{top:max(88px,calc(env(safe-area-inset-top) + 83px))!important;width:min(270px,71vw)}
- .progressTitle{font-size:9px;letter-spacing:0}
- .minimap{top:max(158px,calc(env(safe-area-inset-top) + 158px));right:9px;width:105px;height:84px}
- .areaTag{top:158px;left:9px;font-size:10px;padding:5px 7px}
- .huntCounter{top:187px;left:9px;font-size:10px;padding:5px 7px}
- .growthHud{top:218px;left:9px;right:auto;width:176px;max-width:46vw;padding:8px 10px}
- .growthTop{align-items:flex-start;gap:5px}
- .growthTop strong{font-size:19px;white-space:nowrap}
- .growthTop span{font-size:9px;line-height:1.25;text-align:right}
- .growthHelp{display:none}
- #humanA,#humanB{transform:translate(-50%,-55%)}
- .bottomRight{display:none}
- .farmArrow{top:161px;left:52%;font-size:10px;padding:5px 9px;max-width:135px;overflow:hidden;text-overflow:ellipsis}
- #toast{bottom:183px;max-width:88vw}
-}
-@media (max-width:650px) and (max-height:680px) {
- .growthHud{top:207px;width:152px;padding:7px}
- .growthHelp{display:none}
- .minimap{top:146px}
- .areaTag{top:145px}.huntCounter{top:173px}
- .farmArrow{top:155px}
-}
-
 
 /* Combat readability: HP is always derived from each live mob's one authoritative hp.
    Presentation owns pooled, noninteractive screenspace feedback; gameplay never reads it. */
@@ -105,35 +51,22 @@
  .combatFloat{font-size:16px}.combatFloat.heavy{font-size:19px}.combatFloat.ko{font-size:12px}.combatFloat.level{font-size:18px}}
 @media(prefers-reduced-motion:reduce){.mobPlate.dead{animation:none;opacity:.65}.mobHpLag{transition:none}.combatFloat{transition:none}}
 
-#buildTag{position:absolute;right:8px;bottom:3px;z-index:5;font-size:9px;letter-spacing:.035em;color:#f1efeaad;pointer-events:none;text-shadow:0 1px 4px #171926}
 
-/* Multiplayer lobby and live roster keep a single room/actor SSOT. */
-.lobbyCap{display:inline-flex;align-items:center;font-size:12px;font-weight:850;color:#f4e8ca;padding:8px 0}
-#beginRoom{background:#89c9a2;color:#183b36;font-weight:900;border-radius:11px;border:0;padding:10px 13px}
-#beginRoom:disabled{opacity:.4;cursor:not-allowed}
-
-.roomSetup{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 8px}
-.roomSetup label{display:flex;flex-direction:column;gap:5px;font-size:11px;color:#d8ede7;font-weight:850}
-.roomSetup select,.roomSetup input{width:100%;background:#14344a;color:#fcf6ea;border:1px solid #a3cbbb7c;border-radius:11px;padding:10px 11px;font:800 14px system-ui;outline-color:#ffde9f}
-.roomActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:7px}
-.roomActions button{pointer-events:auto;border:1px solid #9ad9cc88;background:#285266;color:#f7fff7;border-radius:12px;padding:11px 6px;font-size:13px;font-weight:900}
-#lobbyStatus{margin:9px 0 0;min-height:20px;font-size:12px;line-height:1.35;font-weight:750;color:#ffebb9}
-#cancelLobby{display:none;margin-top:6px;background:transparent;border:1px solid #e5e5d366;border-radius:9px;padding:8px 12px;font-size:12px;color:#d9eff1}
-#netRoster{position:absolute;left:18px;top:232px;z-index:7;pointer-events:none;min-width:140px;border:1px solid #ceeae77e;background:#132b41b9;backdrop-filter:blur(8px);padding:8px 12px;border-radius:12px;font:850 12px/1.65 system-ui;display:none}
-#netRoster .self{color:#ffe1a1}#netRoster .guest{color:#b9e9ff}
-.netName{position:absolute;z-index:7;pointer-events:none;white-space:nowrap;color:#f7fefa;background:#183647cc;border:1px solid #fff6;border-radius:12px;padding:2px 7px;font-size:11px;font-weight:850;transform:translate(-50%,-100%)}
-@media(max-width:650px){#netRoster{top:365px;left:9px;right:auto;min-width:95px;font-size:10px;padding:6px 8px}.roomSetup{gap:6px}.roomActions button{font-size:12px}.hero{max-height:94dvh;overflow:auto;padding:22px 19px}.brand span{letter-spacing:1px!important}}
+@media(pointer:coarse){#lookZone,#touch{display:block}.bottomRight{bottom:215px}.actionPad{transform:scale(.86);transform-origin:bottom right}.joystick{width:116px;height:116px}}
+.clock{display:block}@media(max-width:740px){.clock{display:none}.showDetails .clock{display:block;position:fixed;top:190px;right:14px;left:auto}.hero{padding:22px}.topbar{top:max(10px,env(safe-area-inset-top));left:10px}.stat{padding:6px 9px;min-width:58px}.stat.heart{width:110px}.hudTools{top:max(10px,env(safe-area-inset-top));right:10px;gap:4px}.tool{padding:8px;font-size:11px}.centerHead{top:85px;width:190px;left:auto;right:10px;transform:none}.growthHud{top:85px;left:10px;width:135px}.farmArrow{top:145px}.showDetails .growthHud{width:145px}.growthTop{flex-wrap:wrap}.areaTag{top:198px}.huntCounter{top:231px}.minimap{top:266px;width:112px;height:86px}#netRoster{top:360px;left:10px}#warning{top:177px;font-size:12px}.bottomRight{bottom:205px;width:90%;font-size:11px}#targetText{display:none}.actionPad{transform:scale(.78);transform-origin:bottom right}.joystick{width:108px;height:108px}.knob{width:48px;height:48px}}
+@media(max-height:500px){.cover{padding:12px}.hero{padding:16px 24px;width:min(530px,100%)}h1{font-size:42px;margin:10px 0}.hero p{margin:8px 0 14px}.menuLinks{margin-top:10px}.hero small{margin-top:8px}.guide{margin:4px 0;font-size:12px}.guide li{padding:3px 0}.centerHead{top:12px;width:180px;left:50%;right:auto;transform:translateX(-50%)}.growthHud{top:85px}.farmArrow{top:90px}.bottomRight{bottom:8px}.actionPad{transform:scale(.72);transform-origin:bottom right}.joystick{width:98px;height:98px;bottom:14px}.minimap{top:190px}.areaTag{top:145px}.huntCounter{top:175px}#netRoster{top:85px;left:auto;right:14px}#warning{top:130px}#toast{bottom:130px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-<div id="app">
+<div id="app" data-view="menu">
  <canvas id="game" tabindex="0" aria-label="와르르냥 / Meow Tumble"></canvas>
  <div id="lookZone" aria-label="오른쪽 화면을 드래그하여 시점 회전"></div>
  <div id="boot">고양이에게 힘을 불어넣는 중… 🐈</div>
  <div id="error"></div>
  <div id="hud" class="inactive">
-  <div class="ui topbar"><div class="brand"><strong>와르르<b>냥</b></strong><span>MEOW TUMBLE · PHYSICS BOSS · 1–4 PLAYERS</span></div><div class="stats"><div class="stat heart"><span class="tiny">냥이 체력</span><div class="hpTrack"><i id="hpFill"></i></div><strong class="hpLabel" id="hpText">100 / 100</strong></div><div class="stat clock"><span class="tiny">경과 시간</span><strong id="clock">0:00</strong></div></div></div>
-  <div class="ui centerHead"><div class="progressTitle">🏰 젠가탑 물리 붕괴 · 충돌/중력</div><div class="progressBox"><div class="progressFill" id="progressFill"></div></div><div class="progressFraction" id="fraction">물리적으로 무너진 블록 0 / 32</div></div>
+  <div class="ui topbar"><div class="stats"><div class="stat heart"><span class="tiny">냥이 체력</span><div class="hpTrack"><i id="hpFill"></i></div><strong class="hpLabel" id="hpText">100 / 100</strong></div><div class="stat clock"><span class="tiny">경과 시간</span><strong id="clock">0:00</strong></div></div></div>
+  <div class="ui centerHead"><div class="progressTitle">젠가탑 무너뜨리기</div><div class="progressBox"><div class="progressFill" id="progressFill"></div></div><div class="progressFraction" id="fraction">물리적으로 무너진 블록 0 / 32</div></div>
  <div class="ui growthHud" id="growthHud"><div class="growthTop"><strong>🐈 LV <span id="level">1</span></strong><span id="power">질량 1.00 · 박치기 5~10</span></div><div class="growthBar"><i id="xpFill"></i></div><div class="growthHelp" id="growthHelp">🐁 쥐·곤충은 짧게 할퀴고, 탑은 차지 박치기로 무너뜨리세요</div></div>
  <div class="ui farmArrow" id="farmArrow">🐁 사냥터</div>
  <div class="ui areaTag" id="areaTag">🏠 집 전체 · 사냥 중</div>
@@ -146,21 +79,20 @@
   <div id="humanA">인간 A</div><div id="humanB">인간 B</div>
   <div id="mobHudLayer" aria-hidden="true"></div>
   <div id="combatFloatLayer" aria-hidden="true"></div>
-  <div class="controlsHint"><div id="controlsHint" class="keyHint"> <b>WASD</b> 이동　<b>마우스 이동</b> 시점<br><b>🐁 탭: 할퀴기 사냥</b> 성장<br><b>좌클릭 / F</b> 짧게: 할퀴기 / 길게: 박치기(1.5초)<br><b>Space</b> 점프 차지(1초)→놓기　<b>Shift</b> 방향 구르기　<b>Esc</b> 마우스 잠금 해제</div></div>
-  <div class="bottomRight"><button id="helpBtn" class="tool">조작법 ❔</button><button id="soundBtn" class="tool">🔊</button><div id="status" class="status">박치기 1.5초 · 점프 1초 차지</div><div class="dashbar"><i id="dashReady"></i></div></div>
+  <div class="hudTools"><button id="helpBtn" class="tool">도움말</button><button class="tool" data-route="settings">설정</button><button id="detailsBtn" class="tool" aria-expanded="false">지도·상세</button></div>
+ <div class="bottomRight"><div id="status" class="status"></div><div class="dashbar"><i id="dashReady"></i></div></div>
  </div>
  <div id="netRoster" aria-label="멀티플레이 참가자"></div><div id="netLabels" aria-hidden="true"></div>
- <div id="buildTag">v0.10.1 · MEOW TUMBLE</div>
- <div id="touch"><div id="stick" class="joystick"><div id="knob" class="knob"></div></div><div class="actionPad"><button type="button" class="action" data-action="charge" aria-label="짧게 누르면 할퀴기, 0.25초 이상 길게 누르고 떼면 박치기"><strong>🐾</strong><small>탭 할퀴기 · 홀드 박치기</small><span class="chargeTrack"><i id="touchChargeFill"></i></span></button><button type="button" class="action" data-action="jump" aria-label="점프: 1초까지 누르고 떼서 점프"><strong>↥</strong><small>길게 눌러 점프</small><span class="chargeTrack jumpTrack"><i id="touchJumpFill"></i></span></button><button type="button" class="action" data-action="dodge"><strong>↻</strong><small>구르기</small></button></div><div class="touchTooltip">왼쪽 이동 · 오른쪽 화면 드래그로 시점 회전</div></div>
- <section id="intro" class="cover"><div class="hero"><div class="eyebrow">MEOW TUMBLE · 고양이 반란 작전</div><h1>와르르<em>냥</em></h1><p>인간 둘이 쌓는 <b>고양이보다 훨씬 거대한 젠가탑.</b><br>처음에는 몸이 가벼워 탑에 거의 충격을 못 줍니다.<br><b>집 전체를 누비며 <b>도망가는 쥐와 곤충, 공격하는 거미</b>를 사냥해 질량을 키우세요. 중앙 식탁으로 올라가 두 거인의 손을 피하면서 젠가탑을 물리적으로 무너뜨리세요. 체력이 0이 되어도 <b>성장·탑 진행도 손실 없이 고양이 잠자리에서 부활</b>합니다.</p><div class="pills"><span class="pill">🐈 작은 고양이 vs 거인 둘</span><span class="pill">🐁 쥐·곤충·거미 사냥 · 성장</span><span class="pill">💥 거인의 지면 충격파 · 공중 튕김</span><span class="pill">🏰 무너지는 거대 탑</span></div><button id="startBtn" type="button" class="primary">🐾 싱글 플레이 시작 →</button>
-<div class="roomSetup">
- <span class="lobbyCap">🐈 최대 4명 · 1명부터 시작 가능</span>
- <label>방 코드<input id="roomCode" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="4자리 코드"></label>
-</div>
-<div class="roomActions"><button id="createRoom" type="button">🏠 방 만들기</button><button id="joinRoom" type="button">🐾 코드로 참가</button><button id="beginRoom" type="button" style="display:none">▶ 현재 인원으로 시작</button></div>
-<div id="lobbyStatus" role="status" aria-live="polite">방을 만들고 친구를 기다린 후, 방장이 1~4명 중 원하는 인원으로 시작합니다.</div>
-<button id="cancelLobby" type="button">연결 취소 / 싱글로 돌아가기</button><div class="introSteps"><b>1.</b> 주방·거실·침실·서재에서 <b>쥐·벌레·거미를 짧은 할퀴기로 사냥</b>해 레벨을 올리세요.<br><b>2.</b> 중앙 식탁에는 경사로로 올라가세요. 붉은 범위가 보이면 구르기! <b>지면을 퍼지는 충격파</b>가 고양이를 날려버립니다.<br><b>3.</b> <b>차지 박치기로 어느 블록이든 밀 수 있습니다.</b> 뛰면서도 박치기를 충전하고, 충돌·마찰·중력으로 균형을 무너뜨리세요!</div><small>모바일: 왼쪽 이동 + 오른쪽 드래그 · 짧게 할퀴기 · 길게 박치기 · 점프 차지 · PC: WASD + 마우스 이동<br>단일 HTML · 인터넷 연결 필요 · Rapier 3D 0.21.0 · Bloom GameKit WebRTC 동적 방 · 최대 4명</small></div></section>
- <section id="ending" class="cover hidden"><div class="hero"><div class="eyebrow">◆ 오늘의 대참사 ◆</div><h1 id="endingTitle" class="endTitle">대참사 성공! 🐾</h1><p id="endingSub">거대한 탑이 무너졌어요!</p><div class="statsEnd" id="endingStats"></div><button id="retryBtn" type="button" class="primary">🐾 한 판 더!</button><small>거인의 충격파를 구르기로 피하며 질량을 키우고, 균형이 약한 블록을 물리적으로 밀어보세요.</small></div></section>
+ <div id="buildTag">v0.10.2 · MEOW TUMBLE</div>
+ <div id="touch"><div id="stick" class="joystick"><div id="knob" class="knob"></div></div><div class="actionPad"><button type="button" class="action" data-action="charge" aria-label="짧게 누르면 할퀴기, 0.25초 이상 길게 누르고 떼면 박치기"><strong>🐾</strong><small>탭 할퀴기 · 홀드 박치기</small><span class="chargeTrack"><i id="touchChargeFill"></i></span></button><button type="button" class="action" data-action="jump" aria-label="점프: 1초까지 누르고 떼서 점프"><strong>↥</strong><small>길게 눌러 점프</small><span class="chargeTrack jumpTrack"><i id="touchJumpFill"></i></span></button><button type="button" class="action" data-action="dodge"><strong>↻</strong><small>구르기</small></button></div></div>
+ <section id="intro" class="cover" aria-label="게임 메뉴"><div class="hero">
+ <div data-screen="main"><div class="eyebrow">MEOW TUMBLE</div><h1>와르르<em>냥</em></h1><p>작은 고양이로 사냥하고 성장해<br>거대한 젠가탑을 무너뜨리세요.</p><button type="button" class="primary" data-route="modes">시작하기</button><div class="menuLinks"><button data-route="help">게임 방법</button><button data-route="settings">설정</button></div><small>1–4명 · PC / 터치 · 인터넷 연결 필요</small></div>
+ <div data-screen="modes" class="hidden"><button class="back" data-route="main">← 타이틀</button><h2>어떻게 놀까요?</h2><p>혼자 탐험하거나 친구와 함께 탑을 무너뜨려요.</p><button id="startBtn" type="button" class="primary">혼자 시작</button><button class="secondary wide" data-route="multi">친구와 함께 · 최대 4명</button></div>
+ <div data-screen="multi" class="hidden"><button class="back" id="lobbyBack">← 모드 선택</button><h2>친구와 함께</h2><p class="menuSummary">방을 만들거나 친구의 4자리 코드로 참가하세요.</p><div id="roomEntry"><button id="createRoom" class="primary" type="button">새 방 만들기</button><div class="roomSetup"><label for="roomCode">방 코드 <span>참가할 때 입력</span></label><div class="joinRow"><input id="roomCode" inputmode="numeric" pattern="[0-9]{4}" autocomplete="off" maxlength="4" placeholder="4자리 숫자"><button id="joinRoom" class="secondary" type="button">참가</button></div></div></div><div id="lobbyStatus" role="status" aria-live="polite">방장은 1명부터 시작할 수 있어요.</div><button id="beginRoom" class="primary" type="button" style="display:none">현재 인원으로 시작</button><button id="cancelLobby" class="secondary wide" type="button">연결 취소 / 방 나가기</button></div>
+ <div data-screen="help" class="hidden"><button class="back" data-menu-close>← 돌아가기</button><h2>게임 방법</h2><ol class="guide"><li><b>사냥하고 성장</b><br>집 안의 쥐·곤충·거미를 짧게 할퀴세요.</li><li><b>식탁으로 이동</b><br>경사로로 올라가 붉은 공격 범위를 구르기로 피하세요.</li><li><b>탑을 와르르!</b><br>길게 충전한 박치기로 블록을 밀어내세요.</li></ol><details><summary>PC / 터치 조작</summary><p>PC: WASD·방향키 이동 / 마우스 시점<br>F·좌클릭: 탭 할퀴기, 홀드 후 놓기 박치기<br>Space: 홀드 후 놓기 점프 / Shift: 구르기<br>Esc: 마우스 잠금 해제<br><br>터치: 왼쪽 스틱 이동 / 오른쪽 드래그 시점<br>발바닥·점프 버튼: 탭 또는 홀드 후 놓기</p></details><p class="note">체력이 0이 되어도 성장·탑 진행도를 유지하며 부활해요. 게임 중 메뉴를 열어도 세계는 계속 움직여요.</p></div>
+ <div data-screen="settings" class="hidden"><button class="back" data-menu-close>← 돌아가기</button><h2>설정</h2><button id="soundBtn" class="secondary wide" aria-pressed="true">효과음 켜짐</button><p class="note">화면 크기에 맞춰 조작 버튼이 자동으로 바뀝니다.</p></div>
+ </div></section>
+ <section id="ending" class="cover hidden"><div class="hero"><div class="eyebrow">오늘의 대참사</div><h1 id="endingTitle" class="endTitle">대참사 성공! 🐾</h1><p id="endingSub">거대한 탑이 무너졌어요!</p><div class="statsEnd" id="endingStats"></div><button id="retryBtn" type="button" class="primary">한 판 더</button><p id="replayStatus" class="note hidden">방장이 다음 판을 시작하면 함께 시작해요.</p><button id="titleBtn" class="secondary wide" type="button">타이틀로 돌아가기</button></div></section>
 </div>
 <script type="module">
 /* Bloom GameKit · v0.3.1 pinned published dist commit (2026-10-14). No duplicate input/loop/PRNG engine.
@@ -168,15 +100,16 @@
  * Browser WebRTC uses the official group-room transport, never a second signaling stack. */
 const GAMEKIT_PIN='72b09b260edf9650353017acb49c06873fe9f5a1';
 const GAMEKIT_CDN=`https://cdn.jsdelivr.net/gh/byh-playground/bloom-gamekit@${GAMEKIT_PIN}/`;
-let ActionState,SeededPRNG,createLoop,createNostrDynamicRoom,createRoomSession,profiles,InterpolationTimeline,PresentationEventQueue;
+let ActionState,SeededPRNG,createLoop,createNostrDynamicRoom,createRoomSession,profiles,InterpolationTimeline,PresentationEventQueue,createNavigation;
 try{
- const [inputModule,deterministicModule,loopModule,transportModule,sessionModule,interpolationModule,eventModule]=await Promise.all([
+ const [inputModule,deterministicModule,loopModule,transportModule,sessionModule,interpolationModule,eventModule,navigationModule]=await Promise.all([
   import(GAMEKIT_CDN+'input.js'),import(GAMEKIT_CDN+'deterministic.js'),
-  import(GAMEKIT_CDN+'simloop.js'),import(GAMEKIT_CDN+'transport.js'),import(GAMEKIT_CDN+'rollback.js'),import(GAMEKIT_CDN+'interpolation.js'),import(GAMEKIT_CDN+'presentation-events.js')]);
+  import(GAMEKIT_CDN+'simloop.js'),import(GAMEKIT_CDN+'transport.js'),import(GAMEKIT_CDN+'rollback.js'),import(GAMEKIT_CDN+'interpolation.js'),import(GAMEKIT_CDN+'presentation-events.js'),import(GAMEKIT_CDN+'navigation.js')]);
+ ({createNavigation}=navigationModule);
  ({InterpolationTimeline}=interpolationModule);({PresentationEventQueue}=eventModule);
  ({ActionState}=inputModule);({SeededPRNG}=deterministicModule);
  ({createLoop}=loopModule);({createNostrDynamicRoom}=transportModule);({createRoomSession,profiles}=sessionModule);
- if(!InterpolationTimeline||!PresentationEventQueue||!ActionState||!SeededPRNG||!createLoop||!createNostrDynamicRoom||!createRoomSession||!profiles)throw new Error('Bloom GameKit 공개 API가 누락됨');
+ if(!createNavigation||!InterpolationTimeline||!PresentationEventQueue||!ActionState||!SeededPRNG||!createLoop||!createNostrDynamicRoom||!createRoomSession||!profiles)throw new Error('Bloom GameKit 공개 API가 누락됨');
 }catch(error){
  document.querySelector('#boot').textContent='Bloom GameKit 로드 실패 · 인터넷/CORS 확인';
  const panel=document.querySelector('#error');panel.textContent=String(error.stack||error);panel.classList.add('show');throw error;
@@ -599,7 +532,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
 const DEF={
-  build:'20261014-gamekit-v0101',version:'0.10.1',
+  build:'20261014-menu-hierarchy-v0102',version:'0.10.2',
   // After the success threshold, physics keeps stepping until the debris is quiet.
   // These are PRESENTATION timings only; they never influence Rapier impulses.
   round:{durationMs:0,winBlocks:TOWER.winScattered,
@@ -619,7 +552,7 @@ const ui={start:document.querySelector('#intro'),end:document.querySelector('#en
  warning:document.querySelector('#warning'),message:document.querySelector('#toast'),status:document.querySelector('#status'),target:document.querySelector('#targetIndicator'),targetText:document.querySelector('#targetText'),
  humanA:document.querySelector('#humanA'),humanB:document.querySelector('#humanB'),endingTitle:document.querySelector('#endingTitle'),endingSub:document.querySelector('#endingSub'),endingStats:document.querySelector('#endingStats'),hud:document.querySelector('#hud'),touch:document.querySelector('#touch'),
  level:document.querySelector('#level'),power:document.querySelector('#power'),xpFill:document.querySelector('#xpFill'),growthHelp:document.querySelector('#growthHelp'),farmArrow:document.querySelector('#farmArrow'),
- respawn:document.querySelector('#respawnBanner'),area:document.querySelector('#areaTag'),kills:document.querySelector('#huntCounter'),minimap:document.querySelector('#miniMap'),joy:document.querySelector('#stick'),knob:document.querySelector('#knob'),chargeButton:document.querySelector('[data-action="charge"]'),chargeFill:document.querySelector('#touchChargeFill'),jumpButton:document.querySelector('[data-action="jump"]'),jumpFill:document.querySelector('#touchJumpFill'),help:document.querySelector('#helpBtn'),sound:document.querySelector('#soundBtn'),hint:document.querySelector('#controlsHint'),boss1:document.querySelector('#bossA'),boss2:document.querySelector('#bossB')};
+ respawn:document.querySelector('#respawnBanner'),area:document.querySelector('#areaTag'),kills:document.querySelector('#huntCounter'),minimap:document.querySelector('#miniMap'),joy:document.querySelector('#stick'),knob:document.querySelector('#knob'),chargeButton:document.querySelector('[data-action="charge"]'),chargeFill:document.querySelector('#touchChargeFill'),jumpButton:document.querySelector('[data-action="jump"]'),jumpFill:document.querySelector('#touchJumpFill'),help:document.querySelector('#helpBtn'),sound:document.querySelector('#soundBtn'),boss1:document.querySelector('#bossA'),boss2:document.querySelector('#bossB')};
 let RAPIER=null;
 const RAPIER_URL='https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.21.0/+esm';
 const tower=new PhysicsTower();
@@ -985,7 +918,7 @@ function updateCollapse(dt){
    if(net.room&&net.isHost)net.publishState(true);
  }
 }
-function endRound(success){if(phase!=='play'&&phase!=='collapse')return;if(document.pointerLockElement===gameCanvas)document.exitPointerLock?.();phase=success?'win':'lose';winClock=0;ui.end.classList.remove('hidden');ui.endingTitle.textContent=success?'대참사 성공! 🐾':'고양이 작전 실패…';ui.endingSub.textContent=success?'젠가가 끝까지 와르르 무너진 뒤 최종 결과를 집계했어요!':'성장과 회피 타이밍을 활용해 다시 도전하세요!';ui.endingStats.innerHTML=`<span>무너뜨린 블록 <b>${tower.scattered}개</b></span><span>걸린 시간 <b>${Math.round(seconds)}초</b></span><span>최종 성장 <b>LV ${cat.level}</b></span>`;ui.warning.classList.remove('show');sfx(success?'win':'lose');announce(success?'고양이가 이겼다!':'아직 포기하지 마!');}
+function endRound(success){if(phase!=='play'&&phase!=='collapse')return;if(document.pointerLockElement===gameCanvas)document.exitPointerLock?.();phase=success?'win':'lose';winClock=0;navigation.replace({screen:'result'});ui.retryBtn.disabled=!!net.room&&!net.isHost;ui.retryBtn.textContent=ui.retryBtn.disabled?'방장 시작 대기':'한 판 더';document.querySelector('#replayStatus').classList.toggle('hidden',!ui.retryBtn.disabled);ui.end.classList.remove('hidden');ui.endingTitle.textContent=success?'대참사 성공! 🐾':'고양이 작전 실패…';ui.endingSub.textContent=success?'젠가가 끝까지 와르르 무너진 뒤 최종 결과를 집계했어요!':'성장과 회피 타이밍을 활용해 다시 도전하세요!';ui.endingStats.innerHTML=`<span>무너뜨린 블록 <b>${tower.scattered}개</b></span><span>걸린 시간 <b>${Math.round(seconds)}초</b></span><span>최종 성장 <b>LV ${cat.level}</b></span>`;ui.warning.classList.remove('show');sfx(success?'win':'lose');announce(success?'고양이가 이겼다!':'아직 포기하지 마!');}
 function announce(msg,ms=2000){ui.message.textContent=msg;ui.message.classList.add('show');messageUntil=seconds*1000+ms;}
 function updateHUD(){
  const min=Math.floor(seconds/60),sec=Math.floor(seconds%60);ui.clock.textContent=min+':'+String(sec).padStart(2,'0');
@@ -1029,7 +962,7 @@ function wakeAudio(){if(!soundEnabled)return;try{audioContext ||= new (window.Au
 function sfx(name,amount=1){if(!audioContext||audioContext.state!=='running'||!soundEnabled)return;const t=audioContext.currentTime;let base=220,len=.14,type='triangle',gain=.05;
  switch(name){case'charge':base=490;len=.12;type='triangle';gain=.045;break;case'dash':base=135;len=.25;type='sawtooth';gain=.055;break;case'claw':base=780;len=.105;type='triangle';gain=.035;break;case'crash':base=90;len=.33;type='sawtooth';gain=.065;break;case'block':base=350;len=.13;type='sine';gain=.037;break;case'warn':base=540;len=.18;type='square';gain=.023;break;case'hit':base=180;len=.3;type='sawtooth';gain=.09;break;case'win':base=650;len=.46;gain=.11;break;case'lose':base=155;len=.5;gain=.04;break;case'jump':base=360;len=.11;gain=.045;break;case'collect':base=800;len=.16;gain=.055;break;case'dull':base=110;len=.14;gain=.045;break;case'crack':base=180;len=.16;gain=.075;break;case'roll':base=300;len=.14;gain=.045;break;case'land':base=108;len=.23;gain=.07;break;case'impact':base=82;len=.55;type='sawtooth';gain=.10;break;case'bounce':base=260;len=.17;type='square';gain=.065;break;}
  const osc=audioContext.createOscillator(),g=audioContext.createGain();osc.type=type;osc.frequency.setValueAtTime(base*(.96+Math.random()*.08),t);osc.frequency.exponentialRampToValueAtTime(Math.max(40,base*(name==='win'?1.65:.55)),t+len);g.gain.setValueAtTime(gain*Math.max(.2,Math.min(1.5,amount)),t);g.gain.exponentialRampToValueAtTime(.0001,t+len);osc.connect(g);g.connect(audioContext.destination);osc.start(t);osc.stop(t+len+.01);}
-function start(){wakeAudio();resetWorld();phase='play';net.startButton.style.display='none';ui.start.classList.add('hidden');ui.end.classList.add('hidden');ui.hud.classList.remove('inactive');roundStart=performance.now();announce('🐁 사냥으로 무거워져라! 거인 손의 충격파를 피해 모든 블록을 물리적으로 무너뜨려!',4300);gameCanvas.focus();}
+function start(){wakeAudio();resetWorld();phase='play';navigation.replace({screen:'play'});net.startButton.style.display='none';ui.start.classList.add('hidden');ui.end.classList.add('hidden');ui.hud.classList.remove('inactive');roundStart=performance.now();announce('🐁 사냥으로 무거워져라! 거인 손의 충격파를 피해 모든 블록을 물리적으로 무너뜨려!',4300);gameCanvas.focus();}
 function blinkHuman(h,msg,ms=1200){h.speech=msg;h.noticeMs=ms;}
 function patternRadius(h){return h.pattern==='grab'?2.9:h.pattern==='sweep'?4.5:5.2;}
 function createShockwave(h,x,z,scale=1){shockwaves.push({id:nowTicks*10+h.id+shockwaves.length*.01,x,z,r:0,previous:0,
@@ -2129,7 +2062,7 @@ let pendingInputEdges=0;
 const joy={id:null,x:0,y:0};
 const look={id:null,x:0,y:0},mouse={lastX:null,lastY:null};
 const lookZone=document.querySelector('#lookZone');
-function sampleControls(){for(const k in samples)actions.sampleInto(k,samples[k]);for(const action of canceledTouch){samples[action].pressed=false;samples[action].released=false;}canceledTouch.clear();let x=(samples.right.held?1:0)-(samples.left.held?1:0)+joy.x,y=(samples.up.held?1:0)-(samples.down.held?1:0)+joy.y;
+function sampleControls(){if(navigation.snapshot().screen!=='play'){actions.consume();pendingInputEdges=0;return DEFAULT_PEER_INPUT.slice();}for(const k in samples)actions.sampleInto(k,samples[k]);for(const action of canceledTouch){samples[action].pressed=false;samples[action].released=false;}canceledTouch.clear();let x=(samples.right.held?1:0)-(samples.left.held?1:0)+joy.x,y=(samples.up.held?1:0)-(samples.down.held?1:0)+joy.y;
  const d=Math.max(1,Math.hypot(x,y));x=clamp(x/d,-1,1);y=clamp(y/d,-1,1);
  const flags=(samples.charge.pressed?1:0)|(samples.charge.released?2:0)|(samples.jump.pressed?4:0)|(samples.dodge.pressed?8:0)|(samples.charge.held?16:0)|(samples.jump.released?32:0)|(samples.jump.held?64:0);
  pendingInputEdges|=flags&47;
@@ -2188,7 +2121,7 @@ const net={
  code:document.querySelector('#roomCode'),startButton:document.querySelector('#beginRoom'),
  statusNode:document.querySelector('#lobbyStatus'),rosterNode:document.querySelector('#netRoster'),
  labels:document.querySelector('#netLabels'),
- status(message){this.statusNode.textContent=message;},
+ status(message){this.statusNode.textContent=message;document.querySelector('#roomEntry').classList.toggle('hidden',this.joining||!!this.room);},
  roster(){return this.memberSession?.players?.slice()??this.room?.players?.slice()??[];},
  ready(){return !!this.room&&!!this.memberSession&&this.memberSession.status!=='membership'&&this.roster().includes(this.localId);},
  refreshLobby(){
@@ -2269,7 +2202,7 @@ const net={
   document.querySelector('#createRoom').addEventListener('click',()=>void this.open('host'));
   document.querySelector('#joinRoom').addEventListener('click',()=>void this.open('join'));
   this.startButton.addEventListener('click',()=>this.begin());
-  document.querySelector('#cancelLobby').addEventListener('click',()=>this.close());
+  document.querySelector('#cancelLobby').addEventListener('click',()=>{this.close();navigation.replace({screen:'multi'});});
  },
  showRoster(){
   this.rosterNode.style.display=this.room?'block':'none';
@@ -2286,7 +2219,7 @@ const net={
   for(const peer of this.remote.values())peer.remove?.();
   this.room?.close();this.room=null;this.remote.clear();this.isHost=false;this.localId='local';
   this.resetView();this.pendingStart=false;
-  this.rosterNode.style.display='none';this.labels.innerHTML='';
+  this.rosterNode.style.display='none';this.rosterNode.textContent='';this.labels.innerHTML='';
   this.startButton.style.display='none';
   document.querySelector('#cancelLobby').style.display='none';
   this.status('싱글플레이 또는 최대 4인 멀티 방을 만들어 주세요.');
@@ -2460,9 +2393,40 @@ const session={profile:{tickRate:30,maxCatchupSteps:4},inputSize:5,closed:false,
  releaseInput(){actions.releaseAll();joy.x=0;joy.y=0;net.releaseInput();},
  advance(input){net.pollMembership();if(!net.room||net.isHost)updateGame(1/30,input);else updateParticles(1/30);pendingInputEdges=0;net.sentInputEdges=0;return{status:'advanced'}}};
 const simLoop=createLoop({session,getInput:sampleControls,render:drawWorld,onError:e=>{console.error(e);document.querySelector('#error').textContent='게임 실행 오류: '+e.message;document.querySelector('#error').classList.add('show');},onInputRelease:()=>{joy.x=joy.y=0;look.id=null;cancelCharge();cancelJumpCharge();actions.consume();ui.chargeButton.classList.remove('pressed');ui.jumpButton.classList.remove('pressed');}});
+const navigation=createNavigation({normalize:route=>({screen:['main','modes','multi','help','settings','play','result'].includes(route.screen)?route.screen:'main'})});
+function renderMenu(route){
+ const active=phase==='play'||phase==='collapse',ended=phase==='win'||phase==='lose';
+ let screen=route.screen;
+ if(active&&!['play','help','settings'].includes(screen))screen='play';
+ else if(ended)screen='result';
+ else if(!active&&['play','result'].includes(screen))screen='main';
+ if(phase==='intro'&&(net.room||net.joining)&&!['multi','help','settings'].includes(screen))screen='multi';
+ if(screen!==route.screen){navigation.replace({screen});return;}
+ const playing=screen==='play',result=screen==='result';
+ (screen==='multi'?document.querySelector('[data-screen="multi"]'):document.querySelector('#app')).append(document.querySelector('#netRoster'));
+ document.querySelector('#app').dataset.view=playing?'play':'menu';
+ ui.start.classList.toggle('hidden',playing||result);ui.end.classList.toggle('hidden',!result);
+ document.querySelectorAll('[data-screen]').forEach(el=>el.classList.toggle('hidden',el.dataset.screen!==screen));
+ if(!playing){
+  actions.releaseAll();actions.consume();pendingInputEdges=0;net.releaseInput();joy.x=joy.y=0;joy.id=null;look.id=null;cancelCharge();cancelJumpCharge();
+  ui.knob.style.transform='translate(0px,0px)';ui.chargeButton.classList.remove('pressed');ui.jumpButton.classList.remove('pressed');
+  if(document.pointerLockElement===gameCanvas)document.exitPointerLock?.();
+ }
+ const panel=result?ui.end:document.querySelector(`[data-screen="${screen}"]`);
+ (playing?gameCanvas:panel?.querySelector('button'))?.focus({preventScroll:true});
+}
+navigation.subscribe(renderMenu);
+function bindMenu(){
+ document.querySelectorAll('[data-route]').forEach(button=>button.addEventListener('click',()=>navigation.navigate({screen:button.dataset.route})));
+ document.querySelectorAll('[data-menu-close]').forEach(button=>button.addEventListener('click',()=>navigation.navigate({screen:phase==='play'||phase==='collapse'?'play':net.room||net.joining?'multi':'main'})));
+ document.querySelector('#lobbyBack').addEventListener('click',()=>{net.close();navigation.navigate({screen:'modes'});});
+ document.querySelector('#titleBtn').addEventListener('click',()=>{net.close();phase='intro';navigation.replace({screen:'main'});});
+ document.querySelector('#detailsBtn').addEventListener('click',event=>{const expanded=ui.hud.classList.toggle('showDetails');event.currentTarget.setAttribute('aria-expanded',String(expanded));});
+ navigation.replace(navigation.snapshot(),{force:true});
+}
 function bindControls(){const keyboard={KeyW:'up',ArrowUp:'up',KeyS:'down',ArrowDown:'down',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right'};
  const discrete={ShiftLeft:'dodge',ShiftRight:'dodge'};const chargeKeys=new Set(['KeyF']);const jumpKeys=new Set(['Space']);
- document.addEventListener('keydown',e=>{if(keyboard[e.code]){actions.set(keyboard[e.code],'keyboard-'+e.code,true);e.preventDefault()}else if(chargeKeys.has(e.code)){actions.set('charge','keyboard-'+e.code,true);e.preventDefault()}else if(jumpKeys.has(e.code)){actions.set('jump','keyboard-'+e.code,true);e.preventDefault()}else if(discrete[e.code]){if(!e.repeat)actions.pulse(discrete[e.code]);e.preventDefault()}else if(e.code==='Escape'&&document.pointerLockElement===gameCanvas){document.exitPointerLock?.();e.preventDefault()}else if(e.code==='KeyR'&&!e.repeat&&phase!=='play'&&!net.room){start()}});
+ document.addEventListener('keydown',e=>{if(e.code==='KeyR'&&!e.repeat&&['win','lose'].includes(phase)&&!net.room){start();return;}if(navigation.snapshot().screen!=='play'||e.target.closest?.('input,textarea,summary')||(e.target.closest?.('button')&&['Space','Enter'].includes(e.code)))return;if(keyboard[e.code]){actions.set(keyboard[e.code],'keyboard-'+e.code,true);e.preventDefault()}else if(chargeKeys.has(e.code)){actions.set('charge','keyboard-'+e.code,true);e.preventDefault()}else if(jumpKeys.has(e.code)){actions.set('jump','keyboard-'+e.code,true);e.preventDefault()}else if(discrete[e.code]){if(!e.repeat)actions.pulse(discrete[e.code]);e.preventDefault()}else if(e.code==='Escape'&&document.pointerLockElement===gameCanvas){document.exitPointerLock?.();e.preventDefault()}});
  document.addEventListener('keyup',e=>{if(keyboard[e.code])actions.set(keyboard[e.code],'keyboard-'+e.code,false);if(chargeKeys.has(e.code))actions.set('charge','keyboard-'+e.code,false);if(jumpKeys.has(e.code))actions.set('jump','keyboard-'+e.code,false)});
  const resetHeld=()=>{actions.releaseAll();actions.consume();cancelCharge();cancelJumpCharge();joy.x=joy.y=0;joy.id=null;look.id=null;mouse.lastX=mouse.lastY=null;ui.chargeButton.classList.remove('pressed');ui.jumpButton.classList.remove('pressed');ui.knob.style.transform='translate(0px,0px)';};
  window.addEventListener('blur',resetHeld);document.addEventListener('visibilitychange',()=>{if(document.hidden)resetHeld()});
@@ -2470,15 +2434,15 @@ function bindControls(){const keyboard={KeyW:'up',ArrowUp:'up',KeyS:'down',Arrow
  // Desktop mouse look works without holding the button; click captures the cursor
  // so the player can turn indefinitely, as in Minecraft. Esc releases it.
  document.addEventListener('pointerlockchange',()=>{mouse.lastX=mouse.lastY=null});
- document.addEventListener('mousemove',e=>{if(phase==='play'&&document.pointerLockElement===gameCanvas)rotateLook(e.movementX,e.movementY,LOOK.mouseRadPerPx)});
+ document.addEventListener('mousemove',e=>{if(navigation.snapshot().screen==='play'&&phase==='play'&&document.pointerLockElement===gameCanvas)rotateLook(e.movementX,e.movementY,LOOK.mouseRadPerPx)});
  gameCanvas.addEventListener('pointermove',e=>{
-  if(phase!=='play'||e.pointerType!=='mouse'||document.pointerLockElement===gameCanvas)return;
+  if(navigation.snapshot().screen!=='play'||phase!=='play'||e.pointerType!=='mouse'||document.pointerLockElement===gameCanvas)return;
   if(mouse.lastX!==null)rotateLook(e.clientX-mouse.lastX,e.clientY-mouse.lastY,LOOK.mouseRadPerPx);
   mouse.lastX=e.clientX;mouse.lastY=e.clientY;
  });
  gameCanvas.addEventListener('pointerleave',()=>{mouse.lastX=mouse.lastY=null});
  gameCanvas.addEventListener('pointerdown',e=>{
-  if(phase!=='play'||e.pointerType!=='mouse')return;
+  if(navigation.snapshot().screen!=='play'||phase!=='play'||e.pointerType!=='mouse')return;
   if(e.button===0){actions.set('charge','mouse-primary',true);if(document.pointerLockElement!==gameCanvas){const task=gameCanvas.requestPointerLock?.();task?.catch?.(()=>{});}}
  });
  window.addEventListener('pointerup',e=>{if(e.pointerType==='mouse'&&e.button===0)actions.set('charge','mouse-primary',false)});
@@ -2486,7 +2450,7 @@ function bindControls(){const keyboard={KeyW:'up',ArrowUp:'up',KeyS:'down',Arrow
  // Right-side touch look is a dedicated pointer surface under HUD/buttons.
  // Its pointer is independent of the left joystick and can move at the same time.
  lookZone.addEventListener('pointerdown',e=>{
-  if(phase!=='play'||look.id!==null)return;
+  if(navigation.snapshot().screen!=='play'||phase!=='play'||look.id!==null)return;
   e.preventDefault();look.id=e.pointerId;look.x=e.clientX;look.y=e.clientY;
   lookZone.setPointerCapture?.(e.pointerId);
  });
@@ -2497,7 +2461,7 @@ function bindControls(){const keyboard={KeyW:'up',ArrowUp:'up',KeyS:'down',Arrow
  });
  const stopLook=e=>{if(e.pointerId===look.id)look.id=null};
  lookZone.addEventListener('pointerup',stopLook);lookZone.addEventListener('pointercancel',stopLook);lookZone.addEventListener('lostpointercapture',stopLook);
- ui.joy.addEventListener('pointerdown',e=>{if(phase!=='play')return;e.preventDefault();joy.id=e.pointerId;ui.joy.setPointerCapture(e.pointerId);updateJoy(e)});
+ ui.joy.addEventListener('pointerdown',e=>{if(navigation.snapshot().screen!=='play'||phase!=='play')return;e.preventDefault();joy.id=e.pointerId;ui.joy.setPointerCapture(e.pointerId);updateJoy(e)});
  const updateJoy=e=>{if(joy.id!==e.pointerId)return;let r=ui.joy.getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2,dist=Math.hypot(dx,dy),lim=Math.min(r.width,r.height)*.32,ratio=Math.min(1,dist/lim);joy.x=dist?dx/dist*ratio:0;joy.y=dist?-dy/dist*ratio:0;ui.knob.style.transform=`translate(${joy.x*lim}px,${-joy.y*lim}px)`};
  ui.joy.addEventListener('pointermove',updateJoy);
  function stopJoy(e){if(joy.id!==e.pointerId)return;joy.id=null;joy.x=joy.y=0;ui.knob.style.transform='translate(0px,0px)'}
@@ -2507,7 +2471,7 @@ function bindControls(){const keyboard={KeyW:'up',ArrowUp:'up',KeyS:'down',Arrow
  document.querySelectorAll('[data-action]').forEach(button=>{
   const action=button.dataset.action,holdAction=action==='charge'||action==='jump';let pointerId=null;
   button.addEventListener('pointerdown',e=>{
-   e.preventDefault();e.stopPropagation();if(phase!=='play')return;
+   e.preventDefault();e.stopPropagation();if(navigation.snapshot().screen!=='play'||phase!=='play')return;
    if(holdAction){
     if(pointerId!==null)return;
     pointerId=e.pointerId;button.setPointerCapture(e.pointerId);
@@ -2531,7 +2495,7 @@ function bindControls(){const keyboard={KeyW:'up',ArrowUp:'up',KeyS:'down',Arrow
  for(const type of ['keydown','keyup','pointerdown','pointerup','pointermove','pointercancel','mousemove']){
   window.addEventListener(type,()=>{if(phase==='play')simLoop.observeInput(performance.now());});
  }
- ui.startBtn.addEventListener('click',()=>{net.close();start();});ui.retryBtn.addEventListener('click',()=>{if(net.room&&!net.isHost){net.status('방장이 다음 판을 시작하면 함께 시작해요.');return;}if(net.room)net.sendReset();start();});net.bindLobby();ui.help.addEventListener('click',()=>ui.hint.classList.toggle('hidden'));ui.sound.addEventListener('click',()=>{soundEnabled=!soundEnabled;ui.sound.textContent=soundEnabled?'🔊':'🔇';if(soundEnabled)wakeAudio()});
+ ui.startBtn.addEventListener('click',()=>{net.close();start();});ui.retryBtn.addEventListener('click',()=>{if(net.room&&!net.isHost){net.status('방장이 다음 판을 시작하면 함께 시작해요.');return;}if(net.room)net.sendReset();start();});net.bindLobby();ui.help.addEventListener('click',()=>navigation.navigate({screen:'help'}));ui.sound.addEventListener('click',()=>{soundEnabled=!soundEnabled;ui.sound.textContent=soundEnabled?'효과음 켜짐':'효과음 꺼짐';ui.sound.setAttribute('aria-pressed',String(soundEnabled));if(soundEnabled)wakeAudio()});
 }
 async function main(){try{
  document.querySelector('#boot').textContent='Rapier 3D 물리 엔진 불러오는 중…';
@@ -2541,7 +2505,7 @@ async function main(){try{
  RAPIER=imported.default?.World?imported.default:imported;
  if(typeof RAPIER.init==='function')await RAPIER.init();
  if(!RAPIER.World||!RAPIER.ColliderDesc||!RAPIER.RigidBodyDesc)throw new Error('Rapier 3D API 검증 실패');
- renderer=new Toon3D(gameCanvas);renderHouse(renderer);resetWorld();bindControls();simLoop.start();
+ renderer=new Toon3D(gameCanvas);renderHouse(renderer);resetWorld();bindControls();bindMenu();simLoop.start();
  document.querySelector('#boot').classList.add('hidden');
  document.querySelector('#error').classList.remove('show');
  }catch(error){document.querySelector('#boot').textContent='게임 실행 실패: '+(error.message||error);

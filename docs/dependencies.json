@@ -30,6 +30,10 @@
       {
         "file": "presentation-events.js",
         "sha256": "469a820e22730cdff9a0e4cd37fcbbfa4ffc9af3e39eab6d9a784e1d544caf84"
+      },
+      {
+        "file": "navigation.js",
+        "sha256": "92c387dcfa8af47beb3544f4a16121bbfc8fa9831052b33ce07076dd733c81d3"
       }
     ],
     "sourceCommit": "baa96876876a08013ad28b5a71c83bfadd285fab",
