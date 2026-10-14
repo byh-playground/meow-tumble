@@ -2249,6 +2249,10 @@ const sceneView={
  reset(){const stepMs=net.room&&!net.isHost?100:1000/NET_DEF.stepHz;
   this.runtime=new PresentationRuntime({stepMs,delayMs:stepMs});this.frame=null;this.remoteReady=false;
  },
+ // A loop timing discontinuity discards alpha's old interval, not simulation state.
+ resetLocalClock(){if(!this.runtime||(net.room&&!net.isHost))return;
+  this.reset();this.capture(nowTicks*1000/NET_DEF.stepHz,true);
+ },
  capture(now,reset=false){
   const entities=[...roomCats].map(([id,c])=>({id:'cat:'+id,generation:0,type:CatRenderModel,source:c,teleport:!!c.viewTeleport}));
   for(const m of mobs){const p=m.body.translation(),v=m.body.linvel();entities.push({id:'mob:'+m.id,generation:0,type:MobRenderModel,
@@ -2538,7 +2542,9 @@ const session={profile:{tickRate:30,maxCatchupSteps:4},inputSize:5,closed:false,
  submitInput(input){net.submitInput(input);return{commandSequences:[]}},
  releaseInput(){actions.releaseAll();joy.x=0;joy.y=0;net.releaseInput();},
  advance(input){net.pollMembership();if(!net.room||net.isHost){const before=nowTicks;updateGame(1/30,input);if(nowTicks!==before)sceneView.capture(nowTicks*1000/NET_DEF.stepHz);}else updateParticles(1/30);pendingInputEdges=0;net.sentInputEdges=0;return{status:'advanced'}}};
-const simLoop=createLoop({session,getInput:sampleControls,render:drawWorld,onError:e=>{console.error(e);document.querySelector('#error').textContent='게임 실행 오류: '+e.message;document.querySelector('#error').classList.add('show');},onInputRelease:()=>{joy.x=joy.y=0;look.id=null;cancelCharge();cancelJumpCharge();actions.consume();ui.chargeButton.classList.remove('pressed');ui.jumpButton.classList.remove('pressed');}});
+const simLoop=createLoop({session,getInput:sampleControls,render:drawWorld,onBacklogDrop:()=>sceneView.resetLocalClock(),onError:e=>{console.error(e);document.querySelector('#error').textContent='게임 실행 오류: '+e.message;document.querySelector('#error').classList.add('show');},onInputRelease:()=>{joy.x=joy.y=0;look.id=null;cancelCharge();cancelJumpCharge();actions.consume();ui.chargeButton.classList.remove('pressed');ui.jumpButton.classList.remove('pressed');}});
+// Match createLoop's visibility reset; ordinary blur only releases input.
+document.addEventListener('visibilitychange',()=>{if(document.hidden)sceneView.resetLocalClock();});
 const navigation=createNavigation({normalize:route=>({screen:['main','modes','multi','help','settings','play','result'].includes(route.screen)?route.screen:'main'})});
 function renderMenu(route){
  const active=phase==='play'||phase==='collapse',ended=phase==='win'||phase==='lose';
