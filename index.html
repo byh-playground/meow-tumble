@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"/>
 <meta name="theme-color" content="#182438"/>
-<title>와르르냥 / Meow Tumble · 고정 팔 젠가 쌓기 · v0.17.1</title>
+<title>와르르냥 / Meow Tumble · 고정 팔 젠가 쌓기 · v0.17.2</title>
 <style>
 :root{color-scheme:dark;--bg:#17283c;--ink:#fffaf0;--sub:#c8d1da;--mint:#93edcb;--pink:#ffaaa6;--yellow:#ffe49e}
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:ui-rounded,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}button,input,summary{font:inherit}button,summary{cursor:pointer;touch-action:manipulation}button{color:inherit;min-height:48px}button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}button:disabled{opacity:.55;cursor:default}.hidden{display:none!important}
@@ -119,7 +119,7 @@
  <div class="bottomRight"><div id="status" class="status"></div><div class="dashbar"><i id="dashReady"></i></div></div>
  </div>
  <div id="netRoster" aria-label="멀티플레이 참가자"></div><div id="netLabels" aria-hidden="true"></div>
- <div id="buildTag">v0.17.1 · MEOW TUMBLE</div>
+ <div id="buildTag">v0.17.2 · MEOW TUMBLE</div>
  <div id="touch"><div id="stick" class="joystick"><div id="knob" class="knob"></div></div><div class="actionPad"><button type="button" class="action" data-action="charge" aria-label="짧게 누르면 할퀴기, 0.25초 이상 길게 누르고 떼면 박치기"><strong>🐾</strong><small>홀드 박치기<br>드래그 조준</small><span class="chargeTrack"><i id="touchChargeFill"></i></span></button><button type="button" class="action" data-action="jump" aria-label="점프: 1초까지 누르고 떼서 점프"><strong>↥</strong><small>길게 눌러 점프</small><span class="chargeTrack jumpTrack"><i id="touchJumpFill"></i></span></button><button type="button" class="action" data-action="dodge"><strong>↻</strong><small>구르기</small></button></div></div>
  <section id="intro" class="cover" aria-label="게임 메뉴"><div class="hero">
  <div data-screen="main"><div class="eyebrow">MEOW TUMBLE</div><h1>와르르<em>냥</em></h1><p>작은 고양이로 사냥하고 성장해<br>거대한 젠가탑을 무너뜨리세요.</p><button type="button" class="primary" data-route="modes">시작하기</button><div class="menuLinks"><button data-route="help">게임 방법</button><button data-route="settings">설정</button></div><small>1–4명 · PC / 터치 · 인터넷 연결 필요</small></div>
@@ -601,7 +601,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
  const DEF={
-    build:'20261015-fast-fixed-arm-jenga-v0171',version:'0.17.1',
+    build:'20261015-fast-fixed-arm-jenga-wedge-v0172',version:'0.17.2',
   // After the success threshold, physics keeps stepping until the debris is quiet.
   // These are PRESENTATION timings only; they never influence Rapier impulses.
   round:{durationMs:0,winBlocks:TOWER.winScattered,
@@ -1134,7 +1134,7 @@ const roomCats=new Map();
 let hapticEnabled=true;
 const rand=(a,b)=>a+(b-a)*rng.nextUint32()/4294967296;
 function makeCat(){return {id:"local",x:ARENA.spawnX,z:ARENA.spawnZ,y:ARENA.floorY,surfaceY:ARENA.floorY,vy:0,vx:0,vz:0,knockX:0,knockZ:0,aimYaw:Math.PI,get mass(){return catMassForLevel(this.level)},yaw:Math.PI,targetYaw:Math.PI,speed:0,hp:DEF.cat.maxHp,xp:0,level:1,growthSequence:0,openingMs:0,invuln:0,spawnProtectionMs:0,respawn:{leftMs:0},
- impactGraceMs:0,holdBlocked:false,charge:{held:false,elapsedMs:0,ratio:0,inputMs:0,tapPending:false},claw:{cooldown:{leftMs:0},animation:{leftMs:0},pendingHit:false,bufferMs:0,side:-1,attacks:0,lastHits:0},jump:{held:false,elapsedMs:0,ratio:0,lastVelocity:0,requestMs:0,releaseQueued:false,bufferRatio:0,coyoteMs:0,canJump:false},dash:{cooldown:{leftMs:0},leftMs:0,velocity:0,direction:{x:0,z:1}},dodgeCd:0,dodgeMs:0,dodgeBuffer:{leftMs:0,dx:0,dz:1},ticks:0,
+ impactGraceMs:0,unwedge:{anchor:null,blockedMs:0,cooldownMs:0,recoveries:0,lastDirection:null},holdBlocked:false,charge:{held:false,elapsedMs:0,ratio:0,inputMs:0,tapPending:false},claw:{cooldown:{leftMs:0},animation:{leftMs:0},pendingHit:false,bufferMs:0,side:-1,attacks:0,lastHits:0},jump:{held:false,elapsedMs:0,ratio:0,lastVelocity:0,requestMs:0,releaseQueued:false,bufferRatio:0,coyoteMs:0,canJump:false},dash:{cooldown:{leftMs:0},leftMs:0,velocity:0,direction:{x:0,z:1}},dodgeCd:0,dodgeMs:0,dodgeBuffer:{leftMs:0,dx:0,dz:1},ticks:0,
  motion:{state:'idle',elapsedMs:0,rollAxis:[1,0,0],rollDirX:0,rollDirZ:1,spinAxis:[1,0,0],spinRad:0,spinRate:0,wasAirborne:false,airborneRoll:false,fromRoll:false,rollRecoveryMs:0},trail:[],landings:0,humanHits:0,successfulRolls:0};}
 const HUMAN_PROFILES=Object.freeze([
  {label:'사람 A · 근접',patterns:['slam','sweep']},
@@ -1753,6 +1753,48 @@ function beginDodge(directionX,directionZ){
  return true;
 }
 function decodeAimYaw(input){return ((input[3]|(input[4]<<8))/65535)*Math.PI*2-Math.PI;}
+const CAT_UNWEDGE=Object.freeze({intent:.48,progress:.18,timeoutMs:760,cooldownMs:1250,rayScale:3.3,rayPadding:.32,groundImpulse:1.05,airImpulse:.78});
+function recoverCatFromWedge(dt,body,intentX,intentZ,inputMagnitude){
+ const state=cat.unwedge??(cat.unwedge={anchor:null,blockedMs:0,cooldownMs:0,recoveries:0,lastDirection:null});
+ const p=body.translation(),ms=dt*1000;
+ state.cooldownMs=Math.max(0,state.cooldownMs-ms);
+ const motionIntent=cat.motion.state==='roll'||cat.motion.state==='dash'||inputMagnitude>=CAT_UNWEDGE.intent;
+ if(!motionIntent||CAT_DISABLED_STATES.has(cat.motion.state)){
+  state.anchor=null;state.blockedMs=0;return;
+ }
+ if(!state.anchor){state.anchor=[p.x,p.z];state.blockedMs=0;return;}
+ if(Math.hypot(p.x-state.anchor[0],p.z-state.anchor[1])>=CAT_UNWEDGE.progress){
+  state.anchor=[p.x,p.z];state.blockedMs=0;return;
+ }
+ state.blockedMs+=ms;
+ if(state.blockedMs<CAT_UNWEDGE.timeoutMs||state.cooldownMs>0||cat.impactGraceMs>0)return;
+ const radius=tower.catCollider?.radius()??DEF.cat.size.baseRadius,reach=radius*CAT_UNWEDGE.rayScale+CAT_UNWEDGE.rayPadding;
+ const directions=[[1,0],[.7071068,.7071068],[0,1],[-.7071068,.7071068],[-1,0],[-.7071068,-.7071068],[0,-1],[.7071068,-.7071068]];
+ const desiredLength=Math.hypot(intentX,intentZ),desired=desiredLength>.05?[intentX/desiredLength,intentZ/desiredLength]:[0,0];
+ let best=null;
+ for(const [dx,dz] of directions){
+  const ray=new RAPIER.Ray({x:p.x,y:p.y,z:p.z},{x:dx,y:0,z:dz});
+  const hit=tower.world.castRayAndGetNormal(ray,reach,true,undefined,undefined,tower.catCollider,body);
+  const clearance=Math.max(0,(hit?.timeOfImpact??reach)-radius-.06),score=clearance+.24*(dx*desired[0]+dz*desired[1]);
+  if(!best||score>best.score)best={x:dx,y:0,z:dz,clearance,score};
+ }
+ const upRay=new RAPIER.Ray({x:p.x,y:p.y,z:p.z},{x:0,y:1,z:0});
+ const upHit=tower.world.castRayAndGetNormal(upRay,reach,true,undefined,undefined,tower.catCollider,body);
+ const upClearance=Math.max(0,(upHit?.timeOfImpact??reach)-radius-.06);
+ const canRise=upClearance>Math.max(.32,radius*.9),canSlide=best.clearance>.10;
+ if(!canRise&&!canSlide){
+  const away=desiredLength>.05?[-desired[0],-desired[1]]:[Math.cos(cat.yaw),-Math.sin(cat.yaw)];
+  const retreat=.68;body.applyImpulse({x:away[0]*retreat*body.mass(),y:.10*body.mass(),z:away[1]*retreat*body.mass()},true);
+  state.lastDirection=[away[0]*retreat,.10,away[1]*retreat].map(v=>Math.round(v*1000)/1000);state.recoveries++;
+  state.anchor=[p.x,p.z];state.blockedMs=0;state.cooldownMs=CAT_UNWEDGE.cooldownMs;return;
+ }
+ const grounded=isCatSupported(p),dv=canRise&&(!canSlide||best.clearance<radius*.7)
+  ?[desired[0]*.24,CAT_UNWEDGE.airImpulse,desired[1]*.24]
+  :[best.x*CAT_UNWEDGE.groundImpulse+desired[0]*.16,grounded?.18:.12,best.z*CAT_UNWEDGE.groundImpulse+desired[1]*.16];
+ body.applyImpulse({x:dv[0]*body.mass(),y:dv[1]*body.mass(),z:dv[2]*body.mass()},true);
+ state.lastDirection=dv.map(v=>Math.round(v*1000)/1000);state.recoveries++;
+ state.anchor=[p.x,p.z];state.blockedMs=0;state.cooldownMs=CAT_UNWEDGE.cooldownMs;
+}
 function updateCat(dt,input){
  cat.ticks++;const ms=dt*1000,body=tower.catBody;cat.impactGraceMs=Math.max(0,cat.impactGraceMs-ms);
  cat.invuln=Math.max(0,cat.invuln-ms);cat.spawnProtectionMs=Math.max(0,cat.spawnProtectionMs-ms);cat.openingMs=Math.max(0,cat.openingMs-ms);
@@ -1837,6 +1879,7 @@ function updateCat(dt,input){
   const damping=Math.min(1,dt*(cat.motion.state==='stunned'?3.2:5));
   body.applyImpulse({x:-current.x*body.mass()*damping,y:0,z:-current.z*body.mass()*damping},true);
  }
+ recoverCatFromWedge(dt,body,vx,vz,mag);
 }
 function tickAttackCharge(ms){
  const previousMs=cat.charge.elapsedMs;
@@ -2710,9 +2753,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewpo
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
-  namespace:'meow-tumble-0.17.1',inputBytes:5,snapshotLimit:15000,
-  inputType:91,snapshotType:92,resetType:93,startType:94,protocol:9});
-const LOBBY_VERSION='meow-tumble-0.17.1';
+  namespace:'meow-tumble-0.17.2',inputBytes:5,snapshotLimit:15000,
+  inputType:91,snapshotType:92,resetType:93,startType:94,protocol:10});
+const LOBBY_VERSION='meow-tumble-0.17.2';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};

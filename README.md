@@ -2,7 +2,7 @@
 
 집 안을 누비는 작은 고양이가 쥐·곤충을 사냥하며 성장하고, 사람의 공격을 피하며 거대한 젠가탑을 무너뜨리는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.17.1** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.17.2** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -155,4 +155,11 @@ The starting tower now has 8 layers and the cap remains 17. A human keeps the ex
 The initial 8-layer tower, 17-layer cap, human scale (3.10), and fixed two-segment arm remain unchanged. Each human moves to one work point beside the tower, bends down to pick up a nearby real mass-20 dynamic Rapier block, lifts it toward the body, turns toward the tower, and places and releases that same body with a short alignment pause. The former repeated supply-to-tower carry route is removed. The block stays under impulse-driven physics throughout the handoff and can still be disturbed or released by impacts. Placement checks the fixed arm reach before starting; a target outside reach is left unbuilt rather than reached by stretching the arm.
 
 The multiplayer namespace/protocol advances to 0.17.1/9 for the changed human build sequence. Camera, cat movement, block mass, and toy-ball mass and damage rules remain unchanged.
+
+
+## v0.17.2: physics-driven cat escape from wedged contacts
+
+When a cat keeps a movement, dash, or roll intent but makes almost no progress for 760 ms, short Rapier raycasts look for a clearer horizontal exit or open space overhead. The cat receives one capped impulse, then waits through a cooldown; if every ray is blocked, it gets a small physical retreat impulse opposite the held direction. Recovery only adds impulses to the existing dynamic body. It never relocates the cat, changes contact filters, alters damage, or runs without player intent.
+
+The multiplayer namespace/protocol advances to 0.17.2/10 for the revised host simulation.
 
