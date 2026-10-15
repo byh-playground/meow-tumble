@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"/>
 <meta name="theme-color" content="#182438"/>
-<title>와르르냥 / Meow Tumble · 사람 크기 복원과 지속 물리 공 · v0.15.2</title>
+<title>와르르냥 / Meow Tumble · 고정 팔 젠가 쌓기 · v0.16.0</title>
 <style>
 :root{color-scheme:dark;--bg:#17283c;--ink:#fffaf0;--sub:#c8d1da;--mint:#93edcb;--pink:#ffaaa6;--yellow:#ffe49e}
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:ui-rounded,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}button,input,summary{font:inherit}button,summary{cursor:pointer;touch-action:manipulation}button{color:inherit;min-height:48px}button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}button:disabled{opacity:.55;cursor:default}.hidden{display:none!important}
@@ -119,7 +119,7 @@
  <div class="bottomRight"><div id="status" class="status"></div><div class="dashbar"><i id="dashReady"></i></div></div>
  </div>
  <div id="netRoster" aria-label="멀티플레이 참가자"></div><div id="netLabels" aria-hidden="true"></div>
- <div id="buildTag">v0.15.2 · MEOW TUMBLE</div>
+ <div id="buildTag">v0.16.0 · MEOW TUMBLE</div>
  <div id="touch"><div id="stick" class="joystick"><div id="knob" class="knob"></div></div><div class="actionPad"><button type="button" class="action" data-action="charge" aria-label="짧게 누르면 할퀴기, 0.25초 이상 길게 누르고 떼면 박치기"><strong>🐾</strong><small>홀드 박치기<br>드래그 조준</small><span class="chargeTrack"><i id="touchChargeFill"></i></span></button><button type="button" class="action" data-action="jump" aria-label="점프: 1초까지 누르고 떼서 점프"><strong>↥</strong><small>길게 눌러 점프</small><span class="chargeTrack jumpTrack"><i id="touchJumpFill"></i></span></button><button type="button" class="action" data-action="dodge"><strong>↻</strong><small>구르기</small></button></div></div>
  <section id="intro" class="cover" aria-label="게임 메뉴"><div class="hero">
  <div data-screen="main"><div class="eyebrow">MEOW TUMBLE</div><h1>와르르<em>냥</em></h1><p>작은 고양이로 사냥하고 성장해<br>거대한 젠가탑을 무너뜨리세요.</p><button type="button" class="primary" data-route="modes">시작하기</button><div class="menuLinks"><button data-route="help">게임 방법</button><button data-route="settings">설정</button></div><small>1–4명 · PC / 터치 · 인터넷 연결 필요</small></div>
@@ -367,10 +367,10 @@ function limb(g,p0,p1,r,col){const d=vsub(p1,p0),mid=vmul(vadd(p0,p1),.5),axis=n
    All wooden pieces and the cat are dynamic rigid bodies; joints, supports,
    scripted collapse, block HP and level immunities do not exist. */
 const PHYS={gravity:17.5,solverIterations:10,friction:1.1,restitution:0.025};
-const TOWER={width:1.07,length:3.48,height:.70,gap:.025,initialLayers:22,maxLayers:26,mass:20,winScattered:32};
+const TOWER={width:1.07,length:3.48,height:.70,gap:.025,initialLayers:16,maxLayers:17,mass:20,winScattered:32};
 const ARENA={halfX:10.9,halfZ:8.6,edgeX:10.35,edgeZ:8.0,floorY:-3.05,houseHalfX:46,houseHalfZ:36,spawnX:0,spawnZ:23.5};
 // Exact model/placement anchors from pre-shrink d82b224 (0.12.1); no human rigid bodies existed there.
-const HUMAN_MODEL=Object.freeze({scale:3.10,height:3.925*3.10,z:-8.6,labelY:12.25,shadowRadius:2.25});
+const HUMAN_MODEL=Object.freeze({scale:3.10,height:3.925*3.10,z:-10.0,labelY:12.25,shadowRadius:2.25});
 const HUMAN_THROW=Object.freeze({referenceLevel:4,mass:2,speed:20,radius:.45,maxBalls:24,releaseHeight:3.77,releaseForward:2.05,friction:.55,restitution:.15,linearDamping:.16,angularDamping:.5});
 const LOOK={mouseRadPerPx:.0029,touchRadPerPx:.0062,pitchMin:-.86,pitchMax:1.22,
  followDistance:4.85,eyeHeight:1.42,
@@ -390,6 +390,18 @@ const RAMP=(()=>{
  return Object.freeze({halfLength,halfThickness,angle,centerZ,centerY,overlap,
   lowerZ:centerZ+run,upperZ:centerZ-run,topAtTable:0,topAtFloor:ARENA.floorY});
 })();
+const HUMAN_BUILD=Object.freeze({
+  walkSpeed:6.0,turnSpeed:4.5,sourceX:10.6,sourceApproachX:13.0,carryHeight:4.8,
+  towerSideX:2.6,shoulderSide:0.77*HUMAN_MODEL.scale,armUpper:.88*HUMAN_MODEL.scale,
+  armForearm:.77*HUMAN_MODEL.scale,pickupMs:620,alignMs:2500,settleMs:520,retractMs:480,
+  gripBreakSpeed:9,gripBreakSpin:18,alignKp:20,alignKd:5,alignMaxImpulse:1.2
+});
+const humanGroundY=(x,z)=>{
+  if(Math.abs(x)<=ARENA.halfX+.35&&Math.abs(z)<=ARENA.halfZ+.35)return 0;
+  if(z<RAMP.upperZ-.15||z>RAMP.lowerZ+.15||Math.abs(x)>2.5)return ARENA.floorY;
+  const t=clamp((RAMP.lowerZ-z)/(RAMP.lowerZ-RAMP.upperZ),0,1);
+  return lerp(ARENA.floorY,0,t);
+};
 // Gameplay slope policy; only walkable contacts may add incline assistance.
 // The cat stays a Rapier DYNAMIC body (never a kinematic teleporter).
 const CAT_SLOPE=Object.freeze({probeLength:.82,probeLift:.08,contactHeight:.69,maxAngleRad:Math.PI*48/180,steerVerticalRatio:.95});
@@ -457,23 +469,30 @@ class PhysicsTower {
   return{p:turn?[0,(level+.5)*TOWER.height,along]:[along,(level+.5)*TOWER.height,0],
    size:[TOWER.width,TOWER.height,TOWER.length],q:qyaw(turn?Math.PI/2:0),color:(level+slot)%3,level};
  }
- addBlockAt(level,slot){
-  const spec=this.getNextBlockSpec(level,slot),r=RAPIER;
+ addBlockAt(level,slot,spawnPosition=null,spawnRotation=null,building=false){
+  const spec=this.getNextBlockSpec(level,slot),r=RAPIER,initialP=spawnPosition??spec.p,initialQ=spawnRotation??spec.q;
   const body=this.world.createRigidBody(r.RigidBodyDesc.dynamic()
-     .setTranslation(...spec.p).setRotation(quat(spec.q))
+   .setTranslation(...initialP).setRotation(quat(initialQ))
      .setLinearDamping(.015).setAngularDamping(.045));
   this.world.createCollider(r.ColliderDesc.cuboid(...spec.size.map(v=>v*.5))
     .setMass(TOWER.mass).setFriction(PHYS.friction).setRestitution(PHYS.restitution),body);
-  const b={id:this.counter++,p:spec.p.slice(),q:spec.q.slice(),v:[0,0,0],w:[0,0,0],
-   home:spec.p.slice(),size:spec.size,level,color:spec.color,body,
+  const b={id:this.counter++,p:initialP.slice(),q:initialQ.slice(),v:[0,0,0],w:[0,0,0],
+   home:initialP.slice(),size:spec.size,level,color:spec.color,body,building,
    fallen:false,highlight:0,spawn:.19,sleeping:false,mass:TOWER.mass};
   this.blocks.push(b);return b;
  }
  addLayer(){if(this.layers>=TOWER.maxLayers)return false;
   for(let i=0;i<3;i++)this.addBlockAt(this.layers,i);this.layers++;this.partialSlot=0;return true;}
- addSingleBlock(){if(this.layers>=TOWER.maxLayers)return null;
-  const b=this.addBlockAt(this.layers,this.partialSlot);this.partialSlot++;
+ addSingleBlock(spawnPosition=null,spawnRotation=null,building=false){if(this.layers>=TOWER.maxLayers)return null;
+  const b=this.addBlockAt(this.layers,this.partialSlot,spawnPosition,spawnRotation,building);this.partialSlot++;
   if(this.partialSlot===3){this.layers++;this.partialSlot=0;}return b;}
+ releaseCarriedBlock(h){
+  const grip=h.grip;if(!grip)return null;
+  this.world.removeImpulseJoint(grip.joint,true);this.world.removeRigidBody(grip.anchorBody);
+  const block=this.blocks.find(b=>b.id===grip.blockId);
+  if(block){const p=block.body.translation();block.building=false;block.home=[p.x,p.y,p.z];}
+  h.grip=null;return block;
+ }
  addPlayer(id,position){
   if(this.playerBodies.has(id))return this.playerBodies.get(id);
   const r=RAPIER;
@@ -515,7 +534,8 @@ class PhysicsTower {
    b.v[0]=vel.x;b.v[1]=vel.y;b.v[2]=vel.z;
    b.w[0]=angular.x;b.w[1]=angular.y;b.w[2]=angular.z;
    b.sleeping=b.body.isSleeping();if(b.sleeping)sleepers++;
-   const deviation=Math.hypot(p.x-b.home[0],p.z-b.home[2]);
+    if(b.building){b.fallen=false;continue;}
+    const deviation=Math.hypot(p.x-b.home[0],p.z-b.home[2]);
    const tilt=1-Math.abs(1-2*(q.x*q.x+q.z*q.z));
    if(!b.fallen&&(deviation>1.55||p.y<b.home[1]-1.05||tilt>.40))b.fallen=true;
    if(b.fallen)fallen++;
@@ -556,7 +576,11 @@ class PhysicsTower {
   this.tick++;
   for(const b of this.blocks){b.highlight=Math.max(0,b.highlight-dt);b.spawn=Math.max(0,b.spawn-dt);}
   // Two 60 Hz Rapier substeps per 30 TPS authoritative game tick.
-  for(let substep=0;substep<2;substep++){
+   const handAnchors=(human??[]).filter(h=>h.grip?.anchorBody).map(h=>({
+    body:h.grip.anchorBody,start:h.grip.anchorBody.translation(),target:h.grip.nextPoint??h.grip.handPoint
+   }));
+   for(let substep=0;substep<2;substep++){
+   for(const a of handAnchors){const k=(substep+1)/2,p=[a.start.x+(a.target[0]-a.start.x)*k,a.start.y+(a.target[1]-a.start.y)*k,a.start.z+(a.target[2]-a.start.z)*k];a.body.setNextKinematicTranslation(vec3(p));}
   collisionDamage.capture();
   this.world.step(this.eventQueue);collisionDamage.resolve();
   // Resolve short-lived appliance contacts before the next physical substep.
@@ -572,14 +596,14 @@ class PhysicsTower {
    The host alone simulates Rapier; the guests receive bounded view snapshots.
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
-const DEF={
-  build:'20261015-human-restore-persistent-ball-v0150',version:'0.15.2',
+ const DEF={
+   build:'20261015-human-jenga-fixed-arm-carry-v0160',version:'0.16.0',
   // After the success threshold, physics keeps stepping until the debris is quiet.
   // These are PRESENTATION timings only; they never influence Rapier impulses.
   round:{durationMs:0,winBlocks:TOWER.winScattered,
     collapseMinMs:2800,collapseQuietMs:1350,collapseMaxMs:11800,collapseMovingTolerance:2},
   cat:{size:{min:.6,max:1.2,baseRadius:.5},moveSpeed:6.3,mass:{base:1,growthFactor:1.5},jump:{baseVelocity:10,maxMultiplier:2,durationMs:1000},charge:{durationMs:1500,baseSpeed:{base:5,perLevel:5/7},maxMultiplier:2,minDashMs:250,maxDashMs:560,cooldownMs:1550},claw:{tapMaxMs:250,cooldownMs:320,animationMs:260,hitAtMs:65,reach:2.55,queryRadius:1.46,queryForward:1.16,minFacingDot:.18,knockback:1.7},dodgeCooldownMs:1350,dodgeDurationMs:650,rollRecoveryMs:180,rollSpeed:12.5,rollIFrameStartMs:70,rollIFrameEndMs:495,launchAirControl:1.05,stunDurationMs:820,recoverDurationMs:550,maxHp:100,hitInvulnMs:1250},
-  humans:{buildDurationMs:3200,waveSpeed:15.2,impulse:11.8,slamUpSpeed:21.0,slamOutSpeed:14.5,otherUpSpeed:6.4,otherOutSpeed:10.2,launchMassExponent:.32},
+   humans:{buildDurationMs:45000,waveSpeed:15.2,impulse:11.8,slamUpSpeed:21.0,slamOutSpeed:14.5,otherUpSpeed:6.4,otherOutSpeed:10.2,launchMassExponent:.32},
   input:{chargeLookDeadzonePx:6,jumpBufferMs:150,coyoteMs:100,rollBufferMs:150,clawBufferMs:120},
   farming:{levelXp:[0,2,5,9,14,20,28,37,47,58,70,83],get maxLevel(){return this.levelXp.length},deathLossRatio:.10},
   graphics:{maxParticles:180,maxCombatBursts:16,maxDamageNumbers:26,mobHudDistance:25}
@@ -1116,9 +1140,9 @@ const HUMAN_ATTACKS=Object.freeze({
  sweep:{battleArea:true,minY:-2.4,radius:4.5,warningMs:1180,lockMs:1180,strikeMs:870,recoveryMs:1900,release:h=>{createShockwave(h,h.target[0],h.target[2]);createShockwave(h,h.target[0]-1.9,h.target[2],.72);}},
  throw:{range:24,minY:ARENA.floorY-1,radius:.65,warningMs:1500,lockMs:450,strikeMs:420,recoveryMs:2400,release:launchHumanToyBall}
 });
-function makeHuman(id){return{id,x:id===0?-8.4:8.4,z:HUMAN_MODEL.z,pattern:HUMAN_PROFILES[id].patterns[0],mode:'idle',timer:id===0?1600:3100,anim:0,target:[0,0,0],targetId:null,aimLocked:false,attackApplied:false,buildDone:false,anger:0,noticeMs:0,speech:HUMAN_PROFILES[id].label,attacks:0,builds:0};}
+function makeHuman(id){return{id,x:id===0?-12.8:12.8,y:ARENA.floorY,z:HUMAN_MODEL.z,yaw:0,pattern:HUMAN_PROFILES[id].patterns[0],mode:'idle',timer:id===0?1600:3100,anim:0,target:[0,0,0],targetId:null,aimLocked:false,attackApplied:false,buildDone:false,buildStage:null,buildStageMs:0,buildRoute:null,buildRouteIndex:0,handTarget:null,retractFrom:null,grip:null,anger:0,noticeMs:0,speech:HUMAN_PROFILES[id].label,attacks:0,builds:0};}
 // A low underhand release preserves the approved 0.14.0 world height and momentum.
-function humanThrowOrigin(h){return[h.x+.1,ARENA.floorY+HUMAN_THROW.releaseHeight,h.z+HUMAN_THROW.releaseForward];}
+function humanThrowOrigin(h){return[h.x+.1,h.y+HUMAN_THROW.releaseHeight,h.z+HUMAN_THROW.releaseForward];}
 function throwReference(){const level=HUMAN_THROW.referenceLevel,mass=catMassForLevel(level),speed=headbuttBaseSpeed(level)*DEF.cat.charge.maxMultiplier;return{level,mass,speed,momentum:mass*speed};}
 function humanAim(h,c){
  if(h.pattern==='throw')return[c.x,Math.max(c.y+catRadiusForLevel(c.level),c.surfaceY+HUMAN_THROW.radius),c.z];
@@ -1383,30 +1407,140 @@ function updateShockwaves(dt){for(let i=shockwaves.length-1;i>=0;i--){const w=sh
   tower.shockwave(w.x,w.z,w.r,band,w.strength*.36,w.hitBlocks);
   if(w.r>w.maxRadius+.24)shockwaves.splice(i,1);
  }}
+const humanActiveSide=h=>h.id===0?-1:1;
+function humanLocalPoint(h,x,y,z){return yawPart([h.x,h.y-.05,h.z],h.yaw,x,y,z);}
+function humanTurnToward(h,yaw,dt){const delta=((yaw-h.yaw+Math.PI*3)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;h.yaw+=clamp(delta,-HUMAN_BUILD.turnSpeed*dt,HUMAN_BUILD.turnSpeed*dt);return Math.abs(delta)<.08;}
+function walkHumanRoute(h,dt){
+ let remaining=HUMAN_BUILD.walkSpeed*dt;
+ while(remaining>1e-5&&h.buildRouteIndex<h.buildRoute.length){
+  const [tx,tz]=h.buildRoute[h.buildRouteIndex],dx=tx-h.x,dz=tz-h.z,distance=Math.hypot(dx,dz);
+  if(distance<.08){h.x=tx;h.z=tz;h.buildRouteIndex++;continue;}
+  const yaw=Math.atan2(dx,dz);humanTurnToward(h,yaw,dt);
+  const facing=Math.max(.5,1-Math.abs(((yaw-h.yaw+Math.PI*3)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI)/2.4);
+  const step=Math.min(distance,remaining*facing);h.x+=dx/distance*step;h.z+=dz/distance*step;remaining-=step;
+  h.y=humanGroundY(h.x,h.z);
+  if(step>=distance-.08){h.x=tx;h.z=tz;h.buildRouteIndex++;}
+ }
+ h.y=humanGroundY(h.x,h.z);return h.buildRouteIndex>=h.buildRoute.length;
+}
+function setCarryAnchorForCenter(h,center){
+ const q=h.grip.block.body.rotation(),point=vadd(center,qrotate([q.x,q.y,q.z,q.w],h.grip.local));
+ h.grip.nextPoint=point;h.handTarget=point.slice();
+}
+function addHumanCarryBlock(h){
+ const plan=h.buildPlan,side=h.id===0?-1:1,index=2-(h.builds%3);
+ plan.source=[side*HUMAN_BUILD.sourceX,(index+.5)*TOWER.height,0];plan.sourceIndex=index;
+ plan.gripLocal=[side*(TOWER.width*.5-.04),0,0];
+ const block=tower.addSingleBlock(plan.source,Q(),true);if(!block)return false;
+ plan.blockId=block.id;
+ const contact=vadd(plan.source,qrotate(block.q,plan.gripLocal));
+ const anchor=tower.world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(...contact));
+ const joint=tower.world.createImpulseJoint(RAPIER.JointData.spherical({x:0,y:0,z:0},vec3(plan.gripLocal)),anchor,block.body,true);
+ h.grip={blockId:block.id,block,local:plan.gripLocal.slice(),anchorBody:anchor,joint,nextPoint:contact.slice(),handPoint:contact.slice()};
+ h.handTarget=contact.slice();return true;
+}
+function buildCarryRoute(h){
+ const side=h.id===0?-1:1,plan=h.buildPlan,offset=qrotate(plan.q,plan.gripLocal),stanceZ=plan.p[2]+offset[2]-HUMAN_BUILD.shoulderSide;
+ plan.stance=[side*HUMAN_BUILD.towerSideX,0,stanceZ];
+ return[[side*HUMAN_BUILD.sourceApproachX,0],[side*HUMAN_BUILD.sourceApproachX,RAMP.lowerZ],
+  [0,RAMP.lowerZ],[0,RAMP.upperZ],[side*HUMAN_BUILD.towerSideX,RAMP.upperZ],[side*HUMAN_BUILD.towerSideX,stanceZ]];
+}
+function startHumanBuild(h){
+ const side=h.id===0?-1:1,plan=tower.getNextBlockSpec();
+ h.mode='build';h.timer=DEF.humans.buildDurationMs;h.buildDone=false;
+ h.buildPlan={...plan,p:plan.p.slice(),q:plan.q.slice(),size:plan.size.slice(),blockId:null,source:null,gripLocal:null};
+ h.buildStage='approach-supply';h.buildStageMs=0;h.grip=null;h.handTarget=null;h.retractFrom=null;
+ if(h.y>ARENA.floorY+1)h.buildRoute=[[0,RAMP.upperZ],[0,RAMP.lowerZ],[side*HUMAN_BUILD.sourceApproachX,RAMP.lowerZ],
+  [side*HUMAN_BUILD.sourceApproachX,0],[side*(HUMAN_BUILD.sourceApproachX-.2),0]];
+ else h.buildRoute=[[h.x,-RAMP.upperZ-.9],[side*HUMAN_BUILD.sourceApproachX,-RAMP.upperZ-.9],
+  [side*HUMAN_BUILD.sourceApproachX,0],[side*(HUMAN_BUILD.sourceApproachX-.2),0]];
+ h.buildRouteIndex=0;
+}
+function quaternionMultiply(a,b){return[
+ a[3]*b[0]+a[0]*b[3]+a[1]*b[2]-a[2]*b[1],a[3]*b[1]-a[0]*b[2]+a[1]*b[3]+a[2]*b[0],
+ a[3]*b[2]+a[0]*b[1]-a[1]*b[0]+a[2]*b[3],a[3]*b[3]-a[0]*b[0]-a[1]*b[1]-a[2]*b[2]];}
+function alignCarriedBlock(h,dt){
+ const body=h.grip.block.body,q=body.rotation(),current=[q.x,q.y,q.z,q.w],target=h.buildPlan.q;
+ let error=quaternionMultiply(target,[-current[0],-current[1],-current[2],current[3]]);if(error[3]<0)error=error.map(v=>-v);
+ const sine=Math.hypot(error[0],error[1],error[2]),angle=2*Math.atan2(sine,Math.max(0,error[3]));
+ const omega=body.angvel(),axis=sine>1e-5?[error[0]/sine,error[1]/sine,error[2]/sine]:[0,0,0];
+ let impulse=vmul(vsub(vmul(axis,angle*HUMAN_BUILD.alignKp),[omega.x*HUMAN_BUILD.alignKd,omega.y*HUMAN_BUILD.alignKd,omega.z*HUMAN_BUILD.alignKd]),dt);
+ const length=len(impulse);if(length>HUMAN_BUILD.alignMaxImpulse)impulse=vmul(impulse,HUMAN_BUILD.alignMaxImpulse/length);
+ if(length>1e-5)body.applyTorqueImpulse(vec3(impulse),true);
+}
+function releaseHumanCarry(h,disturbed=false){
+ const releasePoint=h.handTarget?.slice()??[h.x,h.y+4,h.z],block=tower.releaseCarriedBlock(h);
+ h.buildDone=true;h.buildStage='retract';h.buildStageMs=0;h.retractFrom=releasePoint;
+ if(block){h.builds++;if(!disturbed){particle(block.p,'yellow',13,1.5);sfx('block');}}
+}
+function advanceHumanBuild(h,dt){
+ const phase=h.buildStage;h.buildStageMs+=dt*1000;
+ if(h.grip&&phase!=='retract'){
+  const v=h.grip.block.body.linvel(),w=h.grip.block.body.angvel();
+  if(Math.hypot(v.x,v.y,v.z)>HUMAN_BUILD.gripBreakSpeed||Math.hypot(w.x,w.y,w.z)>HUMAN_BUILD.gripBreakSpin){releaseHumanCarry(h,true);return;}
+ }
+ if(phase==='approach-supply'){
+  if(walkHumanRoute(h,dt)){h.buildStage='face-supply';h.buildStageMs=0;}
+  return;
+ }
+ if(phase==='face-supply'){
+  const side=h.id===0?-1:1,yaw=side<0?Math.PI/2:-Math.PI/2;
+  if(humanTurnToward(h,yaw,dt)){h.buildStage='pickup';h.buildStageMs=0;if(!addHumanCarryBlock(h)){h.mode='idle';h.timer=900;h.buildPlan=null;h.buildStage=null;}}
+  return;
+ }
+ if(phase==='pickup'){
+  const t=clamp(h.buildStageMs/HUMAN_BUILD.pickupMs,0,1),center=h.buildPlan.source.map((v,i)=>lerp(v,[h.x,h.y+HUMAN_BUILD.carryHeight,h.z][i],t*t*(3-2*t)));
+  setCarryAnchorForCenter(h,center);
+  if(t>=1){h.buildStage='carry-route';h.buildStageMs=0;h.buildRoute=buildCarryRoute(h);h.buildRouteIndex=0;}
+  return;
+ }
+ if(phase==='carry-route'){
+  const done=walkHumanRoute(h,dt);setCarryAnchorForCenter(h,[h.x,h.y+HUMAN_BUILD.carryHeight,h.z]);
+  if(done){h.buildStage='face-tower';h.buildStageMs=0;}
+  return;
+ }
+ if(phase==='face-tower'){
+  const side=h.id===0?-1:1,yaw=side<0?Math.PI/2:-Math.PI/2;
+  setCarryAnchorForCenter(h,[h.x,h.y+HUMAN_BUILD.carryHeight,h.z]);
+  if(humanTurnToward(h,yaw,dt)){const p=h.grip.block.body.translation();h.alignStartCenter=[p.x,p.y,p.z];h.buildStage='align';h.buildStageMs=0;}
+  return;
+ }
+ if(phase==='align'){
+  const t=clamp(h.buildStageMs/HUMAN_BUILD.alignMs,0,1),smooth=t*t*(3-2*t),center=h.alignStartCenter.map((v,i)=>lerp(v,h.buildPlan.p[i],smooth));
+  setCarryAnchorForCenter(h,center);alignCarriedBlock(h,dt);
+  if(t>=1){h.buildStage='settle';h.buildStageMs=0;}
+  return;
+ }
+ if(phase==='settle'){
+  setCarryAnchorForCenter(h,h.buildPlan.p);alignCarriedBlock(h,dt);
+  if(h.buildStageMs>=HUMAN_BUILD.settleMs)releaseHumanCarry(h,false);
+  return;
+ }
+ if(phase==='retract'){
+  const t=clamp(h.buildStageMs/HUMAN_BUILD.retractMs,0,1),rest=humanLocalPoint(h,humanActiveSide(h)*.90*HUMAN_MODEL.scale,1.60*HUMAN_MODEL.scale,.29*HUMAN_MODEL.scale);
+  h.handTarget=h.retractFrom.map((v,i)=>lerp(v,rest[i],t*t*(3-2*t)));
+  if(t>=1){h.mode='idle';h.timer=640+rand(-120,520);h.buildPlan=null;h.buildStage=null;h.buildRoute=null;h.handTarget=null;h.retractFrom=null;}
+ }
+}
 function updateHumans(dt){for(const h of human){h.anim+=dt;h.noticeMs=Math.max(0,h.noticeMs-dt*1000);h.timer-=dt*1000;
- const profile=HUMAN_PROFILES[h.id];
- if(h.mode==='idle'&&h.timer<=0){h.pattern=profile.patterns[h.attacks%profile.patterns.length];const config=HUMAN_ATTACKS[h.pattern];
-  const target=[...roomCats.values()].filter(c=>c.hp>0&&(config.battleArea?Math.abs(c.x)<ARENA.halfX+6&&Math.abs(c.z)<ARENA.halfZ+6&&c.y>config.minY:c.y>=config.minY&&c.z>h.z+1.2&&Math.hypot(c.x-h.x,c.z-h.z)<=config.range)).sort((a,b)=>Math.hypot(a.x-h.x,a.z-h.z)-Math.hypot(b.x-h.x,b.z-h.z))[0];
-  const canBuild=tower.layers<TOWER.maxLayers&&tower.scattered<5&&!human.some(other=>other!==h&&other.mode==='build');
-  if(canBuild&&(!target||rng.nextInt(100)<(h.id===0?40:18))){h.mode='build';h.timer=DEF.humans.buildDurationMs;h.buildDone=false;h.buildPlan={...tower.getNextBlockSpec(),blockId:null};blinkHuman(h,'블록 하나 더!',1500);}
-  else if(target)beginHumanAttack(h,target);else h.timer=800;
- }
- if(h.mode==='build'){
-  if(!h.buildDone&&h.timer<=540){h.buildDone=true;const block=tower.addSingleBlock();if(block){h.builds++;h.buildPlan.blockId=block.id;particle(block.p,'yellow',13,1.5);sfx('block');}}
-  if(h.timer<=0){h.mode='idle';h.timer=640+rand(-120,520);}
- }
- if(h.mode==='warning'){const config=HUMAN_ATTACKS[h.pattern];
-  if(!h.aimLocked){const target=roomCats.get(h.targetId);if(target?.hp>0)h.target=humanAim(h,target);if(h.timer<=config.lockMs)h.aimLocked=true;}
-  if(h.timer<=0){h.mode='strike';h.timer=h.strikeMs=config.strikeMs;h.attackApplied=false;}
- }
- if(h.mode==='strike'){
-  if(!h.attackApplied&&h.timer<h.strikeMs*.66){h.attackApplied=true;HUMAN_ATTACKS[h.pattern].release(h);}
-  if(h.timer<=0){h.mode='recover';h.timer=HUMAN_ATTACKS[h.pattern].recoveryMs;}
- }
- if(h.mode==='recover'&&h.timer<=0){h.mode='idle';h.timer=550+rand(0,700);}
-}}
-
-// Level-based mass and base headbutt speed share one source of truth.
+  const profile=HUMAN_PROFILES[h.id];
+  if(h.mode==='idle'&&h.timer<=0){h.pattern=profile.patterns[h.attacks%profile.patterns.length];const config=HUMAN_ATTACKS[h.pattern];
+   const target=[...roomCats.values()].filter(c=>c.hp>0&&(config.battleArea?Math.abs(c.x)<ARENA.halfX+6&&Math.abs(c.z)<ARENA.halfZ+6&&c.y>config.minY:c.y>=config.minY&&c.z>h.z+1.2&&Math.hypot(c.x-h.x,c.z-h.z)<=config.range)).sort((a,b)=>Math.hypot(a.x-h.x,a.z-h.z)-Math.hypot(b.x-h.x,b.z-h.z))[0];
+   const canBuild=tower.layers<TOWER.maxLayers&&tower.scattered<5&&!human.some(other=>other!==h&&other.mode==='build');
+   if(canBuild&&(!target||rng.nextInt(100)<(h.id===0?40:18)))startHumanBuild(h);
+   else if(target)beginHumanAttack(h,target);else h.timer=800;
+  }
+  if(h.mode==='build')advanceHumanBuild(h,dt);
+  if(h.mode==='warning'){const config=HUMAN_ATTACKS[h.pattern];
+   if(!h.aimLocked){const target=roomCats.get(h.targetId);if(target?.hp>0)h.target=humanAim(h,target);if(h.timer<=config.lockMs)h.aimLocked=true;}
+   if(h.timer<=0){h.mode='strike';h.timer=h.strikeMs=config.strikeMs;h.attackApplied=false;}
+  }
+  if(h.mode==='strike'){
+   if(!h.attackApplied&&h.timer<h.strikeMs*.66){h.attackApplied=true;HUMAN_ATTACKS[h.pattern].release(h);}
+   if(h.timer<=0){h.mode='recover';h.timer=HUMAN_ATTACKS[h.pattern].recoveryMs;}
+  }
+  if(h.mode==='recover'&&h.timer<=0){h.mode='idle';h.timer=550+rand(0,700);}
+ }}// Level-based mass and base headbutt speed share one source of truth.
 function catScaleForLevel(level){const size=DEF.cat.size;return lerp(size.min,size.max,(level-1)/(DEF.farming.maxLevel-1));}
 function catRadiusForLevel(level){return DEF.cat.size.baseRadius*catScaleForLevel(level);}
 function catMassForLevel(level){return DEF.cat.mass.base*Math.pow(DEF.cat.mass.growthFactor,level-1);}
@@ -2232,89 +2366,80 @@ const HUMAN_STYLES=Object.freeze([
  {shirt:rgb('#d49b76'),light:rgb('#ecc29e'),trim:rgb('#a97964'),pants:rgb('#687887'),shoe:rgb('#4b5362'),hair:rgb('#68524b'),skin:rgb('#f1cbb0'),accent:rgb('#f5ddca')}
 ]);
 function humanBuildPose(h){
- if(h.mode!=='build'||!h.buildPlan)return null;const plan=h.buildPlan,t=clamp(1-h.timer/DEF.humans.buildDurationMs,0,1),side=h.id===0?-1:1,scale=HUMAN_MODEL.scale;
- const pickup=[h.x+side*1.2*scale,ARENA.floorY+TOWER.height*2.5,h.z+1.0],lift=[pickup[0],pickup[1]+2,pickup[2]],above=[plan.p[0],plan.p[1]+1.1,plan.p[2]];
- const mix=(a,b,k)=>a.map((v,i)=>lerp(v,b[i],k*k*(3-2*k)));let p,stage;
- if(t<.18){p=pickup;stage='집기';}else if(t<.32){p=mix(pickup,lift,(t-.18)/.14);stage='들기';}else if(t<.62){const k=(t-.32)/.30;p=mix(lift,above,k);p[1]+=.65*Math.sin(k*Math.PI);stage='운반';}else if(t<.74){p=mix(above,[plan.p[0],plan.p[1]+.35,plan.p[2]],(t-.62)/.12);stage='정렬';}else if(t<.83125){p=mix([plan.p[0],plan.p[1]+.35,plan.p[2]],plan.p,(t-.74)/.09125);stage='내려놓기';}else{p=plan.p.slice();stage='손떼기';}
- const turn=clamp((t-.50)/.24,0,1),rotation=plan.q.map((v,i)=>lerp(Q()[i],v,turn)),length=Math.hypot(...rotation);const q=rotation.map(v=>v/length);
- return{t,stage,p,q,held:!h.buildDone&&t>=.18,shift:side*.18*Math.sin(t*Math.PI),pickup,release:clamp((t-.83125)/.16875,0,1)};
+ if(h.mode!=='build'||!h.buildPlan)return null;
+ const body=h.grip?.block?.body,q=body?.rotation(),rotation=q?[q.x,q.y,q.z,q.w]:h.buildPlan.q;
+ return{stage:h.buildStage,p:h.handTarget?.slice()??null,q:rotation,held:!!h.buildPlan.blockId&&!h.buildDone&&h.buildStage!=='retract',release:h.buildStage==='retract'?clamp(h.buildStageMs/HUMAN_BUILD.retractMs,0,1):0,sourceIndex:h.grip?h.buildPlan.sourceIndex:(2-(h.builds%3))};
 }
 function drawHuman(g,h){
- // Friendly low-poly proportions. Simple faces, restrained hands and IK-limited reaching.
- // Exact pre-shrink adult proportions; the original humans had no rigid-body capsule.
- const buildPose=humanBuildPose(h),x=h.x+(buildPose?.shift??0),z=h.z,scale=HUMAN_MODEL.scale,base=ARENA.floorY-.05,style=HUMAN_STYLES[h.id];
- const p=(a,b,c)=>[x+a*scale,base+b*scale,z+c*scale];
+ const buildPose=humanBuildPose(h),x=h.x,z=h.z,scale=HUMAN_MODEL.scale,base=h.y-.05,style=HUMAN_STYLES[h.id];
+ const p=(a,b,c)=>yawPart([x,base,z],h.yaw,a*scale,b*scale,c*scale);
  const acting=h.mode==='warning'||h.mode==='strike',building=h.mode==='build',recover=h.mode==='recover';
  const warning=h.mode==='warning'?clamp(1-h.timer/Math.max(1,h.warningMs),0,1):acting?1:0;
  const strike=h.mode==='strike'?clamp(1-h.timer/Math.max(1,h.strikeMs),0,1):0;
- const breathing=Math.sin(sceneView.displaySeconds*1.7+h.id)*.02;
- const lightStep=Math.sin(sceneView.displaySeconds*1.1+h.id)*.025;
- g.disc([h.x,ARENA.floorY+.045,h.z],HUMAN_MODEL.shadowRadius,COLOR.shadow,.20);
- // Boots and articulated trouser legs, with no disproportionate oversized feet.
+ const breathing=Math.sin(sceneView.displaySeconds*1.7+h.id)*.02,walking=building&&(buildPose?.stage==='approach-supply'||buildPose?.stage==='carry-route');
+ const gait=walking?Math.sin(h.anim*7+h.id*Math.PI):0,lightStep=walking?Math.max(0,gait)*.20:Math.sin(sceneView.displaySeconds*1.1+h.id)*.025;
+ g.disc([h.x,h.y+.045,h.z],HUMAN_MODEL.shadowRadius,COLOR.shadow,.20);
  for(const side of [-1,1]){
-  const hip=p(side*.27,1.51,0),knee=p(side*.30,.92,lightStep),ankle=[h.x+side*.30*scale,base+.20*scale,h.z];
+  const hip=p(side*.27,1.51,0),knee=p(side*.30,.92,lightStep),ankle=p(side*.30,.20,gait*.16);
   limb(g,hip,knee,.22*scale,style.pants);limb(g,knee,ankle,.205*scale,style.pants);
-  g.cube([h.x+side*.30*scale,base+.11*scale,h.z+.18*scale],[.48*scale,.21*scale,.77*scale],style.shoe);
+  g.cube(p(side*.30,.11,.18+gait*.15),[.48*scale,.21*scale,.77*scale],style.shoe,qyaw(h.yaw));
  }
- // Clean low-poly sweatshirt / jacket: distinct waist, chest, collar, not bulbous spheres.
- g.cube(p(0,1.55,0),[.98*scale,.52*scale,.52*scale],style.pants);
- g.cube(p(0,2.18+breathing,0),[1.27*scale,1.25*scale,.74*scale],style.shirt);
- g.cube(p(0,2.70+breathing,.025),[1.33*scale,.15*scale,.77*scale],style.light);
- g.cube(p(0,2.82+breathing,.04),[.50*scale,.20*scale,.46*scale],style.trim);
- // One seam/pocket identifies clothing without looking like heavy armor.
- g.cube(p(0,2.15,-.393),[.12*scale,.55*scale,.025*scale],style.trim);
+ g.cube(p(0,1.55,0),[.98*scale,.52*scale,.52*scale],style.pants,qyaw(h.yaw));
+ g.cube(p(0,2.18+breathing,0),[1.27*scale,1.25*scale,.74*scale],style.shirt,qyaw(h.yaw));
+ g.cube(p(0,2.70+breathing,.025),[1.33*scale,.15*scale,.77*scale],style.light,qyaw(h.yaw));
+ g.cube(p(0,2.82+breathing,.04),[.50*scale,.20*scale,.46*scale],style.trim,qyaw(h.yaw));
+ g.cube(p(0,2.15,-.393),[.12*scale,.55*scale,.025*scale],style.trim,qyaw(h.yaw));
  for(const side of [-1,1]){
-  const shoulder=p(side*.77,2.55,.04);let wrist=p(side*.90,1.60,.29);
-  const activeSide=h.id===0?-1:1;
-  if(side===activeSide&&(acting||building||recover)){
-   const target=building?tower.getNextBlockSpec().p:[h.target[0],h.mode==='strike'?.44:1.20,h.target[2]];
-   const toward=vsub(target,shoulder),distance=len(toward);
-   // Reach limit prevents rubber-band hands and impossible shoulder stretching.
-   const cap=1.65*scale,clipped=vadd(shoulder,vmul(toward,Math.min(1,cap/Math.max(.001,distance))));
-   const ratio=building?clamp(1-h.timer/DEF.humans.buildDurationMs,0,1):acting?warning:recover?.38:0;
-   const k=building?.40+.35*ratio:acting?.20+.72*ratio:.27;
-   wrist=wrist.map((v,i)=>lerp(v,clipped[i],k));
-   if(h.mode==='strike')wrist[1]+=.5*Math.sin(Math.PI*strike);
+  const shoulder=p(side*.77,2.55,.04);let wrist=p(side*.90,1.60,.29),activeSide=humanActiveSide(h);
+  if(side===activeSide){
+   if(buildPose?.p)wrist=buildPose.p.slice();
+   else if(acting||recover){
+    const target=[h.target[0],h.mode==='strike'?.44:1.20,h.target[2]],toward=vsub(target,shoulder),distance=len(toward);
+    const cap=HUMAN_BUILD.armUpper+HUMAN_BUILD.armForearm,clipped=vadd(shoulder,vmul(toward,Math.min(1,cap/Math.max(.001,distance))));
+    const ratio=acting?warning:recover?.38:0,k=acting?.20+.72*ratio:.27;
+    wrist=wrist.map((v,i)=>lerp(v,clipped[i],k));if(h.mode==='strike')wrist[1]+=.5*Math.sin(Math.PI*strike);
+   }
   }
   if(h.pattern==='throw'&&side===1&&(acting||recover)){const windup=p(.90,1.60,.29),out=humanThrowOrigin(h);wrist=h.mode==='strike'?windup.map((v,i)=>lerp(v,out[i],Math.min(1,strike*3))):windup;if(!h.attackApplied)drawToyBall(g,wrist);}
-  if(buildPose&&side===activeSide){const tip=[buildPose.p[0],buildPose.p[1]+.48,buildPose.p[2]],toward=vsub(tip,shoulder),distance=len(toward),cap=1.65*scale;
-   const reach=vadd(shoulder,vmul(toward,Math.min(1,cap/Math.max(.001,distance)))),rest=p(side*.90,1.60,.29),grip=buildPose.t<.18?buildPose.t/.18:1-buildPose.release;
-   wrist=rest.map((v,i)=>lerp(v,reach[i],grip));
-   if(grip>.02){const middle=wrist.map((v,i)=>lerp(v,tip[i],.45));limb(g,wrist,middle,.15,style.trim);limb(g,middle,tip,.095,COLOR.dark);g.orb(middle,[.14,.14,.14],COLOR.mint);g.orb(wrist,[.15,.15,.15],style.trim);const jaw=TOWER.width/2+.06+.28*buildPose.release;for(const sign of [-1,1])limb(g,vadd(tip,qrotate(buildPose.q,[sign*jaw,.1,0])),vadd(tip,qrotate(buildPose.q,[sign*jaw,-.45,0])),.08,COLOR.mint);}
+  const active=side===activeSide&&(buildPose?.p||acting||recover),delta=vsub(wrist,shoulder),rawDistance=len(delta);
+  let elbow;
+  if(active){
+   const upper=HUMAN_BUILD.armUpper,forearm=HUMAN_BUILD.armForearm,distance=clamp(rawDistance,Math.abs(upper-forearm)+.001,upper+forearm-.001),direction=norm(delta);
+   const pole=yawPart([0,0,0],h.yaw,0,0,-1),projected=vsub(pole,vmul(direction,dot(pole,direction)));
+   const perpendicular=len(projected)>.02?norm(projected):norm(cross(direction,[1,0,0]));
+   const along=(upper*upper-forearm*forearm+distance*distance)/(2*distance),bend=Math.sqrt(Math.max(0,upper*upper-along*along));
+   elbow=vadd(shoulder,vadd(vmul(direction,along),vmul(perpendicular,bend)));
+  }else{
+   const midpoint=vmul(vadd(shoulder,wrist),.5),offset=yawPart([0,0,0],h.yaw,side*.34*scale,0,-.12*scale);
+   elbow=[midpoint[0]+offset[0],Math.max(base+.98*scale,midpoint[1]+.13*scale),midpoint[2]+offset[2]];
   }
-  const elbow=[(shoulder[0]+wrist[0])*.5+side*.34*scale,
-    Math.max(base+.98*scale,(shoulder[1]+wrist[1])*.5+.13*scale),
-    (shoulder[2]+wrist[2])*.5-.12*scale];
-  limb(g,shoulder,elbow,.255*scale,style.shirt);
-  g.orb(elbow,[.255*scale,.255*scale,.255*scale],style.light);
+  limb(g,shoulder,elbow,.255*scale,style.shirt);g.orb(elbow,[.255*scale,.255*scale,.255*scale],style.light);
   limb(g,elbow,wrist,.175*scale,style.skin);
-  // One low-poly mitten/palm, no individually articulated uncanny fingers.
-  g.cube(wrist,[.30*scale,.26*scale,.23*scale],style.skin);
+  const palm=buildPose?.held&&side===activeSide?[.44,.28,.46]:[.30*scale,.26*scale,.23*scale];
+  g.cube(wrist,palm,style.skin,qyaw(h.yaw));
  }
- g.cube(p(0,2.96,.05),[.32*scale,.25*scale,.29*scale],style.skin);
- // Soft ears, small nose and eyelids keep the low-poly adults friendly at cat scale.
- g.cube(p(0,3.34,.08),[.91*scale,1.09*scale,.79*scale],style.skin);
- g.cube(p(0,3.79,.02),[.97*scale,.27*scale,.86*scale],style.hair);
- g.cube(p(0,3.70,.40),[.97*scale,.16*scale,.20*scale],style.hair);
- if(h.id===0)g.cube(p(-.31,3.66,-.04),[.37*scale,.24*scale,.76*scale],style.hair);
- else g.cube(p(.22,3.72,-.03),[.50*scale,.25*scale,.81*scale],style.hair);
+ g.cube(p(0,2.96,.05),[.32*scale,.25*scale,.29*scale],style.skin,qyaw(h.yaw));
+ g.cube(p(0,3.34,.08),[.91*scale,1.09*scale,.79*scale],style.skin,qyaw(h.yaw));
+ g.cube(p(0,3.79,.02),[.97*scale,.27*scale,.86*scale],style.hair,qyaw(h.yaw));
+ g.cube(p(0,3.70,.40),[.97*scale,.16*scale,.20*scale],style.hair,qyaw(h.yaw));
+ if(h.id===0)g.cube(p(-.31,3.66,-.04),[.37*scale,.24*scale,.76*scale],style.hair,qyaw(h.yaw));
+ else g.cube(p(.22,3.72,-.03),[.50*scale,.25*scale,.81*scale],style.hair,qyaw(h.yaw));
  const blink=Math.sin(sceneView.displaySeconds*.85+h.id*1.9)>.994?.18:1;
  for(const side of [-1,1]){
   g.orb(p(side*.49,3.35,.07),[.085*scale,.14*scale,.10*scale],style.skin);
   g.orb(p(side*.195,3.38,.486),[.066*scale,.071*scale*blink,.027*scale],COLOR.cream);
   g.orb(p(side*.195,3.375,.511),[.034*scale,.046*scale*blink,.018*scale],COLOR.dark);
-  const brow=p(side*.20,3.51+warning*.035,.492);g.cube(brow,[.16*scale,.026*scale,.026*scale],style.hair,qyaw(0));
+  g.cube(p(side*.20,3.51+warning*.035,.492),[.16*scale,.026*scale,.026*scale],style.hair,qyaw(h.yaw));
  }
  g.orb(p(0,3.25,.493),[.06*scale,.08*scale,.055*scale],style.skin);
  limb(g,p(-.075,3.12,.493),p(0,3.105-warning*.025,.503),.018*scale,style.trim);
  limb(g,p(0,3.105-warning*.025,.503),p(.075,3.12,.493),.018*scale,style.trim);
- // Stitching/pocket/cuffs distinguish fabric from skin without extra particles.
- g.cube(p(h.id===0?-.28:.28,2.28,-.386),[.30*scale,.25*scale,.024*scale],style.light);
- for(const side of [-1,1])g.cube(p(side*.49,1.69,-.276),[.08*scale,.12*scale,.026*scale],style.trim);
- const side=h.id===0?-1:1,supply=[h.x+side*1.2*scale,ARENA.floorY,h.z+1.0];g.cube([supply[0],supply[1]+.13,supply[2]],[TOWER.width+.5,.26,TOWER.length+.5],style.trim);
- for(let i=0;i<(buildPose&&buildPose.t>=.18?2:3);i++)g.cube([supply[0],ARENA.floorY+(i+.5)*TOWER.height,supply[2]],[TOWER.width,TOWER.height,TOWER.length],COLOR.wood2,Q());
- if(buildPose?.held)g.cube(buildPose.p,h.buildPlan.size,COLOR.wood2,buildPose.q);
-
+ g.cube(p(h.id===0?-.28:.28,2.28,-.386),[.30*scale,.25*scale,.024*scale],style.light,qyaw(h.yaw));
+ for(const side of [-1,1])g.cube(p(side*.49,1.69,-.276),[.08*scale,.12*scale,.026*scale],style.trim,qyaw(h.yaw));
+ const side=h.id===0?-1:1,supply=[side*HUMAN_BUILD.sourceX,0,0],sourceIndex=buildPose?.sourceIndex??(2-(h.builds%3));
+ const selected=buildPose?.held===true,visible=selected?sourceIndex:sourceIndex+1;
+ g.cube([supply[0],.13,supply[2]],[TOWER.width+.5,.26,TOWER.length+.5],style.trim);
+ for(let i=0;i<visible;i++)g.cube([supply[0],(i+.5)*TOWER.height,supply[2]],[TOWER.width,TOWER.height,TOWER.length],COLOR.wood2,Q());
 }
 function drawTower(g,viewCat){for(const b of tower.blocks){if(b.p[1]<ARENA.floorY-12)continue;
   let col=b.color===0?COLOR.wood:b.color===1?COLOR.wood2:COLOR.wood3;
@@ -2424,7 +2549,7 @@ function drawWorld({alpha=0}={}){if(!renderer)return;const frameNow=performance.
  for(const mob of sceneView.mobs){const p=mob,dx=p.x-c.x,dz=p.z-c.z,dist=Math.hypot(dx,dz);
   if(dist<3.9&&(dx*Math.sin(cat.aimYaw)+dz*Math.cos(cat.aimYaw))/Math.max(.01,dist)>.48){mobInAim=true;break;}}
  ui.target.classList.toggle('mobFocus',mobInAim);
- for(const h of human){const node=h.id===0?ui.humanA:ui.humanB,p=g.screen([h.x,HUMAN_MODEL.labelY,h.z]);if(p&&p.x>-120&&p.x<gameCanvas.clientWidth+100){node.style.left=p.x+'px';node.style.top=p.y+'px';node.style.display='block';node.textContent=h.mode==='warning'?(h.pattern==='throw'?(h.aimLocked?'투척 방향 고정!':'장난감 공 조준 중'):'손바닥 준비!'):h.mode==='build'?('블록 '+(humanBuildPose(h)?.stage??'쌓는 중')):h.mode==='recover'?'잠깐 쉬는 중':h.pattern==='throw'&&projectiles.length>=HUMAN_THROW.maxBalls?'공 24개 · 오래된 공 교체':HUMAN_PROFILES[h.id].label;node.classList.toggle('angry',h.mode==='warning'||h.mode==='strike')}else node.style.display='none';}
+ for(const h of human){const node=h.id===0?ui.humanA:ui.humanB,p=g.screen([h.x,h.y+HUMAN_MODEL.labelY,h.z]);if(p&&p.x>-120&&p.x<gameCanvas.clientWidth+100){node.style.left=p.x+'px';node.style.top=p.y+'px';node.style.display='block';node.textContent=h.mode==='warning'?(h.pattern==='throw'?(h.aimLocked?'투척 방향 고정!':'장난감 공 조준 중'):'손바닥 준비!'):h.mode==='build'?('블록 '+(humanBuildPose(h)?.stage??'쌓는 중')):h.mode==='recover'?'잠깐 쉬는 중':h.pattern==='throw'&&projectiles.length>=HUMAN_THROW.maxBalls?'공 24개 · 오래된 공 교체':HUMAN_PROFILES[h.id].label;node.classList.toggle('angry',h.mode==='warning'||h.mode==='strike')}else node.style.display='none';}
 }
 // GameKit action input, sampled once per fixed tick.
 const samples=Object.fromEntries(['left','right','up','down','charge','jump','dodge'].map(k=>[k,{held:false,pressed:false,released:false}]));
@@ -2475,9 +2600,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewpo
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
- namespace:'meow-tumble-0.15.2',inputBytes:5,snapshotLimit:15000,
- inputType:91,snapshotType:92,resetType:93,startType:94,protocol:6});
-const LOBBY_VERSION='meow-tumble-0.15.2';
+  namespace:'meow-tumble-0.16.0',inputBytes:5,snapshotLimit:15000,
+  inputType:91,snapshotType:92,resetType:93,startType:94,protocol:7});
+const LOBBY_VERSION='meow-tumble-0.16.0';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};
@@ -2745,10 +2870,10 @@ const net={
       motion:c.motion,speed:round(c.speed),surfaceY:round(c.surfaceY),charge:{...c.charge},jump:{...c.jump},
       claw:{animation:{...c.claw.animation},side:c.claw.side},invuln:round(c.invuln)}]);
   const state={t:nowTicks,s:round(seconds),phase,collapse:collapseState,events:combatUI.recent,b:tower.blocks.map(b=>[
-    b.id,round(b.p[0]),round(b.p[1]),round(b.p[2]),...b.q.map(round),b.fallen?1:0]),
+     b.id,round(b.p[0]),round(b.p[1]),round(b.p[2]),...b.q.map(round),b.fallen?1:0,b.building?1:0]),
     v:vacuums.map(v=>{const p=v.body.translation(),a=v.attack;return[v.id,round(p.x),round(p.y),round(p.z),round(v.yaw),a.state,round(a.leftMs),round(a.dx),round(a.dz)]}),
     cats:actors,m:mobs.map(m=>{const p=m.body.translation();return[m.id,m.type,round(p.x),round(p.y),round(p.z),m.hp,m.hitMs]}),
-    h:human.map(h=>[h.id,h.mode,h.pattern,round(h.timer),round(h.anim),...h.target.map(round),h.attacks,h.builds,h.targetId,h.aimLocked?1:0,{plan:h.buildPlan??null,done:h.buildDone}]),
+     h:human.map(h=>[h.id,h.mode,h.pattern,round(h.timer),round(h.anim),...h.target.map(round),h.attacks,h.builds,h.targetId,h.aimLocked?1:0,{plan:h.buildPlan??null,done:h.buildDone,x:round(h.x),y:round(h.y),z:round(h.z),yaw:round(h.yaw),stage:h.buildStage,stageMs:round(h.buildStageMs),hand:h.handTarget??null,gripId:h.grip?.blockId??null}]),
     p:projectiles.map(p=>[p.id,p.owner,...p.p.map(round),...p.q.map(round),p.sleeping?1:0]),throwStats,
     n:tower.layers,f:tower.scattered,k:kills,w:shockwaves.map(w=>[w.id,round(w.x),round(w.z),round(w.r),round(w.maxRadius),w.pattern,round(w.age)])};
   const raw=new TextEncoder().encode(JSON.stringify(state));if(raw.length+2>NET_DEF.snapshotLimit){console.warn('게임 상태가 패킷 예산 초과',raw.length);return;}
@@ -2763,9 +2888,9 @@ const net={
    v.body.setTranslation({x,y,z},true);v.yaw=yaw;Object.assign(v.attack,{state:mode,leftMs,dx,dz});
   }
   const existing=new Map(tower.blocks.map(b=>[b.id,b]));
-  for(const row of state.b){const [id,x,y,z,qx,qy,qz,qw,fallen]=row;let b=existing.get(id);
+   for(const row of state.b){const [id,x,y,z,qx,qy,qz,qw,fallen,building]=row;let b=existing.get(id);
     if(!b){if(tower.blocks.length>=TOWER.maxLayers*3)continue;b=tower.addSingleBlock();if(!b)continue;}
-    b.p=[x,y,z];b.q=[qx,qy,qz,qw];b.fallen=!!fallen;
+     b.p=[x,y,z];b.q=[qx,qy,qz,qw];b.fallen=!!fallen;b.building=!!building;
   }
   tower.scattered=state.f;tower.layers=state.n;
   if(state.k)kills={mouse:state.k.mouse??0,beetle:state.k.beetle??0,spider:state.k.spider??0};
@@ -2798,7 +2923,7 @@ const net={
   }
   for(let i=mobs.length-1;i>=0;i--){if(!alive.has(mobs[i].id)){combatUI.unregister(mobs[i]);tower.world.removeRigidBody(mobs[i].body);mobs.splice(i,1);}}
   for(const row of state.h){const h=human[row[0]];if(!h)continue;
-   [h.id,h.mode,h.pattern,h.timer,h.anim,h.target[0],h.target[1],h.target[2],h.attacks,h.builds,h.targetId,h.aimLocked]=row;h.buildPlan=row[12].plan;h.buildDone=row[12].done;
+    [h.id,h.mode,h.pattern,h.timer,h.anim,h.target[0],h.target[1],h.target[2],h.attacks,h.builds,h.targetId,h.aimLocked]=row;const visual=row[12];h.buildPlan=visual.plan;h.buildDone=visual.done;h.x=visual.x??h.x;h.y=visual.y??h.y;h.z=visual.z??h.z;h.yaw=visual.yaw??h.yaw;h.buildStage=visual.stage??null;h.buildStageMs=visual.stageMs??0;h.handTarget=visual.hand??null;h.remoteGripId=visual.gripId??null;
    h.warningMs=HUMAN_ATTACKS[h.pattern].warningMs;h.strikeMs=HUMAN_ATTACKS[h.pattern].strikeMs;
   }
   projectiles=state.p.map(([id,owner,x,y,z,qx,qy,qz,qw,sleeping])=>({id,owner,p:[x,y,z],q:[qx,qy,qz,qw],sleeping:!!sleeping}));throwStats=state.throwStats;
@@ -2972,7 +3097,7 @@ window.__meowTumble={get state(){return{product:"와르르냥 / Meow Tumble",pha
  level:cat?.level,xp:cat?.xp,mass:cat?.mass,hp:cat?.hp,animation:cat?.motion?.state,animationMs:cat?.motion?.elapsedMs,maxHp:DEF.cat.maxHp,kills:{...kills},vacuums:vacuums.map(v=>({id:v.id,state:v.attack.state,leftMs:v.attack.leftMs,cooldownMs:v.attack.cooldownMs,p:v.body.translation()})),mobs:mobs.length,zone:cat?zoneAt(cat.x,cat.z):null,respawning:cat?.motion?.state==='dead',cat:cat?{x:cat.x,z:cat.z,y:cat.y,yaw:cat.yaw,
  knockX:cat.knockX,knockZ:cat.knockZ,vy:cat.vy}:null,camera:camera?{yaw:camera.yaw,pitch:camera.pitch,eye:camera.eye.slice()}:null,
  impactGraceMs:cat?.impactGraceMs,controls:{lookPointer:look.id,chargeLookPointer:look.chargeId,joyPointer:joy.id},layers:tower.layers,activeBodies:tower.blocks.length-tower.sleeperCount,
- humans:(human??[]).map(h=>({id:h.id,label:HUMAN_PROFILES[h.id].label,pattern:h.pattern,mode:h.mode,target:h.target.slice(),aimLocked:h.aimLocked,height:HUMAN_MODEL.height,scale:HUMAN_MODEL.scale})),projectiles:projectiles.map(p=>({id:p.id,owner:p.owner,p:p.p.slice(),q:p.q.slice(),sleeping:p.sleeping})),impactDamage:{config:IMPACT_DAMAGE,events:collisionDamage.events,decisions:collisionDamage.decisions,pairs:collisionDamage.pairs.size},throwPhysics:{kind:'toy-ball',radius:HUMAN_THROW.radius,reference:throwReference(),mass:HUMAN_THROW.mass,speed:HUMAN_THROW.speed,maxBalls:HUMAN_THROW.maxBalls,stats:throwStats},
+ humans:(human??[]).map(h=>{const id=h.grip?.blockId??h.remoteGripId??h.buildPlan?.blockId??null,block=id===null?null:tower.blocks.find(b=>b.id===id),shoulder=humanLocalPoint(h,humanActiveSide(h)*.77*HUMAN_MODEL.scale,2.55,.04);return{id:h.id,label:HUMAN_PROFILES[h.id].label,pattern:h.pattern,mode:h.mode,target:h.target.slice(),aimLocked:h.aimLocked,height:HUMAN_MODEL.height,scale:HUMAN_MODEL.scale,x:h.x,y:h.y,z:h.z,yaw:h.yaw,buildStage:h.buildStage,buildDone:h.buildDone,blockId:id,blockMass:block?.mass??null,blockPosition:block?.p.slice()??null,blockBuilding:block?.building??false,handTarget:h.handTarget?.slice()??null,armReachLimit:HUMAN_BUILD.armUpper+HUMAN_BUILD.armForearm,handDistance:h.handTarget?len(vsub(h.handTarget,shoulder)):null};}),towerBlocks:tower.blocks.map(b=>({id:b.id,mass:b.mass,p:b.p.slice(),building:b.building,fallen:b.fallen})),projectiles:projectiles.map(p=>({id:p.id,owner:p.owner,p:p.p.slice(),q:p.q.slice(),sleeping:p.sleeping})),impactDamage:{config:IMPACT_DAMAGE,events:collisionDamage.events,decisions:collisionDamage.decisions,pairs:collisionDamage.pairs.size},throwPhysics:{kind:'toy-ball',radius:HUMAN_THROW.radius,reference:throwReference(),mass:HUMAN_THROW.mass,speed:HUMAN_THROW.speed,maxBalls:HUMAN_THROW.maxBalls,stats:throwStats},
  shockwaves:shockwaves.length,impulses:tower.totalImpulses,physicsEngine:'Rapier 3D 0.21.0',physicsVersion:DEF.version,motion:cat?.motion?.state,motionElapsedMs:cat?.motion?.elapsedMs,humanHits:cat?.humanHits,successfulRolls:cat?.successfulRolls,landings:cat?.landings,chargePercent:cat?Math.round(cat.charge.ratio*100):0,chargeHeld:cat?.charge.held,clawCooldownMs:cat?.claw.cooldown.leftMs,clawAnimationMs:cat?.claw.animation.leftMs,clawHitPending:cat?.claw.pendingHit,clawAttacks:cat?.claw.attacks,clawLastHits:cat?.claw.lastHits,jumpHeld:cat?.jump.held,jumpPercent:cat?Math.round(cat.jump.ratio*100):0,jumpLaunchVelocity:cat?.jump.lastVelocity,headbuttBaseSpeed:cat?headbuttBaseSpeed(cat.level):null,dashVelocity:cat?.dash.velocity,dashCooldownMs:cat?.dash.cooldown.leftMs,
  catBodyMass:tower.catBody?.mass(),contacts:tower.contacts,loopRunning:simLoop.running,drawCalls:renderer?.drawCalls,
  mobVitals:[...combatUI.plates].filter(([,p])=>p.mob).map(([id,p])=>({id,type:p.type,hp:p.mob.hp,maxHp:MOB_TYPES[p.type].maxHp,display:p.node.style.display})),

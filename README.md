@@ -2,7 +2,7 @@
 
 집 안을 누비는 작은 고양이가 쥐·곤충을 사냥하며 성장하고, 사람의 공격을 피하며 거대한 젠가탑을 무너뜨리는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.15.2** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.16.0** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -140,3 +140,7 @@ Rapier 0.21.0의 contactImpulse는 법선 방향 충격량이며 단위는 게�
 사람 파동·할퀴기는 의도적으로 적용한 Rapier 임펄스를 명시적 human/cat 공격원으로 전달하며 대상의 기존 이동 속도를 공격 강도에 더하지 않습니다. 체력·피격 자세·표시와 2인 권위 구조, 부활/구르기 보호, 공2·젠가20 질량과 FIFO는 유지합니다. 방 namespace는 0.15.2이며 protocol6/SDK/Rapier pin/기존 Pages 경로는 유지합니다.
 
 대표 실제 Edge 비교: 무중력/무감쇠 분리 fixture에서 고양이 속도12→정지 공은 원래 13 HP에서 0으로 수정됐고, 물리 J10.23999977과 두 강체의 충돌 후 속도/위치는 0.15.1과 정확히 같았습니다. 공 속도12→정지 고양이는 전후 동일13 HP입니다. 공 속도6/12의 피해6/13 HP, 양쪽 접근(공12/고양이6)도13 HP, 같은 방향 추격(공12/고양이6)은6 HP, 대상이15로 도망가면 접촉/피해0을 확인했습니다. 기본 중력·마찰·controller의 실제 WASD 고양이→정지 공은0 HP, 날아오는 공은15 HP였습니다. 숫자 차이는 방향별 배분 여부 및 중력/마찰을 분리한 fixture와 실제 지면 상황의 차이입니다. 실제2인도 움직이는 게스트→정지 공0, 공→게스트 피해·양쪽 HP 일치와 게스트 물리0회, 스냅샷 재적용 무피해를 확인했습니다. 위치/속도 준비 및 고정 tick을 사용한 fixture와 실제 실행/키 입력/RTC를 구분합니다. 실물 모바일·iOS·4인/외부 NAT는 미검증입니다.
+
+## v0.16.0: fixed-arm Jenga carrying
+
+The starting tower is now 16 layers (down from 22), and its cap is 17 layers (down from 26). This lowers the starting tower by 4.2 world units and the maximum by 6.3, while leaving one full reachable layer for human stacking. A human keeps the existing model scale, walks around the table and up its existing ramp, grips one real mass-20 Rapier block with a spherical hand joint, carries it near the body, then raises and aligns it with a fixed two-segment arm before releasing it to free physics. Strong impacts can release the grip. No camera snap, extra platform, or ladder is added. The multiplayer namespace/protocol advances to 0.16.0/7 so old snapshot readers do not mix with this scene state.
