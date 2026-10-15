@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"/>
 <meta name="theme-color" content="#182438"/>
-<title>와르르냥 / Meow Tumble · 고정 팔 젠가 쌓기 · v0.17.3</title>
+<title>와르르냥 / Meow Tumble · 고정 팔 젠가 쌓기 · v0.17.4</title>
 <style>
 :root{color-scheme:dark;--bg:#17283c;--ink:#fffaf0;--sub:#c8d1da;--mint:#93edcb;--pink:#ffaaa6;--yellow:#ffe49e}
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:ui-rounded,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}button,input,summary{font:inherit}button,summary{cursor:pointer;touch-action:manipulation}button{color:inherit;min-height:48px}button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}button:disabled{opacity:.55;cursor:default}.hidden{display:none!important}
@@ -119,7 +119,7 @@
  <div class="bottomRight"><div id="status" class="status"></div><div class="dashbar"><i id="dashReady"></i></div></div>
  </div>
  <div id="netRoster" aria-label="멀티플레이 참가자"></div><div id="netLabels" aria-hidden="true"></div>
- <div id="buildTag">v0.17.3 · MEOW TUMBLE</div>
+ <div id="buildTag">v0.17.4 · MEOW TUMBLE</div>
  <div id="touch"><div id="stick" class="joystick"><div id="knob" class="knob"></div></div><div class="actionPad"><button type="button" class="action" data-action="charge" aria-label="짧게 누르면 할퀴기, 0.25초 이상 길게 누르고 떼면 박치기"><strong>🐾</strong><small>홀드 박치기<br>드래그 조준</small><span class="chargeTrack"><i id="touchChargeFill"></i></span></button><button type="button" class="action" data-action="jump" aria-label="점프: 1초까지 누르고 떼서 점프"><strong>↥</strong><small>길게 눌러 점프</small><span class="chargeTrack jumpTrack"><i id="touchJumpFill"></i></span></button><button type="button" class="action" data-action="dodge"><strong>↻</strong><small>구르기</small></button></div></div>
  <section id="intro" class="cover" aria-label="게임 메뉴"><div class="hero">
  <div data-screen="main"><div class="eyebrow">MEOW TUMBLE</div><h1>와르르<em>냥</em></h1><p>작은 고양이로 사냥하고 성장해<br>거대한 젠가탑을 무너뜨리세요.</p><button type="button" class="primary" data-route="modes">시작하기</button><div class="menuLinks"><button data-route="help">게임 방법</button><button data-route="settings">설정</button></div><small>1–4명 · PC / 터치 · 인터넷 연결 필요</small></div>
@@ -391,12 +391,12 @@ const RAMP=(()=>{
   lowerZ:centerZ+run,upperZ:centerZ-run,topAtTable:0,topAtFloor:ARENA.floorY});
 })();
 const HUMAN_BUILD=Object.freeze({
-  walkSpeed:3.2,walkAcceleration:4.2,turnSpeed:7.0,sourceX:4.15,workZ:-1.20,
+  walkSpeed:3.2,walkAcceleration:4.2,turnSpeed:7.0,carryWalkSpeed:1.55,carryTurnSpeed:1.3,sourceX:4.15,workZ:-1.20,
   towerSideX:2.6,shoulderSide:0.77*HUMAN_MODEL.scale,armUpper:.88*HUMAN_MODEL.scale,
   armForearm:.77*HUMAN_MODEL.scale,reachMs:520,pickupMs:110,liftMs:420,turnLiftMs:540,
   alignMs:520,lowerMs:360,settleMs:100,retractMs:220,
-  carryClearance:.32,carryHeight:5.35,
-  carryPointKp:240,carryPointKd:130,carryPointMaxImpulse:14,
+  carryClearance:.32,carryHeight:5.35,carryLiftMaxSpeed:1.65,
+  carryPointKp:300,carryPointKd:150,carryPointMaxImpulse:20,
   gripBreakSpeed:15,gripBreakSpin:26,carryAngularDamping:2.0,carryHoldKp:22,carryHoldKd:18,carryHoldMaxImpulse:10,
   carryStableAngle:.95,carryStableSpin:.5,placementAngle:.14,placementSpin:.24,placementStableMs:80,
   settleStableAngle:.20,settleStableSpin:.40
@@ -601,7 +601,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
  const DEF={
-    build:'20261015-fast-fixed-arm-jenga-reactions-v0173',version:'0.17.3',
+    build:'20261015-fast-fixed-arm-jenga-reactions-v0174',version:'0.17.4',
   // After the success threshold, physics keeps stepping until the debris is quiet.
   // These are PRESENTATION timings only; they never influence Rapier impulses.
   round:{durationMs:0,winBlocks:TOWER.winScattered,
@@ -1429,8 +1429,8 @@ function updateShockwaves(dt){for(let i=shockwaves.length-1;i>=0;i--){const w=sh
  }}
 const humanActiveSide=h=>h.id===0?-1:1;
 function humanLocalPoint(h,x,y,z){return yawPart([h.x,h.y-.05,h.z],h.yaw,x,y,z);}
-function humanTurnToward(h,yaw,dt){const delta=((yaw-h.yaw+Math.PI*3)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;h.yaw+=clamp(delta,-HUMAN_BUILD.turnSpeed*dt,HUMAN_BUILD.turnSpeed*dt);return Math.abs(delta)<.08;}
-function walkHumanRoute(h,dt,speedLimit=HUMAN_BUILD.walkSpeed){
+function humanTurnToward(h,yaw,dt,speed=HUMAN_BUILD.turnSpeed){const delta=((yaw-h.yaw+Math.PI*3)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;h.yaw+=clamp(delta,-speed*dt,speed*dt);return Math.abs(delta)<.08;}
+function walkHumanRoute(h,dt,speedLimit=HUMAN_BUILD.walkSpeed,turnToRoute=true,turnSpeed=HUMAN_BUILD.turnSpeed){
  h.buildVelocity??=[0,0];
  if(h.buildRouteIndex>=h.buildRoute.length)return true;
  const [tx,tz]=h.buildRoute[h.buildRouteIndex],dx=tx-h.x,dz=tz-h.z,distance=Math.hypot(dx,dz);
@@ -1441,18 +1441,28 @@ function walkHumanRoute(h,dt,speedLimit=HUMAN_BUILD.walkSpeed){
  const change=[desired[0]-h.buildVelocity[0],desired[1]-h.buildVelocity[1]],length=Math.hypot(...change),limit=HUMAN_BUILD.walkAcceleration*dt;
  if(length>limit){change[0]*=limit/length;change[1]*=limit/length;}
  h.buildVelocity[0]+=change[0];h.buildVelocity[1]+=change[1];
- const yaw=Math.atan2(dx,dz);humanTurnToward(h,yaw,dt);
+ const yaw=Math.atan2(dx,dz);if(turnToRoute)humanTurnToward(h,yaw,dt,turnSpeed);
  h.x+=h.buildVelocity[0]*dt;h.z+=h.buildVelocity[1]*dt;h.y=humanGroundY(h.x,h.z);
  return false;
 }
 function setCarryAnchorForCenter(h,center,dt){
- const q=h.grip.rotationTarget??(()=>{const r=h.grip.block.body.rotation();return[r.x,r.y,r.z,r.w];})(),point=vadd(center,qrotate(q,h.grip.local)),previous=h.grip.nextPoint;
- h.grip.targetVelocity=previous&&dt>0?point.map((v,i)=>(v-previous[i])/dt):[0,0,0];h.grip.nextPoint=point;h.handTarget=point.slice();
+ const body=h.grip.block.body,rotation=body.rotation(),actualQ=[rotation.x,rotation.y,rotation.z,rotation.w],point=vadd(center,qrotate(actualQ,h.grip.local)),previous=h.grip.nextPoint;
+ const p=body.translation(),actualContact=vadd([p.x,p.y,p.z],qrotate(actualQ,h.grip.local));
+ h.grip.targetVelocity=previous&&dt>0?point.map((v,i)=>(v-previous[i])/dt):[0,0,0];h.grip.nextPoint=point;
+ // Draw the wrist at the real Rapier contact point; keep the controller target
+ // separate so a struck block moves the hand instead of stretching the arm.
+ h.handTarget=actualContact;
 }
 function humanCarryContactError(h){
  const grip=h.grip,body=grip?.block?.body;if(!body||!grip.nextPoint)return 0;
  const p=body.translation(),q=body.rotation(),contact=vadd([p.x,p.y,p.z],qrotate([q.x,q.y,q.z,q.w],grip.local));
  return len(vsub(grip.nextPoint,contact));
+}
+function syncHumanCarryHands(){
+ for(const h of human??[]){
+  const body=h.grip?.block?.body;if(!body||h.buildStage==='retract')continue;
+  const p=body.translation(),q=body.rotation();h.handTarget=vadd([p.x,p.y,p.z],qrotate([q.x,q.y,q.z,q.w],h.grip.local));
+ }
 }
 function applyHumanCarryPointImpulse(h,dt){
  const grip=h.grip,body=grip?.block?.body,target=grip?.nextPoint;if(!body||!target)return;
@@ -1484,22 +1494,61 @@ function humanCarryClearY(h){
  return level*TOWER.height+TOWER.height*.5+HUMAN_BUILD.carryClearance;
 }
 const humanCarryBaseY=h=>h.y+HUMAN_BUILD.carryHeight;
+function humanCarryFrontCenter(h,y=humanCarryBaseY(h),forward=1.05){return humanLocalPoint(h,0,y-(h.y-.05),forward);}
+function humanCarryTravelDurationMs(distance,minMs){return Math.max(minMs,distance*1500/HUMAN_BUILD.carryLiftMaxSpeed);}
+function humanCarryLiftDurationMs(fromY,toY,minMs){return humanCarryTravelDurationMs(Math.abs(toY-fromY),minMs);}
+function humanBuildPlanKey(plan){return plan?plan.level+':'+Math.round(plan.p[0]*1000)+':'+Math.round(plan.p[2]*1000):null;}
 function startHumanBuild(h){
-  const side=h.id===0?-1:1,plan=tower.getNextBlockSpec(),workZ=HUMAN_BUILD.workZ;
-  const stance=[side*HUMAN_BUILD.towerSideX,0,workZ],towerYaw=side<0?Math.PI/2:-Math.PI/2;
+  const side=h.id===0?-1:1,plan=tower.getNextBlockSpec(),workZ=HUMAN_BUILD.workZ,towerYaw=side<0?Math.PI/2:-Math.PI/2,supplyYaw=side<0?-Math.PI/2:Math.PI/2;
   const gripLocal=[side*(TOWER.width*.5-.04),0,0],source=[side*HUMAN_BUILD.sourceX,TOWER.height*.5,workZ];
-  const targetContact=vadd(plan.p,qrotate(plan.q,gripLocal));
-  if(!humanBuildPoseReachable(h,targetContact,stance,towerYaw,.15)){h.mode='idle';h.timer=2400;return;}
- h.mode='build';h.timer=DEF.humans.buildDurationMs;h.buildDone=false;
-  h.buildPlan={...plan,p:plan.p.slice(),q:plan.q.slice(),size:plan.size.slice(),blockId:null,source,sourceIndex:2-(h.builds%3),gripLocal,stance};
+  const sourceContact=[source[0]+gripLocal[0],source[1],source[2]],targetContact=vadd(plan.p,qrotate(plan.q,gripLocal));
+  const limit=ARENA.halfZ-.35,clampZ=z=>clamp(z,-limit,limit),unique=values=>[...new Set(values.map(z=>Math.round(clampZ(z)*1000)/1000))];
+  const pickShoulderOffset=-side*HUMAN_BUILD.shoulderSide*Math.sin(supplyYaw),pickIdealZ=sourceContact[2]-pickShoulderOffset;
+  const pickZs=unique([workZ,sourceContact[2],0,pickIdealZ,pickIdealZ-.35,pickIdealZ+.35]);
+  const pickPoints=[];
+  for(const inset of [0,.20,.40])for(const z of pickZs){
+   const stance=[side*(HUMAN_BUILD.towerSideX-inset),0,z],pickPose={...h,x:stance[0],y:humanGroundY(stance[0],stance[2]),z:stance[2],yaw:supplyYaw};
+   const carryCenter=humanCarryFrontCenter(pickPose,pickPose.y+HUMAN_BUILD.carryHeight);
+   if(humanBuildPoseReachable(h,sourceContact,stance,supplyYaw,1.48)&&humanCarryPathReachable(h,stance,supplyYaw,1.48,source,carryCenter,gripLocal))pickPoints.push({stance,cost:Math.hypot(stance[0]-h.x,stance[2]-h.z)});
+  }
+  pickPoints.sort((a,b)=>a.cost-b.cost);const pickStance=pickPoints[0]?.stance;
+  const clearY=plan.level*TOWER.height+TOWER.height*.5+HUMAN_BUILD.carryClearance;
+  const armMargin=plan.level>=12 ? .42 : .12;
+  const targetShoulderOffset=-side*HUMAN_BUILD.shoulderSide*Math.sin(towerYaw),targetIdealZ=targetContact[2]-targetShoulderOffset;
+  const targetZs=unique([workZ,targetContact[2],targetIdealZ,targetIdealZ-.35,targetIdealZ+.35,targetContact[2]-.5,targetContact[2]+.5]);
+  const workpoints=[];
+  if(pickStance)for(const inset of [0,.20,.40])for(const z of targetZs){
+   const stance=[side*(HUMAN_BUILD.towerSideX-inset),0,z];
+   const pose={...h,x:stance[0],y:humanGroundY(stance[0],stance[2]),z:stance[2],yaw:towerYaw,mode:'build',buildStage:'turn-lift',buildStageMs:0};
+   const carryBase=humanCarryFrontCenter(pose),carryClear=humanCarryFrontCenter(pose,clearY),carryClearContact=[carryClear[0]+gripLocal[0],carryClear[1],carryClear[2]],alignEnd=[plan.p[0],clearY,plan.p[2]],placeStart=[plan.p[0],clearY,plan.p[2]];
+   if(humanCarryPathReachable(h,stance,towerYaw,.30,carryBase,carryClear,gripLocal,.30,Q(),Q(),armMargin)&&
+      humanBuildPoseReachable(h,targetContact,stance,towerYaw,.30,armMargin)&&humanBuildPoseReachable(h,carryClearContact,stance,towerYaw,.30,armMargin)&&
+      humanCarryPathReachable(h,stance,towerYaw,.30,carryClear,alignEnd,gripLocal,.30,Q(),plan.q,armMargin)&&
+      humanCarryPathReachable(h,stance,towerYaw,.30,placeStart,plan.p,gripLocal,.30,plan.q,plan.q,armMargin)){
+    const routeCost=Math.hypot(stance[0]-pickStance[0],stance[2]-pickStance[2]),alignCost=Math.hypot(carryClear[0]-plan.p[0],carryClear[2]-plan.p[2]);
+    workpoints.push({stance,cost:routeCost+alignCost-inset*.75});
+   }
+  }
+  workpoints.sort((a,b)=>a.cost-b.cost);const stance=workpoints[0]?.stance;
+  if(!pickStance||!stance){h.mode='idle';h.timer=900;h.unreachableBuildKey=humanBuildPlanKey(plan);return;}
+  h.unreachableBuildKey=null;h.mode='build';h.timer=DEF.humans.buildDurationMs;h.buildDone=false;
+  h.buildPlan={...plan,p:plan.p.slice(),q:plan.q.slice(),size:plan.size.slice(),blockId:null,source,sourceIndex:2-(h.builds%3),gripLocal,pickStance,stance};
   h.buildStage='approach-workpoint';h.buildStageMs=0;h.alignStableMs=0;h.grip=null;h.handTarget=null;h.retractFrom=null;h.buildVelocity=[0,0];
-  h.buildRoute=[[stance[0],stance[2]]];h.buildRouteIndex=0;
+  h.buildRoute=[[pickStance[0],pickStance[2]]];h.buildRouteIndex=0;
 }
-function humanBuildPoseReachable(h,target,stance,yaw,lean){
+function humanBuildPoseReachable(h,target,stance,yaw,lean,margin=.12){
   const pose={...h,x:stance[0],y:humanGroundY(stance[0],stance[2]),z:stance[2],yaw,mode:'build',buildStage:'align',buildStageMs:0};
   const shoulder=humanBuildShoulder(pose,lean,yaw),distance=len(vsub(target,shoulder));
   const max=HUMAN_BUILD.armUpper+HUMAN_BUILD.armForearm,min=Math.abs(HUMAN_BUILD.armUpper-HUMAN_BUILD.armForearm);
-  return distance<=max-.035&&distance>=min+.035;
+  return distance<=max-margin&&distance>=min+margin;
+}
+function humanCarryPathReachable(h,stance,yaw,lean,fromCenter,toCenter,gripLocal,step=.30,fromRotation=Q(),toRotation=fromRotation,margin=.12){
+ const distance=len(vsub(toCenter,fromCenter)),samples=Math.max(1,Math.ceil(distance/step));
+ for(let i=0;i<=samples;i++){
+  const t=i/samples,center=fromCenter.map((v,axis)=>lerp(v,toCenter[axis],t)),rotation=quaternionSlerp(fromRotation,toRotation,t),contact=vadd(center,qrotate(rotation,gripLocal));
+  if(!humanBuildPoseReachable(h,contact,stance,yaw,lean,margin))return false;
+ }
+ return true;
 }
 function quaternionMultiply(a,b){return[
  a[3]*b[0]+a[0]*b[3]+a[1]*b[2]-a[2]*b[1],a[3]*b[1]-a[0]*b[2]+a[1]*b[3]+a[2]*b[0],
@@ -1547,7 +1596,7 @@ function advanceHumanBuild(h,dt){
   const v=h.grip.block.body.linvel(),w=h.grip.block.body.angvel();
   if(Math.hypot(v.x,v.y,v.z)>HUMAN_BUILD.gripBreakSpeed||Math.hypot(w.x,w.y,w.z)>HUMAN_BUILD.gripBreakSpin){releaseHumanCarry(h,true);return;}
  }
-  const side=h.id===0?-1:1,sourceContact=()=>vadd(h.buildPlan.source,qrotate(h.buildPlan.q,h.buildPlan.gripLocal));
+  const side=h.id===0?-1:1,sourceContact=()=>[h.buildPlan.source[0]+h.buildPlan.gripLocal[0],h.buildPlan.source[1],h.buildPlan.source[2]];
   if(phase==='approach-workpoint'){
    if(walkHumanRoute(h,dt)){h.buildVelocity=[0,0];h.buildStage='face-supply';h.buildStageMs=0;}
    return;
@@ -1559,11 +1608,11 @@ function advanceHumanBuild(h,dt){
  }
   if(phase==='reach'){
    const t=clamp(h.buildStageMs/HUMAN_BUILD.reachMs,0,1),smooth=t*t*(3-2*t),contact=sourceContact();
-   const rest=humanBuildPoint(h,humanActiveSide(h)*.90*HUMAN_MODEL.scale,1.60*HUMAN_MODEL.scale,.29*HUMAN_MODEL.scale);
+   const rest=humanBuildPoint(h,humanActiveSide(h)*.90,1.60,.29);
    h.handTarget=humanReachablePoint(h,rest.map((v,i)=>lerp(v,contact[i],smooth)));
    if(t>=1){
-    const shoulder=humanBuildShoulder(h);
-    if(len(vsub(contact,shoulder))>HUMAN_BUILD.armUpper+HUMAN_BUILD.armForearm-.025){h.mode='idle';h.timer=2400;h.buildPlan=null;h.buildStage=null;h.handTarget=null;return;}
+    const shoulder=humanBuildShoulder(h,humanBuildLean(h),h.yaw);
+    if(len(vsub(contact,shoulder))>HUMAN_BUILD.armUpper+HUMAN_BUILD.armForearm-.025){h.mode='idle';h.timer=900;h.unreachableBuildKey=humanBuildPlanKey(h.buildPlan);h.buildPlan=null;h.buildStage=null;h.handTarget=null;return;}
     h.handTarget=contact;
     if(!addHumanCarryBlock(h)){h.mode='idle';h.timer=900;h.buildPlan=null;h.buildStage=null;h.handTarget=null;return;}
     h.buildStage='pickup';h.buildStageMs=0;
@@ -1572,31 +1621,42 @@ function advanceHumanBuild(h,dt){
   }
  if(phase==='pickup'){
    setCarryAnchorForCenter(h,h.buildPlan.source,dt);holdCarriedBlockOrientation(h,dt);
-   if(h.buildStageMs>=HUMAN_BUILD.pickupMs){h.buildStage='lift';h.buildStageMs=0;}
+    if(h.buildStageMs>=HUMAN_BUILD.pickupMs){h.buildStage='lift';h.buildStageMs=0;h.buildStageDurationMs=humanCarryLiftDurationMs(h.buildPlan.source[1],humanCarryBaseY(h),HUMAN_BUILD.liftMs);}
    return;
  }
   if(phase==='lift'){
-   const t=clamp(h.buildStageMs/HUMAN_BUILD.liftMs,0,1),smooth=t*t*(3-2*t),center=[
-    lerp(h.buildPlan.source[0],h.x+side*(HUMAN_BUILD.towerSideX+.05),smooth),
-    lerp(h.buildPlan.source[1],humanCarryBaseY(h),smooth),
-    lerp(h.buildPlan.source[2],h.z,smooth)];
+    const t=clamp(h.buildStageMs/(h.buildStageDurationMs||HUMAN_BUILD.liftMs),0,1),smooth=t*t*(3-2*t),front=humanCarryFrontCenter(h);
+   const center=[lerp(h.buildPlan.source[0],front[0],smooth),lerp(h.buildPlan.source[1],front[1],smooth),lerp(h.buildPlan.source[2],front[2],smooth)];
    setCarryAnchorForCenter(h,center,dt);holdCarriedBlockOrientation(h,dt);
-   if(t>=1){h.buildStage='turn-lift';h.buildStageMs=0;}
+    if(t>=1){h.buildRoute=[[h.buildPlan.stance[0],h.buildPlan.stance[2]]];h.buildRouteIndex=0;h.buildStage='approach-target';h.buildStageMs=0;h.buildStageDurationMs=0;}
+   return;
+  }
+  if(phase==='approach-target'){
+   const arrived=walkHumanRoute(h,dt,HUMAN_BUILD.carryWalkSpeed,true,HUMAN_BUILD.carryTurnSpeed);
+   setCarryAnchorForCenter(h,humanCarryFrontCenter(h),dt);holdCarriedBlockOrientation(h,dt);
+   if(arrived){h.buildVelocity=[0,0];h.buildStage='turn-to-tower';h.buildStageMs=0;}
+   return;
+  }
+  if(phase==='turn-to-tower'){
+   const yaw=side<0?Math.PI/2:-Math.PI/2,turned=humanTurnToward(h,yaw,dt,HUMAN_BUILD.carryTurnSpeed);
+   setCarryAnchorForCenter(h,humanCarryFrontCenter(h),dt);holdCarriedBlockOrientation(h,dt);
+   if(turned){h.buildStage='turn-lift';h.buildStageMs=0;h.buildStageDurationMs=humanCarryLiftDurationMs(humanCarryBaseY(h),humanCarryClearY(h),HUMAN_BUILD.turnLiftMs);}
    return;
   }
   if(phase==='turn-lift'){
-   const t=clamp(h.buildStageMs/HUMAN_BUILD.turnLiftMs,0,1),smooth=t*t*(3-2*t);
-   const yaw=side<0?Math.PI/2:-Math.PI/2,turned=humanTurnToward(h,yaw,dt);
-   const y=lerp(humanCarryBaseY(h),humanCarryClearY(h),smooth);
-   setCarryAnchorForCenter(h,[h.x+side*(HUMAN_BUILD.towerSideX+.05),y,h.z],dt);holdCarriedBlockOrientation(h,dt);
+    const t=clamp(h.buildStageMs/(h.buildStageDurationMs||HUMAN_BUILD.turnLiftMs),0,1),smooth=t*t*(3-2*t);
+   const yaw=side<0?Math.PI/2:-Math.PI/2,turned=humanTurnToward(h,yaw,dt,HUMAN_BUILD.carryTurnSpeed),y=lerp(humanCarryBaseY(h),humanCarryClearY(h),smooth);
+   setCarryAnchorForCenter(h,humanCarryFrontCenter(h,y),dt);holdCarriedBlockOrientation(h,dt);
    if(t>=1&&turned){
     const p=h.grip.block.body.translation();h.alignStartCenter=[p.x,p.y,p.z];h.alignStartRotation=lockHumanCarryOrientation(h);
-    h.alignStableMs=0;h.buildStage='align';h.buildStageMs=0;
+     h.alignStableMs=0;h.buildStage='align';h.buildStageMs=0;
+     const alignTarget=[h.buildPlan.p[0],humanCarryClearY(h),h.buildPlan.p[2]],travel=len(vsub(alignTarget,h.alignStartCenter)),rotation=quaternionAngleError(h.buildPlan.q,h.alignStartRotation);
+     h.alignDurationMs=Math.max(HUMAN_BUILD.alignMs,humanCarryTravelDurationMs(travel,HUMAN_BUILD.alignMs),rotation*1000/1.8);
    }
    return;
- }
+  }
  if(phase==='align'){
-  const t=clamp(h.buildStageMs/HUMAN_BUILD.alignMs,0,1),smooth=t*t*(3-2*t);
+   const t=clamp(h.buildStageMs/(h.alignDurationMs||HUMAN_BUILD.alignMs),0,1),smooth=t*t*(3-2*t);
   const center=[lerp(h.alignStartCenter[0],h.buildPlan.p[0],smooth),humanCarryClearY(h),lerp(h.alignStartCenter[2],h.buildPlan.p[2],smooth)];
   h.grip.rotationTarget=quaternionSlerp(h.alignStartRotation,h.buildPlan.q,smooth);setCarryAnchorForCenter(h,center,dt);holdCarriedBlockOrientation(h,dt);
   const q=h.grip.block.body.rotation(),rotationError=quaternionAngleError(h.buildPlan.q,[q.x,q.y,q.z,q.w]),omega=h.grip.block.body.angvel(),spin=Math.hypot(omega.x,omega.y,omega.z);
@@ -1618,7 +1678,7 @@ function advanceHumanBuild(h,dt){
    return;
  }
  if(phase==='retract'){
-   const t=clamp(h.buildStageMs/HUMAN_BUILD.retractMs,0,1),rest=humanBuildPoint(h,humanActiveSide(h)*.90*HUMAN_MODEL.scale,1.60*HUMAN_MODEL.scale,.29*HUMAN_MODEL.scale);
+   const t=clamp(h.buildStageMs/HUMAN_BUILD.retractMs,0,1),rest=humanBuildPoint(h,humanActiveSide(h)*.90,1.60,.29);
   h.handTarget=h.retractFrom.map((v,i)=>lerp(v,rest[i],t*t*(3-2*t)));
   if(t>=1){h.mode='idle';h.timer=640+rand(-120,520);h.buildPlan=null;h.buildStage=null;h.buildRoute=null;h.handTarget=null;h.retractFrom=null;}
  }
@@ -1644,7 +1704,8 @@ function updateHumans(dt){updateHumanReactions(dt);for(const h of human){h.anim+
    if(target?.hp>0&&target.motion.state!=='dead'){h.pattern=profile.patterns[h.attacks%profile.patterns.length];beginHumanAttack(h,target,true);continue;}}
   if(h.mode==='idle'&&h.timer<=0){h.pattern=profile.patterns[h.attacks%profile.patterns.length];const config=HUMAN_ATTACKS[h.pattern];
    const target=[...roomCats.values()].filter(c=>c.hp>0&&(config.battleArea?Math.abs(c.x)<ARENA.halfX+6&&Math.abs(c.z)<ARENA.halfZ+6&&c.y>config.minY:c.y>=config.minY&&c.z>h.z+1.2&&Math.hypot(c.x-h.x,c.z-h.z)<=config.range)).sort((a,b)=>Math.hypot(a.x-h.x,a.z-h.z)-Math.hypot(b.x-h.x,b.z-h.z))[0];
-   const canBuild=tower.layers<TOWER.maxLayers&&tower.scattered<5&&!human.some(other=>other!==h&&other.mode==='build');
+   const nextPlan=tower.layers<TOWER.maxLayers?tower.getNextBlockSpec():null,blockedPlan=h.unreachableBuildKey===humanBuildPlanKey(nextPlan);
+   const canBuild=tower.layers<TOWER.maxLayers&&tower.scattered<5&&!blockedPlan&&!human.some(other=>other!==h&&other.mode==='build');
    if(canBuild&&(!target||rng.nextInt(100)<(h.id===0?40:18)))startHumanBuild(h);
    else if(target)beginHumanAttack(h,target);else h.timer=800;
   }
@@ -1940,7 +2001,7 @@ function updateGame(dt,frame){if(phase!=='play'&&phase!=='collapse')return;
   if(cat.motion.state==='dead'){cat.respawn.leftMs-=dt*1000;if(cat.respawn.leftMs<=0)respawnCat();}
   else updateCat(dt,input);
  });
- updateMobs(dt);for(const appliance of vacuums)appliance.update(dt);updateHumans(dt);updateShockwaves(dt);updateProjectiles(dt);tower.step(dt);collectMobsAfterStep();
+ updateMobs(dt);for(const appliance of vacuums)appliance.update(dt);updateHumans(dt);updateShockwaves(dt);updateProjectiles(dt);tower.step(dt);syncHumanCarryHands();collectMobsAfterStep();
  for(const id of roomCats.keys())withCatActor(id,()=>{
   tower.syncCat();if(id!==localCat.id)collectMobsAfterStep();if(cat.motion.state!=='dead')updateCatMotion(dt);
  });
@@ -2528,13 +2589,14 @@ const HUMAN_STYLES=Object.freeze([
 ]);
 function humanBuildLean(h){
  if(h.mode!=='build'||!h.buildPlan)return 0;
- const stage=h.buildStage,duration=stage==='reach'?HUMAN_BUILD.reachMs:stage==='lift'?HUMAN_BUILD.liftMs:stage==='retract'?HUMAN_BUILD.retractMs:1;
+ const stage=h.buildStage,duration=stage==='reach'?HUMAN_BUILD.reachMs:stage==='lift'?(h.buildStageDurationMs||HUMAN_BUILD.liftMs):stage==='retract'?HUMAN_BUILD.retractMs:1;
  const t=clamp(h.buildStageMs/Math.max(1,duration),0,1),smooth=t*t*(3-2*t);
  if(stage==='reach')return 1.48*smooth;
  if(stage==='pickup')return 1.48;
- if(stage==='lift')return lerp(1.48,.15,smooth);
+ if(stage==='lift')return 1.48;
+ if(stage==='approach-target'){const carryT=clamp(h.buildStageMs/900,0,1),carrySmooth=carryT*carryT*(3-2*carryT);return lerp(1.48,.35,carrySmooth);}
  if(stage==='retract')return .15*(1-smooth);
- if(stage==='turn-lift'||stage==='align'||stage==='lower'||stage==='settle')return .15;
+ if(stage==='approach-target'||stage==='turn-to-tower'||stage==='turn-lift'||stage==='align'||stage==='lower'||stage==='settle')return .30;
  return 0;
 }
 function humanBuildPoint(h,x,y,z,lean=humanBuildLean(h)){
@@ -2543,10 +2605,10 @@ function humanBuildPoint(h,x,y,z,lean=humanBuildLean(h)){
 }
 function humanBuildShoulder(h,lean=humanBuildLean(h),yaw=h.yaw){
  const pose=yaw===h.yaw?h:{...h,yaw};
- return humanBuildPoint(pose,humanActiveSide(h)*.77*HUMAN_MODEL.scale,2.55*HUMAN_MODEL.scale,.04*HUMAN_MODEL.scale,lean);
+ return humanBuildPoint(pose,humanActiveSide(h)*.77,2.55,.04,lean);
 }
 function humanReachablePoint(h,target){
- const shoulder=humanBuildShoulder(h),delta=vsub(target,shoulder),distance=len(delta),min=Math.abs(HUMAN_BUILD.armUpper-HUMAN_BUILD.armForearm)+.001,max=HUMAN_BUILD.armUpper+HUMAN_BUILD.armForearm-.001;
+ const shoulder=humanBuildShoulder(h,humanBuildLean(h),h.yaw),delta=vsub(target,shoulder),distance=len(delta),min=Math.abs(HUMAN_BUILD.armUpper-HUMAN_BUILD.armForearm)+.001,max=HUMAN_BUILD.armUpper+HUMAN_BUILD.armForearm-.001;
  if(distance<.001)return vadd(shoulder,[0,0,-min]);
  return vadd(shoulder,vmul(delta,clamp(distance,min,max)/distance));
 }
@@ -2801,9 +2863,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewpo
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
-  namespace:'meow-tumble-0.17.3',inputBytes:5,snapshotLimit:15000,
-  inputType:91,snapshotType:92,resetType:93,startType:94,protocol:11});
-const LOBBY_VERSION='meow-tumble-0.17.3';
+  namespace:'meow-tumble-0.17.4',inputBytes:5,snapshotLimit:15000,
+  inputType:91,snapshotType:92,resetType:93,startType:94,protocol:12});
+const LOBBY_VERSION='meow-tumble-0.17.4';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};
