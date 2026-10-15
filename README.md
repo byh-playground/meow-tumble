@@ -2,7 +2,7 @@
 
 집 안을 누비는 작은 고양이가 쥐·곤충을 사냥하며 성장하고, 사람의 공격을 피하며 거대한 젠가탑을 무너뜨리는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.16.0** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.17.0** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -144,3 +144,8 @@ Rapier 0.21.0의 contactImpulse는 법선 방향 충격량이며 단위는 게�
 ## v0.16.0: fixed-arm Jenga carrying
 
 The starting tower is now 16 layers (down from 22), and its cap is 17 layers (down from 26). This lowers the starting tower by 4.2 world units and the maximum by 6.3, while leaving one full reachable layer for human stacking. A human keeps the existing model scale, walks around the table and up its existing ramp, grips one real mass-20 Rapier block with a spherical hand joint, carries it near the body, then raises and aligns it with a fixed two-segment arm before releasing it to free physics. Strong impacts can release the grip. No camera snap, extra platform, or ladder is added. The multiplayer namespace/protocol advances to 0.16.0/7 so old snapshot readers do not mix with this scene state.
+
+
+## v0.17.0: human Jenga stacking and the starting tower
+
+The starting tower now has 8 layers and the cap remains 17. A human keeps the existing 3.10 model scale and fixed two-segment arm, walks from the supply table along the existing route and ramp, and carries the same dynamic mass-20 Rapier block from pickup through release. A target-velocity-aware PD controller applies impulses to the dynamic body while a torque controller keeps its orientation; the body is never directly repositioned or changed to kinematic. Pickup waits for stable hand contact, and the human stops residual walking motion before carrying so the floor-to-table transition happens on the ramp. The block is gradually aligned, lowered, released, and left to settle under Rapier physics; disturbances can move it or break the grip. No camera snap, platform, or ladder is added. Human scale, arm reach, block mass, toy-ball mass/speed, and damage rules are preserved. The multiplayer namespace/protocol advances to 0.17.0/8 for the changed starting world.
