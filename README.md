@@ -169,3 +169,12 @@ The multiplayer namespace/protocol advances to 0.17.2/10 for the revised host si
 The host tracks a cat's directional Rapier contact with a block only when that contact also produces real block movement. Both people first flinch and look back at the shaken block; the closer person braces with their free fixed-length arm, then looks to the exact cat owner. After a short nonverbal reaction, that person's existing attack pattern targets the responsible cat. Repeated contacts are debounced, and the building hand, block carry cycle, and player input remain active throughout. Reactions are included in host snapshots so two-player viewers see the same owner-directed response.
 
 The multiplayer namespace/protocol advances to 0.17.3/11 for the added reaction snapshot fields. No explanatory popup or new attack type is introduced.
+
+
+## v0.17.4: fixed-arm carrying, path checks, and reachable placement
+
+Human shoulder/rest-hand anchors now use model-local coordinates once before applying the existing 3.10 scale, fixing the previous doubled-scale reach error. A person walks to the supply, bends to pick up one real mass-20 dynamic Rapier block, raises it toward the body at a controlled speed, walks toward the tower at a slower carry pace, turns at chest height, then lifts/aligns that same body for placement. Translation and orientation use capped Rapier impulses and torque; the body is never teleported or made kinematic. The rendered wrist follows the block's actual surface contact after each physics step, while the two-segment arm renderer stays capped at its original 5.115-unit reach. Impacts may shake or release the block.
+
+Work-point selection checks the fixed-arm reachable path for pickup, carry, raised approach, alignment, and lowering, with a larger reach reserve for high targets. If no complete path fits, the person skips that slot without spawning a carried block, changing scale, or stretching the arm. In isolated Chrome gameplay, the normal next-layer slot and a layer-12 target placed and settled; a layer-16 target was cleanly rejected as unreachable with character scale still 3.10. The exact highest reachable layer depends on slot and stance; layers 13–15 were not exhaustively measured. The 8-layer start, 17-layer cap, 20-unit block mass, camera, cat movement, and damage rules are unchanged.
+
+The room namespace/protocol advances to 0.17.4/12 for the revised build simulation.
