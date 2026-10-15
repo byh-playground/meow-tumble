@@ -2,7 +2,7 @@
 
 집 안을 누비는 작은 고양이가 쥐·곤충을 사냥하며 성장하고, 사람의 공격을 피하며 거대한 젠가탑을 무너뜨리는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.17.0** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.17.3** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -149,3 +149,23 @@ The starting tower is now 16 layers (down from 22), and its cap is 17 layers (do
 ## v0.17.0: human Jenga stacking and the starting tower
 
 The starting tower now has 8 layers and the cap remains 17. A human keeps the existing 3.10 model scale and fixed two-segment arm, walks from the supply table along the existing route and ramp, and carries the same dynamic mass-20 Rapier block from pickup through release. A target-velocity-aware PD controller applies impulses to the dynamic body while a torque controller keeps its orientation; the body is never directly repositioned or changed to kinematic. Pickup waits for stable hand contact, and the human stops residual walking motion before carrying so the floor-to-table transition happens on the ramp. The block is gradually aligned, lowered, released, and left to settle under Rapier physics; disturbances can move it or break the grip. No camera snap, platform, or ladder is added. Human scale, arm reach, block mass, toy-ball mass/speed, and damage rules are preserved. The multiplayer namespace/protocol advances to 0.17.0/8 for the changed starting world.
+
+## v0.17.1: faster tower-side human Jenga stacking
+
+The initial 8-layer tower, 17-layer cap, human scale (3.10), and fixed two-segment arm remain unchanged. Each human moves to one work point beside the tower, bends down to pick up a nearby real mass-20 dynamic Rapier block, lifts it toward the body, turns toward the tower, and places and releases that same body with a short alignment pause. The former repeated supply-to-tower carry route is removed. The block stays under impulse-driven physics throughout the handoff and can still be disturbed or released by impacts. Placement checks the fixed arm reach before starting; a target outside reach is left unbuilt rather than reached by stretching the arm.
+
+The multiplayer namespace/protocol advances to 0.17.1/9 for the changed human build sequence. Camera, cat movement, block mass, and toy-ball mass and damage rules remain unchanged.
+
+
+## v0.17.2: physics-driven cat escape from wedged contacts
+
+When a cat keeps a movement, dash, or roll intent but makes almost no progress for 760 ms, short Rapier raycasts look for a clearer horizontal exit or open space overhead. The cat receives one capped impulse, then waits through a cooldown; if every ray is blocked, it gets a small physical retreat impulse opposite the held direction. Recovery only adds impulses to the existing dynamic body. It never relocates the cat, changes contact filters, alters damage, or runs without player intent.
+
+The multiplayer namespace/protocol advances to 0.17.2/10 for the revised host simulation.
+
+
+## v0.17.3: cause-directed human reactions
+
+The host tracks a cat's directional Rapier contact with a block only when that contact also produces real block movement. Both people first flinch and look back at the shaken block; the closer person braces with their free fixed-length arm, then looks to the exact cat owner. After a short nonverbal reaction, that person's existing attack pattern targets the responsible cat. Repeated contacts are debounced, and the building hand, block carry cycle, and player input remain active throughout. Reactions are included in host snapshots so two-player viewers see the same owner-directed response.
+
+The multiplayer namespace/protocol advances to 0.17.3/11 for the added reaction snapshot fields. No explanatory popup or new attack type is introduced.
