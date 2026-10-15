@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"/>
 <meta name="theme-color" content="#182438"/>
-<title>와르르냥 / Meow Tumble · 사람 크기 복원과 지속 물리 공 · v0.15.1</title>
+<title>와르르냥 / Meow Tumble · 사람 크기 복원과 지속 물리 공 · v0.15.2</title>
 <style>
 :root{color-scheme:dark;--bg:#17283c;--ink:#fffaf0;--sub:#c8d1da;--mint:#93edcb;--pink:#ffaaa6;--yellow:#ffe49e}
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:ui-rounded,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}button,input,summary{font:inherit}button,summary{cursor:pointer;touch-action:manipulation}button{color:inherit;min-height:48px}button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}button:disabled{opacity:.55;cursor:default}.hidden{display:none!important}
@@ -119,7 +119,7 @@
  <div class="bottomRight"><div id="status" class="status"></div><div class="dashbar"><i id="dashReady"></i></div></div>
  </div>
  <div id="netRoster" aria-label="멀티플레이 참가자"></div><div id="netLabels" aria-hidden="true"></div>
- <div id="buildTag">v0.15.1 · MEOW TUMBLE</div>
+ <div id="buildTag">v0.15.2 · MEOW TUMBLE</div>
  <div id="touch"><div id="stick" class="joystick"><div id="knob" class="knob"></div></div><div class="actionPad"><button type="button" class="action" data-action="charge" aria-label="짧게 누르면 할퀴기, 0.25초 이상 길게 누르고 떼면 박치기"><strong>🐾</strong><small>홀드 박치기<br>드래그 조준</small><span class="chargeTrack"><i id="touchChargeFill"></i></span></button><button type="button" class="action" data-action="jump" aria-label="점프: 1초까지 누르고 떼서 점프"><strong>↥</strong><small>길게 눌러 점프</small><span class="chargeTrack jumpTrack"><i id="touchJumpFill"></i></span></button><button type="button" class="action" data-action="dodge"><strong>↻</strong><small>구르기</small></button></div></div>
  <section id="intro" class="cover" aria-label="게임 메뉴"><div class="hero">
  <div data-screen="main"><div class="eyebrow">MEOW TUMBLE</div><h1>와르르<em>냥</em></h1><p>작은 고양이로 사냥하고 성장해<br>거대한 젠가탑을 무너뜨리세요.</p><button type="button" class="primary" data-route="modes">시작하기</button><div class="menuLinks"><button data-route="help">게임 방법</button><button data-route="settings">설정</button></div><small>1–4명 · PC / 터치 · 인터넷 연결 필요</small></div>
@@ -573,7 +573,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
 const DEF={
-  build:'20261015-human-restore-persistent-ball-v0150',version:'0.15.1',
+  build:'20261015-human-restore-persistent-ball-v0150',version:'0.15.2',
   // After the success threshold, physics keeps stepping until the debris is quiet.
   // These are PRESENTATION timings only; they never influence Rapier impulses.
   round:{durationMs:0,winBlocks:TOWER.winScattered,
@@ -916,15 +916,15 @@ function updateMobs(dt){const ms=dt*1000;
 }
 
 // Rapier normal contact impulses are momentum, not force. No dt or friction multiplier.
-const IMPACT_DAMAGE=Object.freeze({minNormalSpeed:2,minImpulse:1,safeDeltaV:1,hpPerDeltaV:1.4,maxDamage:60,launchDeltaV:3});
+const IMPACT_DAMAGE=Object.freeze({minNormalSpeed:2,minAttackSpeed:2,minImpulse:1,safeDeltaV:1,hpPerDeltaV:1.4,maxDamage:60,launchDeltaV:3});
 function damageFromImpulse(impulse,mass,normalSpeed=null){
  if(!Number.isFinite(impulse)||!Number.isFinite(mass)||mass<=0||impulse<IMPACT_DAMAGE.minImpulse||
-    (normalSpeed!==null&&(!Number.isFinite(normalSpeed)||normalSpeed<IMPACT_DAMAGE.minNormalSpeed)))return 0;
+    (normalSpeed!==null&&(!Number.isFinite(normalSpeed)||normalSpeed<IMPACT_DAMAGE.minAttackSpeed)))return 0;
  return Math.min(IMPACT_DAMAGE.maxDamage,Math.ceil(Math.max(0,impulse/mass-IMPACT_DAMAGE.safeDeltaV)*IMPACT_DAMAGE.hpPerDeltaV));
 }
 const collisionDamage={
- before:new Map(),pairs:new Map(),events:[],sequence:0,substep:0,
- reset(){this.before.clear();this.pairs.clear();this.events=[];this.sequence=0;this.substep=0;},
+ before:new Map(),pairs:new Map(),events:[],decisions:[],sequence:0,substep:0,
+ reset(){this.before.clear();this.pairs.clear();this.events=[];this.decisions=[];this.sequence=0;this.substep=0;},
  forget(handle){for(const [key,value] of this.pairs)if(value.handles.includes(handle))this.pairs.delete(key);},
  record(event){this.events.push({sequence:++this.sequence,tick:nowTicks,...event});if(this.events.length>24)this.events.shift();},
  actor(collider){
@@ -944,7 +944,7 @@ const collisionDamage={
   const local=qrotate([-q.x,-q.y,-q.z,q.w],[p.x-com.x,p.y-com.y,p.z-com.z]),r=qrotate(b.q,local);
   return[b.v[0]+b.w[1]*r[2]-b.w[2]*r[1],b.v[1]+b.w[2]*r[0]-b.w[0]*r[2],b.v[2]+b.w[0]*r[1]-b.w[1]*r[0]];
  },
- apply(target,source,impulse,normalSpeed,point){
+ apply(target,source,impulse,normalSpeed,point,attackMeta={}){
   const mass=target.body.mass(),damage=damageFromImpulse(impulse,mass,normalSpeed);if(!damage)return 0;
   let actual=0;
   if(target.kind==='cat')withCatActor(target.id,()=>{
@@ -957,37 +957,56 @@ const collisionDamage={
   });
   else if(target.kind==='mob'&&!target.actor.dead){
    const owner=source?.kind==='cat'?source.id:net.localId;
-   withCatActor(owner,()=>{actual=damageMob(target.actor,damage,source?.kind==='cat'&&source.dash?'dash':'impact',point,420,{impulse,deltaV:impulse/mass});});
+   withCatActor(owner,()=>{actual=damageMob(target.actor,damage,source?.kind==='cat'&&source.dash?'dash':'impact',point,420,{impulse,deltaV:impulse/mass,...attackMeta});});
   }
-  if(actual)this.record({target:target.kind+':'+target.id,source:source?source.kind+':'+source.id:'applied',impulse,normalSpeed,mass,deltaV:impulse/mass,damage:actual});
+  if(actual)this.record({target:target.kind+':'+target.id,source:source?source.kind+':'+source.id:'applied',impulse,normalSpeed,...attackMeta,mass,deltaV:impulse/mass,damage:actual});
   return actual;
  },
  applied(target,source,vector){const before=target.body.linvel();target.body.applyImpulse(vec3(vector),true);const after=target.body.linvel();
   // Actual momentum accepted by Rapier, including translation locks.
   const impulse=target.body.mass()*Math.hypot(after.x-before.x,after.y-before.y,after.z-before.z);
-  return this.apply(target,source,impulse,null,target.body.translation());
+  return this.apply(target,source,impulse,null,target.body.translation(),{attackType:source?.attack??'impulse'});
  },
  resolve(){const seen=new Set(),queried=new Set();
   const colliders=[...tower.playerBodies.values()].map(p=>p.collider).concat(mobs.filter(m=>!m.dead).map(m=>m.collider),projectiles.map(p=>p.collider));
   for(const first of colliders)tower.world.contactPairsWith(first,second=>{
    const handles=[first.handle,second.handle].sort((a,b)=>a-b),key=handles.join(':');if(queried.has(key))return;queried.add(key);
    const a=this.actor(first),b=this.actor(second);if(!a||!b)return;
-   let impulse=0,normalSpeed=0,point=null,touching=false;const normalImpulse=[0,0,0];
+   let impulse=0,normalSpeed=0,point=null,touching=false,geometricContact=false,solvedImpulse=0;
+   const normalImpulse=[0,0,0],attackVectors=[[0,0,0],[0,0,0]],sourceSpeeds=[0,0],attackSpeeds=[0,0];
    tower.world.contactPair(first,second,(m,flipped)=>{
     const raw=m.normal(),n=[raw.x,raw.y,raw.z].map(v=>flipped?-v:v);
     for(let i=0;i<m.numContacts();i++){
-     if(m.contactDist(i)>.02)continue;touching=true;
-     const j=Math.max(0,m.contactImpulse(i));
+     if(m.contactDist(i)>.02)continue;touching=true;geometricContact ||= m.contactDist(i)<=1e-5;
+     const j=Math.max(0,m.contactImpulse(i));solvedImpulse+=j;
      const p=i<m.numSolverContacts()?m.solverContactPoint(i):first.translation();
      const va=this.pointVelocity(a.body,p),vb=this.pointVelocity(b.body,p);
-     const closing=Math.max(0,(va[0]-vb[0])*n[0]+(va[1]-vb[1])*n[1]+(va[2]-vb[2])*n[2]);
-     if(j>0&&closing>=IMPACT_DAMAGE.minNormalSpeed){for(let axis=0;axis<3;axis++)normalImpulse[axis]+=j*n[axis];if(closing>normalSpeed){normalSpeed=closing;point=p;}}
+     const alongA=va[0]*n[0]+va[1]*n[1]+va[2]*n[2],alongB=vb[0]*n[0]+vb[1]*n[1]+vb[2]*n[2];
+     const closing=Math.max(0,alongA-alongB),towards=[Math.max(0,alongA),Math.max(0,-alongB)];
+     if(j<=0||closing<IMPACT_DAMAGE.minNormalSpeed)continue;
+     for(let axis=0;axis<3;axis++)normalImpulse[axis]+=j*n[axis];
+     if(closing>normalSpeed){normalSpeed=closing;point=p;}
+     // Shared directional ownership: the victim's motion cannot increase source attack strength.
+     // The solver reaction remains unchanged; only the HP budget is attributed to each source.
+     for(let source=0;source<2;source++){
+      const speed=Math.min(towards[source],closing);sourceSpeeds[source]=Math.max(sourceSpeeds[source],towards[source]);
+      if(speed<IMPACT_DAMAGE.minAttackSpeed)continue;
+      attackSpeeds[source]=Math.max(attackSpeeds[source],speed);
+      for(let axis=0;axis<3;axis++)attackVectors[source][axis]+=j*n[axis]*speed/closing;
+     }
     }
    });
-   impulse=Math.hypot(...normalImpulse);if(!touching)return;seen.add(key);let episode=this.pairs.get(key);if(!episode){episode={handles,spent:false};this.pairs.set(key,episode);}
-   if(episode.spent||!point||normalSpeed<IMPACT_DAMAGE.minNormalSpeed||impulse<IMPACT_DAMAGE.minImpulse)return;
-   episode.spent=true; // One aggregate per collider pair/contact episode, not per point or solver iteration.
-   this.apply(a,b,impulse,normalSpeed,point);this.apply(b,a,impulse,normalSpeed,point);
+   impulse=Math.hypot(...normalImpulse);if(!touching)return;seen.add(key);let episode=this.pairs.get(key);
+   if(!episode){episode={handles,spent:false};this.pairs.set(key,episode);}
+   if(episode.spent||(!geometricContact&&solvedImpulse<=1e-5))return;
+   // Consume even a zero-attack contact. Reaction velocity in later substeps is not a counterattack.
+   episode.spent=true;
+   const budgets=attackVectors.map(v=>Math.hypot(...v));
+   const decision={tick:nowTicks,a:a.kind+':'+a.id,b:b.kind+':'+b.id,solverImpulse:impulse,closingSpeed:normalSpeed,sourceSpeeds,attackSpeeds,budgets};
+   this.decisions.push(decision);if(this.decisions.length>24)this.decisions.shift();
+   if(!point)return;
+   this.apply(a,b,budgets[1],attackSpeeds[1],point,{solverImpulse:impulse,closingSpeed:normalSpeed,sourceSpeed:sourceSpeeds[1]});
+   this.apply(b,a,budgets[0],attackSpeeds[0],point,{solverImpulse:impulse,closingSpeed:normalSpeed,sourceSpeed:sourceSpeeds[0]});
    const ball=a.kind==='ball'?a:b.kind==='ball'?b:null,other=ball===a?b:a;
    if(ball){const shot=ball.actor;shot.firstImpact=true;shot.contactImpulse=impulse;shot.hitBlocks=other.kind==='block'?[other.id]:[];
     throwStats.impacts++;throwStats.contacts++;throwStats.maxContactImpulse=Math.max(throwStats.maxContactImpulse,impulse);
@@ -1048,7 +1067,7 @@ function resolveClawHit(){
   }
   hitIds.add(handle);
   const impulse=config.knockback*Math.pow(cat.mass,.32);
-  if(collisionDamage.applied({kind:'mob',id:mob.id,body:mob.body,actor:mob},{kind:'cat',id:cat.id,actor:cat},[fx*impulse,impulse*.34,fz*impulse]))hits++;
+  if(collisionDamage.applied({kind:'mob',id:mob.id,body:mob.body,actor:mob},{kind:'cat',id:cat.id,actor:cat,attack:'claw'},[fx*impulse,impulse*.34,fz*impulse]))hits++;
  }
  claw.lastHits=hits;
  if(hits>1)announce('🐾 연속 할퀴기 '+hits+'마리 적중!',650);
@@ -1232,7 +1251,7 @@ function blinkHuman(h,msg,ms=1200){h.speech=msg;h.noticeMs=ms;}
 function patternRadius(h){return HUMAN_ATTACKS[h.pattern].radius;}
 function createShockwave(h,x,z,scale=1){shockwaves.push({id:nowTicks*10+h.id+shockwaves.length*.01,x,z,r:0,previous:0,
  maxRadius:patternRadius(h),speed:DEF.humans.waveSpeed*(h.pattern==='sweep'?1.2:1),
- strength:DEF.humans.impulse*scale,hitCats:h.waveHitCats??(h.waveHitCats=new Set()),hitBlocks:new Set(),pattern:h.pattern,age:0});
+ owner:h.id,strength:DEF.humans.impulse*scale,hitCats:h.waveHitCats??(h.waveHitCats=new Set()),hitBlocks:new Set(),pattern:h.pattern,age:0});
  particle([x,.16,z],'red',18,4);camera.shake=Math.max(camera.shake,.29);sfx('hit',.8);
 }
 // A single exclusive locomotion/impact state drives the procedural cat rig.
@@ -1342,7 +1361,7 @@ function updateShockwaves(dt){for(let i=shockwaves.length-1;i>=0;i--){const w=sh
    const radialImpulse=mass*launchOut*evadeFactor;
    const upwardImpulse=mass*launchUp*evadeFactor;
    if(perfectRoll)tower.catBody.applyImpulse({x:nx*radialImpulse,y:upwardImpulse,z:nz*radialImpulse},true);
-   else collisionDamage.applied({kind:'cat',id:cat.id,body:tower.catBody,actor:cat},null,[nx*radialImpulse,upwardImpulse,nz*radialImpulse]);
+   else collisionDamage.applied({kind:'cat',id:cat.id,body:tower.catBody,actor:cat},{kind:'human',id:w.owner,attack:'wave'},[nx*radialImpulse,upwardImpulse,nz*radialImpulse]);
    if(perfectRoll){cat.successfulRolls++;cat.openingMs=Math.max(cat.openingMs,1950);
     particle([cat.x,cat.y+.48,cat.z],'mint',18,2.6);if(cat===localCat){announce('✨ 구르기 성공! 사람 손을 피해 반격 기회!',1100);sfx('roll',.75);}
    }else{
@@ -2456,9 +2475,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewpo
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
- namespace:'meow-tumble-0.15.1',inputBytes:5,snapshotLimit:15000,
+ namespace:'meow-tumble-0.15.2',inputBytes:5,snapshotLimit:15000,
  inputType:91,snapshotType:92,resetType:93,startType:94,protocol:6});
-const LOBBY_VERSION='meow-tumble-0.15.1';
+const LOBBY_VERSION='meow-tumble-0.15.2';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};
@@ -2953,7 +2972,7 @@ window.__meowTumble={get state(){return{product:"와르르냥 / Meow Tumble",pha
  level:cat?.level,xp:cat?.xp,mass:cat?.mass,hp:cat?.hp,animation:cat?.motion?.state,animationMs:cat?.motion?.elapsedMs,maxHp:DEF.cat.maxHp,kills:{...kills},vacuums:vacuums.map(v=>({id:v.id,state:v.attack.state,leftMs:v.attack.leftMs,cooldownMs:v.attack.cooldownMs,p:v.body.translation()})),mobs:mobs.length,zone:cat?zoneAt(cat.x,cat.z):null,respawning:cat?.motion?.state==='dead',cat:cat?{x:cat.x,z:cat.z,y:cat.y,yaw:cat.yaw,
  knockX:cat.knockX,knockZ:cat.knockZ,vy:cat.vy}:null,camera:camera?{yaw:camera.yaw,pitch:camera.pitch,eye:camera.eye.slice()}:null,
  impactGraceMs:cat?.impactGraceMs,controls:{lookPointer:look.id,chargeLookPointer:look.chargeId,joyPointer:joy.id},layers:tower.layers,activeBodies:tower.blocks.length-tower.sleeperCount,
- humans:(human??[]).map(h=>({id:h.id,label:HUMAN_PROFILES[h.id].label,pattern:h.pattern,mode:h.mode,target:h.target.slice(),aimLocked:h.aimLocked,height:HUMAN_MODEL.height,scale:HUMAN_MODEL.scale})),projectiles:projectiles.map(p=>({id:p.id,owner:p.owner,p:p.p.slice(),q:p.q.slice(),sleeping:p.sleeping})),impactDamage:{config:IMPACT_DAMAGE,events:collisionDamage.events,pairs:collisionDamage.pairs.size},throwPhysics:{kind:'toy-ball',radius:HUMAN_THROW.radius,reference:throwReference(),mass:HUMAN_THROW.mass,speed:HUMAN_THROW.speed,maxBalls:HUMAN_THROW.maxBalls,stats:throwStats},
+ humans:(human??[]).map(h=>({id:h.id,label:HUMAN_PROFILES[h.id].label,pattern:h.pattern,mode:h.mode,target:h.target.slice(),aimLocked:h.aimLocked,height:HUMAN_MODEL.height,scale:HUMAN_MODEL.scale})),projectiles:projectiles.map(p=>({id:p.id,owner:p.owner,p:p.p.slice(),q:p.q.slice(),sleeping:p.sleeping})),impactDamage:{config:IMPACT_DAMAGE,events:collisionDamage.events,decisions:collisionDamage.decisions,pairs:collisionDamage.pairs.size},throwPhysics:{kind:'toy-ball',radius:HUMAN_THROW.radius,reference:throwReference(),mass:HUMAN_THROW.mass,speed:HUMAN_THROW.speed,maxBalls:HUMAN_THROW.maxBalls,stats:throwStats},
  shockwaves:shockwaves.length,impulses:tower.totalImpulses,physicsEngine:'Rapier 3D 0.21.0',physicsVersion:DEF.version,motion:cat?.motion?.state,motionElapsedMs:cat?.motion?.elapsedMs,humanHits:cat?.humanHits,successfulRolls:cat?.successfulRolls,landings:cat?.landings,chargePercent:cat?Math.round(cat.charge.ratio*100):0,chargeHeld:cat?.charge.held,clawCooldownMs:cat?.claw.cooldown.leftMs,clawAnimationMs:cat?.claw.animation.leftMs,clawHitPending:cat?.claw.pendingHit,clawAttacks:cat?.claw.attacks,clawLastHits:cat?.claw.lastHits,jumpHeld:cat?.jump.held,jumpPercent:cat?Math.round(cat.jump.ratio*100):0,jumpLaunchVelocity:cat?.jump.lastVelocity,headbuttBaseSpeed:cat?headbuttBaseSpeed(cat.level):null,dashVelocity:cat?.dash.velocity,dashCooldownMs:cat?.dash.cooldown.leftMs,
  catBodyMass:tower.catBody?.mass(),contacts:tower.contacts,loopRunning:simLoop.running,drawCalls:renderer?.drawCalls,
  mobVitals:[...combatUI.plates].filter(([,p])=>p.mob).map(([id,p])=>({id,type:p.type,hp:p.mob.hp,maxHp:MOB_TYPES[p.type].maxHp,display:p.node.style.display})),
