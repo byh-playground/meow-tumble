@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"/>
 <meta name="theme-color" content="#182438"/>
-<title>와르르냥 / Meow Tumble · 모바일 가로 플레이 · v0.12.1</title>
+<title>와르르냥 / Meow Tumble · 차지 조준과 사람 투척 · v0.13.0</title>
 <style>
 :root{color-scheme:dark;--bg:#17283c;--ink:#fffaf0;--sub:#c8d1da;--mint:#93edcb;--pink:#ffaaa6;--yellow:#ffe49e}
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:ui-rounded,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}button,input,summary{font:inherit}button,summary{cursor:pointer;touch-action:manipulation}button{color:inherit;min-height:48px}button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}button:disabled{opacity:.55;cursor:default}.hidden{display:none!important}
@@ -110,7 +110,7 @@
  <canvas class="ui minimap" id="miniMap" width="172" height="132" aria-label="집 내부 미니맵"></canvas></div>
  <div class="ui respawnBanner hidden" id="respawnBanner">🐾 잠자리에서 부활하는 중…</div>
  <div class="ui" id="targetIndicator"><span id="targetText">먹이를 모아 힘을 기르세요</span></div>
-  <div class="ui" id="warning">⚠️ 거인의 지면 충격파! 구르기로 피하세요!</div>
+  <div class="ui" id="warning">⚠️ 사람의 지면 충격파! 구르기로 피하세요!</div>
   <div class="ui" id="toast">고양이가 출동합니다!</div>
   <div id="humanA">인간 A</div><div id="humanB">인간 B</div>
   <div id="mobHudLayer" aria-hidden="true"></div>
@@ -119,8 +119,8 @@
  <div class="bottomRight"><div id="status" class="status"></div><div class="dashbar"><i id="dashReady"></i></div></div>
  </div>
  <div id="netRoster" aria-label="멀티플레이 참가자"></div><div id="netLabels" aria-hidden="true"></div>
- <div id="buildTag">v0.12.1 · MEOW TUMBLE</div>
- <div id="touch"><div id="stick" class="joystick"><div id="knob" class="knob"></div></div><div class="actionPad"><button type="button" class="action" data-action="charge" aria-label="짧게 누르면 할퀴기, 0.25초 이상 길게 누르고 떼면 박치기"><strong>🐾</strong><small>탭 할퀴기 · 홀드 박치기</small><span class="chargeTrack"><i id="touchChargeFill"></i></span></button><button type="button" class="action" data-action="jump" aria-label="점프: 1초까지 누르고 떼서 점프"><strong>↥</strong><small>길게 눌러 점프</small><span class="chargeTrack jumpTrack"><i id="touchJumpFill"></i></span></button><button type="button" class="action" data-action="dodge"><strong>↻</strong><small>구르기</small></button></div></div>
+ <div id="buildTag">v0.13.0 · MEOW TUMBLE</div>
+ <div id="touch"><div id="stick" class="joystick"><div id="knob" class="knob"></div></div><div class="actionPad"><button type="button" class="action" data-action="charge" aria-label="짧게 누르면 할퀴기, 0.25초 이상 길게 누르고 떼면 박치기"><strong>🐾</strong><small>홀드 박치기<br>드래그 조준</small><span class="chargeTrack"><i id="touchChargeFill"></i></span></button><button type="button" class="action" data-action="jump" aria-label="점프: 1초까지 누르고 떼서 점프"><strong>↥</strong><small>길게 눌러 점프</small><span class="chargeTrack jumpTrack"><i id="touchJumpFill"></i></span></button><button type="button" class="action" data-action="dodge"><strong>↻</strong><small>구르기</small></button></div></div>
  <section id="intro" class="cover" aria-label="게임 메뉴"><div class="hero">
  <div data-screen="main"><div class="eyebrow">MEOW TUMBLE</div><h1>와르르<em>냥</em></h1><p>작은 고양이로 사냥하고 성장해<br>거대한 젠가탑을 무너뜨리세요.</p><button type="button" class="primary" data-route="modes">시작하기</button><div class="menuLinks"><button data-route="help">게임 방법</button><button data-route="settings">설정</button></div><small>1–4명 · PC / 터치 · 인터넷 연결 필요</small></div>
  <div data-screen="modes" class="hidden"><button class="back" data-route="main">← 타이틀</button><h2>어떻게 놀까요?</h2><p>혼자 탐험하거나 친구와 함께 탑을 무너뜨려요.</p><button id="startBtn" type="button" class="primary">혼자 시작</button><button class="secondary wide" data-route="multi">친구와 함께 · 최대 4명</button></div>
@@ -369,6 +369,8 @@ function limb(g,p0,p1,r,col){const d=vsub(p1,p0),mid=vmul(vadd(p0,p1),.5),axis=n
 const PHYS={gravity:17.5,solverIterations:10,friction:1.1,restitution:0.025};
 const TOWER={width:1.07,length:3.48,height:.70,gap:.025,initialLayers:22,maxLayers:26,mass:20,winScattered:32};
 const ARENA={halfX:10.9,halfZ:8.6,edgeX:10.35,edgeZ:8.0,floorY:-3.05,houseHalfX:46,houseHalfZ:36,spawnX:0,spawnZ:23.5};
+const HUMAN_BODY=Object.freeze({scale:1.45,height:3.925*1.45,radius:.92,z:-10.6});
+const HUMAN_THROW=Object.freeze({referenceLevel:4,mass:2,speed:20,size:[.72,.42,1.8],maxActive:4,lifeMs:3200,impactFadeMs:180});
 const LOOK={mouseRadPerPx:.0029,touchRadPerPx:.0062,pitchMin:-.86,pitchMax:1.22,
  followDistance:4.85,eyeHeight:1.42,
  cameraRadius:.22,armCollisionMargin:.08,boomHoldMs:150,boomReleaseHalfLifeMs:180};
@@ -554,7 +556,8 @@ class PhysicsTower {
   for(const b of this.blocks){b.highlight=Math.max(0,b.highlight-dt);b.spawn=Math.max(0,b.spawn-dt);}
   // Two 60 Hz Rapier substeps per 30 TPS authoritative game tick.
   for(let substep=0;substep<2;substep++){
-  this.world.step(this.eventQueue);
+  for(const shot of projectiles)if(shot.body){const v=shot.body.linvel();shot.beforeVelocity=[v.x,v.y,v.z];}
+  this.world.step(this.eventQueue);resolveProjectileContacts();
   // Resolve short-lived appliance contacts before the next physical substep.
   if(phase==='play')for(const appliance of vacuums)appliance.collectContacts();
   this.eventQueue.drainCollisionEvents((a,b,started)=>{
@@ -566,7 +569,7 @@ class PhysicsTower {
    if(mob&&!mob.dead)withCatActor(who[0],()=>onMobContact(mob));
   });
   }
-  this.syncBlocks();this.syncCat();
+  this.syncBlocks();this.syncCat();for(const shot of projectiles)if(shot.body){const p=shot.body.translation();shot.p=[p.x,p.y,p.z];}
  }
 }
 
@@ -576,14 +579,14 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
 const DEF={
-  build:'20261015-mobile-landscape-v0121',version:'0.12.1',
+  build:'20261015-hold-human-throw-v0130',version:'0.13.0',
   // After the success threshold, physics keeps stepping until the debris is quiet.
   // These are PRESENTATION timings only; they never influence Rapier impulses.
   round:{durationMs:0,winBlocks:TOWER.winScattered,
     collapseMinMs:2800,collapseQuietMs:1350,collapseMaxMs:11800,collapseMovingTolerance:2},
   cat:{size:{min:.6,max:1.2,baseRadius:.5},moveSpeed:6.3,mass:{base:1,growthFactor:1.5},jump:{baseVelocity:10,maxMultiplier:2,durationMs:1000},charge:{durationMs:1500,baseSpeed:{base:5,perLevel:5/7},maxMultiplier:2,minDashMs:250,maxDashMs:560,cooldownMs:1550},claw:{tapMaxMs:250,cooldownMs:320,animationMs:260,hitAtMs:65,reach:2.55,queryRadius:1.46,queryForward:1.16,minFacingDot:.18,damageBase:1,knockback:1.7},dodgeCooldownMs:1350,dodgeDurationMs:650,rollRecoveryMs:180,rollSpeed:12.5,rollIFrameStartMs:70,rollIFrameEndMs:495,launchAirControl:1.05,stunDurationMs:820,recoverDurationMs:550,maxHp:100,hitInvulnMs:1250},
-  humans:{buildDurationMs:3200,attackWarningMs:1180,attackDurationMs:780,attackRadius:1.6,attackRecoveryMs:1900,intervalMs:2200,waveSpeed:15.2,impulse:11.8,slamUpSpeed:21.0,slamOutSpeed:14.5,otherUpSpeed:6.4,otherOutSpeed:10.2,launchMassExponent:.32},
-  input:{jumpBufferMs:150,coyoteMs:100,rollBufferMs:150,clawBufferMs:120},
+  humans:{buildDurationMs:3200,waveSpeed:15.2,impulse:11.8,slamUpSpeed:21.0,slamOutSpeed:14.5,otherUpSpeed:6.4,otherOutSpeed:10.2,launchMassExponent:.32},
+  input:{chargeLookDeadzonePx:6,jumpBufferMs:150,coyoteMs:100,rollBufferMs:150,clawBufferMs:120},
   farming:{levelXp:[0,2,5,9,14,20,28,37,47,58,70,83],get maxLevel(){return this.levelXp.length},deathLossRatio:.10},
   graphics:{maxParticles:180,maxCombatBursts:16,maxDamageNumbers:26,mobHudDistance:25}
 };
@@ -1022,7 +1025,7 @@ function collectMobsAfterStep(){if(tower.world.contactPairsWith){
 }
 function damageCat(amount,reason){if(cat.invuln>0||cat.motion.state==='dead'||phase!=='play')return;
  cat.hp=Math.max(0,cat.hp-amount);cat.invuln=DEF.cat.hitInvulnMs;if(cat===localCat){announce(reason+' −'+amount+' HP',1100);sfx('hit',.65);}
- if(cat.hp<=0){const loss=-setCatXp(cat,cat.xp-deathXpLoss(cat));cat.respawn.leftMs=1050;setCatMotion('dead');cancelCharge();clearBufferedInputs();cat.dash.leftMs=0;cat.claw.pendingHit=false;if(cat===localCat){ui.respawn.classList.remove('hidden');announce(deathNotice(loss,cat.level),2200);}}
+ if(cat.hp<=0){cat.holdBlocked=true;cat.charge.inputMs=0;cat.charge.tapPending=false;if(cat===localCat)mobileViewport.resetInput?.();const loss=-setCatXp(cat,cat.xp-deathXpLoss(cat));cat.respawn.leftMs=1050;setCatMotion('dead');cancelCharge();clearBufferedInputs();cat.dash.leftMs=0;cat.claw.pendingHit=false;if(cat===localCat){ui.respawn.classList.remove('hidden');announce(deathNotice(loss,cat.level),2200);}}
 }
 function respawnCat(){const body=tower.catBody;
  const spawnIndex=net.room?net.room.players.indexOf(cat.id):-1;
@@ -1033,15 +1036,65 @@ function respawnCat(){const body=tower.catBody;
  particle([cat.x,cat.y+.5,cat.z],'mint',34,3);sfx('jump');
 }
 
+let projectiles=[],nextProjectileId=1,throwStats;
 let cat,localCat,human,particles,shockwaves=[],phase='intro',seconds=0,nowTicks=0,camera,roundStart=0,messageUntil=0,toastKey='',winClock=0,collapseState=null;
 const roomCats=new Map();
 let hapticEnabled=true;
 const rand=(a,b)=>a+(b-a)*rng.nextUint32()/4294967296;
 function makeCat(){return {id:"local",x:ARENA.spawnX,z:ARENA.spawnZ,y:ARENA.floorY,surfaceY:ARENA.floorY,vy:0,vx:0,vz:0,knockX:0,knockZ:0,aimYaw:Math.PI,get mass(){return catMassForLevel(this.level)},yaw:Math.PI,targetYaw:Math.PI,speed:0,hp:DEF.cat.maxHp,xp:0,level:1,growthSequence:0,openingMs:0,invuln:0,respawn:{leftMs:0},
- charge:{held:false,elapsedMs:0,ratio:0},claw:{cooldown:{leftMs:0},animation:{leftMs:0},pendingHit:false,bufferMs:0,side:-1,attacks:0,lastHits:0},jump:{held:false,elapsedMs:0,ratio:0,lastVelocity:0,requestMs:0,releaseQueued:false,bufferRatio:0,coyoteMs:0,canJump:false},dash:{cooldown:{leftMs:0},leftMs:0,velocity:0,direction:{x:0,z:1}},dodgeCd:0,dodgeMs:0,dodgeBuffer:{leftMs:0,dx:0,dz:1},ticks:0,
+ holdBlocked:false,charge:{held:false,elapsedMs:0,ratio:0,inputMs:0,tapPending:false},claw:{cooldown:{leftMs:0},animation:{leftMs:0},pendingHit:false,bufferMs:0,side:-1,attacks:0,lastHits:0},jump:{held:false,elapsedMs:0,ratio:0,lastVelocity:0,requestMs:0,releaseQueued:false,bufferRatio:0,coyoteMs:0,canJump:false},dash:{cooldown:{leftMs:0},leftMs:0,velocity:0,direction:{x:0,z:1}},dodgeCd:0,dodgeMs:0,dodgeBuffer:{leftMs:0,dx:0,dz:1},ticks:0,
  motion:{state:'idle',elapsedMs:0,rollAxis:[1,0,0],rollDirX:0,rollDirZ:1,spinAxis:[1,0,0],spinRad:0,spinRate:0,wasAirborne:false,airborneRoll:false,fromRoll:false,rollRecoveryMs:0},trail:[],landings:0,giantHits:0,successfulRolls:0};}
-function makeHuman(id){return {id,x:id===0?-8.4:8.4,z:-8.6,pattern:id===0?'slam':'sweep',mode:'idle',timer:id===0?1600:3100,anim:0,target:[0,0,0],attackApplied:false,buildDone:false,anger:0,noticeMs:0,speech:id===0?'이번엔 진짜 높이 쌓자':'고양이 어디 갔지?',attacks:0,builds:0};}
-function resetWorld(){combatUI.reset();net.resetView();cat=null;roomCats.clear();mobs=[];vacuums=[];nextMobId=1;kills={mouse:0,beetle:0,spider:0};rng.state=702104;vfxRng.state=91011;tower.init();cat=makeCat();localCat=cat;
+const HUMAN_PROFILES=Object.freeze([
+ {label:'사람 A · 근접',patterns:['slam','sweep']},
+ {label:'사람 B · 투척',patterns:['throw']}
+]);
+const HUMAN_ATTACKS=Object.freeze({
+ slam:{range:6.5,minY:-2.4,radius:5.2,warningMs:1180,lockMs:1180,strikeMs:780,recoveryMs:1900,release:h=>createShockwave(h,h.target[0],h.target[2])},
+ sweep:{range:6.5,minY:-2.4,radius:4.5,warningMs:1180,lockMs:1180,strikeMs:870,recoveryMs:1900,release:h=>{createShockwave(h,h.target[0],h.target[2]);createShockwave(h,h.target[0]-1.9,h.target[2],.72);}},
+ throw:{range:24,minY:ARENA.floorY-1,radius:.65,warningMs:1500,lockMs:450,strikeMs:420,recoveryMs:2400,release:launchHumanBlock}
+});
+function makeHuman(id){return{id,x:id===0?-8.4:8.4,z:HUMAN_BODY.z,pattern:HUMAN_PROFILES[id].patterns[0],mode:'idle',timer:id===0?1600:3100,anim:0,target:[0,0,0],targetId:null,aimLocked:false,attackApplied:false,buildDone:false,anger:0,noticeMs:0,speech:HUMAN_PROFILES[id].label,attacks:0,builds:0};}
+function initHumanBodies(){for(const h of human){
+ const body=tower.world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(h.x,ARENA.floorY+HUMAN_BODY.height/2,h.z));
+ h.collider=tower.world.createCollider(RAPIER.ColliderDesc.capsule((HUMAN_BODY.height-2*HUMAN_BODY.radius)/2,HUMAN_BODY.radius).setFriction(.7),body);
+}}
+function humanThrowOrigin(h){return[h.x,ARENA.floorY+2.6*HUMAN_BODY.scale,h.z+2.05];}
+function throwReference(){const level=HUMAN_THROW.referenceLevel,mass=catMassForLevel(level),speed=headbuttBaseSpeed(level)*DEF.cat.charge.maxMultiplier;return{level,mass,speed,momentum:mass*speed};}
+function humanAim(h,c){
+ if(h.pattern==='throw')return[c.x,c.y+catRadiusForLevel(c.level),c.z];
+ const dx=c.x-h.x,dz=c.z-h.z,d=Math.max(1,Math.hypot(dx,dz)/4.2);
+ return[h.x+dx/d,Math.max(0,c.surfaceY)+.1,h.z+dz/d];
+}
+function beginHumanAttack(h,c){const config=HUMAN_ATTACKS[h.pattern];h.targetId=c.id;h.target=humanAim(h,c);h.aimLocked=false;h.mode='warning';h.timer=h.warningMs=config.warningMs;h.attackApplied=false;h.attacks++;
+ blinkHuman(h,h.pattern==='throw'?'여길 봐! 블록 던진다!':'가까이 오면 손바닥 공격!',1550);sfx('warn');}
+function launchHumanBlock(h){
+ if(projectiles.filter(p=>!p.spent).length>=HUMAN_THROW.maxActive)return;
+ const p=humanThrowOrigin(h),target=h.target,dx=target[0]-p[0],dz=target[2]-p[2],dy=target[1]-p[1],distance=Math.max(.01,Math.hypot(dx,dz)),speed=HUMAN_THROW.speed,g=PHYS.gravity;
+ const disc=speed**4-g*(g*distance**2+2*dy*speed**2),tan=disc>=0?(speed**2-Math.sqrt(disc))/(g*distance):1;
+ const horizontal=speed/Math.sqrt(1+tan*tan),v=[dx/distance*horizontal,horizontal*tan,dz/distance*horizontal],yaw=Math.atan2(dx,dz);
+ const body=tower.world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(...p).setRotation(quat(qyaw(yaw))).setLinvel(...v).setCcdEnabled(true).lockRotations());
+ const collider=tower.world.createCollider(RAPIER.ColliderDesc.cuboid(...HUMAN_THROW.size.map(n=>n/2)).setMass(HUMAN_THROW.mass).setFriction(.25).setRestitution(0).setRestitutionCombineRule(RAPIER.CoefficientCombineRule.Min),body);
+ projectiles.push({id:nextProjectileId++,owner:h.id,p,yaw,body,collider,spent:false,lifeMs:HUMAN_THROW.lifeMs,launchVelocity:v,launchMomentum:HUMAN_THROW.mass*len(v),hitBlocks:[],contactImpulse:0,netImpulse:0});
+ throwStats.spawned++;sfx('dash',.65);
+}
+function updateProjectiles(dt){for(let i=projectiles.length-1;i>=0;i--){const shot=projectiles[i];shot.lifeMs-=dt*1000;if(shot.body){const p=shot.body.translation();shot.p=[p.x,p.y,p.z];}
+ if(shot.lifeMs<=0){if(shot.body)tower.world.removeRigidBody(shot.body);projectiles.splice(i,1);}
+}}
+function resolveProjectileContacts(){for(const shot of projectiles){if(!shot.body||shot.spent)continue;
+ let impulse=0;const others=[];
+ tower.world.contactPairsWith(shot.collider,other=>{let pairImpulse=0;tower.world.contactPair(shot.collider,other,manifold=>{for(let i=0;i<manifold.numContacts();i++)pairImpulse+=Math.hypot(manifold.contactImpulse(i),manifold.contactTangentImpulseX(i),manifold.contactTangentImpulseY(i));});if(pairImpulse>1e-5){impulse+=pairImpulse;others.push(other.handle);}});
+ if(!others.length)continue;
+ const p=shot.body.translation(),after=shot.body.linvel(),before=shot.beforeVelocity;
+ shot.p=[p.x,p.y,p.z];shot.contactImpulse=impulse;shot.netImpulse=HUMAN_THROW.mass*Math.hypot(before[0]-after.x,before[1]-PHYS.gravity*tower.world.timestep-after.y,before[2]-after.z);
+ shot.hitBlocks=tower.blocks.filter(b=>others.includes(b.body.collider(0).handle)).map(b=>b.id);
+ // Rapier already delivered the collision. No damage impulse or repeated force is added.
+ shot.spent=true;shot.lifeMs=HUMAN_THROW.impactFadeMs;
+ throwStats.impacts++;throwStats.maxContactImpulse=Math.max(throwStats.maxContactImpulse,impulse);throwStats.last={id:shot.id,owner:shot.owner,p:shot.p.slice(),launchMomentum:shot.launchMomentum,contactImpulse:impulse,netImpulse:shot.netImpulse,hitBlocks:shot.hitBlocks.slice()};
+ for(const [id,actor] of tower.playerBodies){if(!others.includes(actor.collider.handle))continue;withCatActor(id,()=>{if(cat.invuln>0||isRollInvulnerable()||cat.motion.state==='dead')return;damageCat(16,'사람의 나무 블록');if(cat.hp>0){const dx=after.x-before[0],dz=after.z-before[2],d=Math.max(.001,Math.hypot(dx,dz));launchCat(-dx/d,-dz/d,shot.netImpulse);}});}
+ // Spend the body after this one solved substep, even when several blocks share the contact.
+ tower.world.removeRigidBody(shot.body);shot.body=null;shot.collider=null;particle(shot.p,'wood',10,1.8);
+}}
+function resetWorld(){projectiles=[];nextProjectileId=1;throwStats={spawned:0,impacts:0,maxContactImpulse:0,last:null};combatUI.reset();net.resetView();cat=null;roomCats.clear();mobs=[];vacuums=[];nextMobId=1;kills={mouse:0,beetle:0,spider:0};rng.state=702104;vfxRng.state=91011;tower.init();cat=makeCat();localCat=cat;
  if(net.room){
    cat.id=net.localId;
    const members=net.room.players;
@@ -1056,7 +1109,7 @@ function resetWorld(){combatUI.reset();net.resetView();cat=null;roomCats.clear()
     if(net.isHost) tower.addPlayer(other.id,{x:other.x,z:ARENA.spawnZ});
    }
  }else{roomCats.set('local',cat);tower.playerBodies.clear();tower.playerBodies.set('local',{body:tower.catBody,collider:tower.catCollider});}
- tower.syncCat();prepareMobs();prepareVacuums();human=[makeHuman(0),makeHuman(1)];particles=[];shockwaves=[];camera={yaw:Math.PI,pitch:.09,eye:[0,ARENA.floorY+LOOK.eyeHeight,ARENA.spawnZ+LOOK.followDistance],shake:0,armLength:LOOK.followDistance};seconds=0;nowTicks=0;cat.respawn.leftMs=0;ui.respawn.classList.add('hidden');toastKey='';messageUntil=0;winClock=0;collapseState=null;ui.end.classList.add('hidden');ui.warning.classList.remove('show');ui.humanA.textContent='';ui.humanB.textContent='';sceneView.reset();sceneView.capture(net.room&&!net.isHost?performance.now():0,true);updateHUD();}
+ tower.syncCat();prepareMobs();prepareVacuums();human=[makeHuman(0),makeHuman(1)];initHumanBodies();particles=[];shockwaves=[];camera={yaw:Math.PI,pitch:.09,eye:[0,ARENA.floorY+LOOK.eyeHeight,ARENA.spawnZ+LOOK.followDistance],shake:0,armLength:LOOK.followDistance};seconds=0;nowTicks=0;cat.respawn.leftMs=0;ui.respawn.classList.add('hidden');toastKey='';messageUntil=0;winClock=0;collapseState=null;ui.end.classList.add('hidden');ui.warning.classList.remove('show');ui.humanA.textContent='';ui.humanB.textContent='';sceneView.reset();sceneView.capture(net.room&&!net.isHost?performance.now():0,true);updateHUD();}
 function beginCollapse(remote=false){
  if(phase!=='play')return;
  phase='collapse';
@@ -1074,7 +1127,7 @@ function updateCollapse(dt){
  state.elapsedMs+=ms;
  // No human AI, player movement, farming or scripted destruction during finale.
  // Rapier alone continues resolving all block contacts and gravity.
- tower.step(dt);
+ updateProjectiles(dt);tower.step(dt);
  updateParticles(dt);
  const busy=tower.movingBlocks>DEF.round.collapseMovingTolerance||tower.scattered>state.lastFallen;
  state.quietMs=busy?0:state.quietMs+ms;
@@ -1137,12 +1190,12 @@ function wakeAudio(){if(!soundEnabled)return;try{audioContext ||= new (window.Au
 function sfx(name,amount=1){if(!audioContext||audioContext.state!=='running'||!soundEnabled)return;const t=audioContext.currentTime;let base=220,len=.14,type='triangle',gain=.05;
  switch(name){case'charge':base=490;len=.12;type='triangle';gain=.045;break;case'dash':base=135;len=.25;type='sawtooth';gain=.055;break;case'claw':base=780;len=.105;type='triangle';gain=.035;break;case'crash':base=90;len=.33;type='sawtooth';gain=.065;break;case'block':base=350;len=.13;type='sine';gain=.037;break;case'warn':base=540;len=.18;type='square';gain=.023;break;case'hit':base=180;len=.3;type='sawtooth';gain=.09;break;case'win':base=650;len=.46;gain=.11;break;case'lose':base=155;len=.5;gain=.04;break;case'jump':base=360;len=.11;gain=.045;break;case'collect':base=800;len=.16;gain=.055;break;case'dull':base=110;len=.14;gain=.045;break;case'crack':base=180;len=.16;gain=.075;break;case'roll':base=300;len=.14;gain=.045;break;case'land':base=108;len=.23;gain=.07;break;case'impact':base=82;len=.55;type='sawtooth';gain=.10;break;case'bounce':base=260;len=.17;type='square';gain=.065;break;}
  const osc=audioContext.createOscillator(),g=audioContext.createGain();osc.type=type;osc.frequency.setValueAtTime(base*(.96+Math.random()*.08),t);osc.frequency.exponentialRampToValueAtTime(Math.max(40,base*(name==='win'?1.65:.55)),t+len);g.gain.setValueAtTime(gain*Math.max(.2,Math.min(1.5,amount)),t);g.gain.exponentialRampToValueAtTime(.0001,t+len);osc.connect(g);g.connect(audioContext.destination);osc.start(t);osc.stop(t+len+.01);}
-function start(){wakeAudio();resetWorld();phase='play';navigation.replace({screen:'play'});net.startButton.style.display='none';ui.start.classList.add('hidden');ui.end.classList.add('hidden');ui.hud.classList.remove('inactive');roundStart=performance.now();announce('🐁 사냥으로 무거워져라! 거인 손의 충격파를 피해 모든 블록을 물리적으로 무너뜨려!',4300);gameCanvas.focus();}
+function start(){wakeAudio();resetWorld();phase='play';navigation.replace({screen:'play'});net.startButton.style.display='none';ui.start.classList.add('hidden');ui.end.classList.add('hidden');ui.hud.classList.remove('inactive');roundStart=performance.now();announce('🐁 사냥으로 무거워져라! 사람 손의 충격파를 피해 모든 블록을 물리적으로 무너뜨려!',4300);gameCanvas.focus();}
 function blinkHuman(h,msg,ms=1200){h.speech=msg;h.noticeMs=ms;}
-function patternRadius(h){return h.pattern==='grab'?2.9:h.pattern==='sweep'?4.5:5.2;}
+function patternRadius(h){return HUMAN_ATTACKS[h.pattern].radius;}
 function createShockwave(h,x,z,scale=1){shockwaves.push({id:nowTicks*10+h.id+shockwaves.length*.01,x,z,r:0,previous:0,
- maxRadius:h.pattern==='grab'?2.9:h.pattern==='sweep'?4.5:5.2,speed:DEF.humans.waveSpeed*(h.pattern==='sweep'?1.2:1),
- strength:DEF.humans.impulse*scale*(h.pattern==='grab'?.82:1),hitCat:false,hitBlocks:new Set(),pattern:h.pattern,age:0});
+ maxRadius:patternRadius(h),speed:DEF.humans.waveSpeed*(h.pattern==='sweep'?1.2:1),
+ strength:DEF.humans.impulse*scale,hitCat:false,hitBlocks:new Set(),pattern:h.pattern,age:0});
  particle([x,.16,z],'red',18,4);camera.shake=Math.max(camera.shake,.29);sfx('hit',.8);
 }
 // A single exclusive locomotion/impact state drives the procedural cat rig.
@@ -1253,9 +1306,9 @@ function updateShockwaves(dt){for(let i=shockwaves.length-1;i>=0;i--){const w=sh
    const upwardImpulse=mass*launchUp*evadeFactor;
    tower.catBody.applyImpulse({x:nx*radialImpulse,y:upwardImpulse,z:nz*radialImpulse},true);
    if(perfectRoll){cat.successfulRolls++;cat.openingMs=Math.max(cat.openingMs,1950);
-    particle([cat.x,cat.y+.48,cat.z],'mint',18,2.6);if(cat===localCat){announce('✨ 구르기 성공! 거인 손을 피해 반격 기회!',1100);sfx('roll',.75);}
+    particle([cat.x,cat.y+.48,cat.z],'mint',18,2.6);if(cat===localCat){announce('✨ 구르기 성공! 사람 손을 피해 반격 기회!',1100);sfx('roll',.75);}
    }else{
-    if(cat.invuln<=0)damageCat(isSlam?27:19,isSlam?'💥 거인 지면 강타!':'💥 거인의 충격파!');
+    if(cat.invuln<=0)damageCat(isSlam?27:19,isSlam?'💥 사람 지면 강타!':'💥 사람의 충격파!');
     // Fatal hits may still transfer their Rapier impulse, but never replace
     // the authoritative dead state with a visual launched state.
     if(cat.hp>0)launchCat(nx,nz,Math.hypot(radialImpulse,upwardImpulse));
@@ -1273,34 +1326,28 @@ function updateShockwaves(dt){for(let i=shockwaves.length-1;i>=0;i--){const w=sh
   tower.shockwave(w.x,w.z,w.r,band,w.strength*.36,w.hitBlocks);
   if(w.r>w.maxRadius+.24)shockwaves.splice(i,1);
  }}
-function updateHumans(dt){for(const h of human){h.anim+=dt;h.anger=lerp(h.anger,Math.min(1,tower.scattered/7),.015);h.noticeMs=Math.max(0,h.noticeMs-dt*1000);h.timer-=dt*1000;
-  if(h.mode==='idle'&&h.timer<=0){const battleCats=net.room&&net.isHost?[...roomCats.values()].filter(c=>c.motion.state!=='dead'):[cat];
-   const targetCat=battleCats.filter(c=>Math.abs(c.x)<ARENA.halfX+6&&Math.abs(c.z)<ARENA.halfZ+6&&c.y>-2.4).sort((a,b)=>Math.hypot(a.x-h.x,a.z-h.z)-Math.hypot(b.x-h.x,b.z-h.z))[0]??cat;
-   const catInBattle=targetCat!==cat||Math.abs(cat.x)<ARENA.halfX+6&&Math.abs(cat.z)<ARENA.halfZ+6&&cat.y>-2.4;const canBuild=tower.layers<TOWER.maxLayers&&tower.scattered<5;
-   if(!catInBattle&&!canBuild){h.timer=1100;continue;}
-   if(canBuild&&(!catInBattle||rng.nextInt(100)<(h.id===0?56:46))){
-    h.mode='build';h.timer=DEF.humans.buildDurationMs;h.buildDone=false;blinkHuman(h,'젠가 하나만 더!',1500);
-   }else{
-    h.mode='warning';h.pattern=['slam','sweep','grab'][(h.attacks+h.id)%3];h.timer=DEF.humans.attackWarningMs+(h.pattern==='grab'?170:0);h.warningMs=h.timer;h.attackApplied=false;
-    h.target=[clamp(targetCat.x+targetCat.vx*.25+targetCat.knockX*.14,-ARENA.edgeX+1,ARENA.edgeX-1),0,clamp(targetCat.z+targetCat.vz*.25+targetCat.knockZ*.14,-ARENA.edgeZ+1,ARENA.edgeZ-1)];h.attacks++;
-    blinkHuman(h,h.pattern==='grab'?'이리 온, 아기 고양이!':h.pattern==='sweep'?'저리 비켜!':'쿵! 장난 그만!',1550);sfx('warn');
-   }
-  }
-  if(h.mode==='build'){
-    if(!h.buildDone&&h.timer<=540){h.buildDone=true;const block=tower.addSingleBlock();if(block){h.builds++;particle(block.p,'yellow',13,1.5);sfx('block');}}
-    if(h.timer<=0){h.mode='idle';h.timer=640+rand(-120,520)}
-  }
-  if(h.mode==='warning'&&h.timer<=0){h.mode='strike';h.timer=DEF.humans.attackDurationMs+(h.pattern==='sweep'?90:0);h.strikeMs=h.timer;h.attackApplied=false;}
-  if(h.mode==='strike'){
-   if(!h.attackApplied&&h.timer<h.strikeMs*.66){h.attackApplied=true;
-    // Sweep creates a train of physical waves rather than a wide instant-hit rectangle.
-    createShockwave(h,h.target[0],h.target[2]);
-    if(h.pattern==='sweep'){const offset=h.id===0?-1.9:1.9;createShockwave(h,h.target[0]+offset,h.target[2],.72);}
-   }
-   if(h.timer<=0){h.mode='recover';h.timer=DEF.humans.attackRecoveryMs+(h.pattern==='grab'?250:0);}
-  }
-  if(h.mode==='recover'&&h.timer<=0){h.mode='idle';h.timer=260+rand(0,520);}
- }}
+function updateHumans(dt){for(const h of human){h.anim+=dt;h.noticeMs=Math.max(0,h.noticeMs-dt*1000);h.timer-=dt*1000;
+ const profile=HUMAN_PROFILES[h.id];
+ if(h.mode==='idle'&&h.timer<=0){h.pattern=profile.patterns[h.attacks%profile.patterns.length];const config=HUMAN_ATTACKS[h.pattern];
+  const target=[...roomCats.values()].filter(c=>c.hp>0&&c.y>=config.minY&&c.z>h.z+1.2&&Math.hypot(c.x-h.x,c.z-h.z)<=config.range).sort((a,b)=>Math.hypot(a.x-h.x,a.z-h.z)-Math.hypot(b.x-h.x,b.z-h.z))[0];
+  const canBuild=tower.layers<TOWER.maxLayers&&tower.scattered<5;
+  if(canBuild&&(!target||rng.nextInt(100)<(h.id===0?40:18))){h.mode='build';h.timer=DEF.humans.buildDurationMs;h.buildDone=false;blinkHuman(h,'블록 하나 더!',1500);}
+  else if(target)beginHumanAttack(h,target);else h.timer=800;
+ }
+ if(h.mode==='build'){
+  if(!h.buildDone&&h.timer<=540){h.buildDone=true;const block=tower.addSingleBlock();if(block){h.builds++;particle(block.p,'yellow',13,1.5);sfx('block');}}
+  if(h.timer<=0){h.mode='idle';h.timer=640+rand(-120,520);}
+ }
+ if(h.mode==='warning'){const config=HUMAN_ATTACKS[h.pattern];
+  if(!h.aimLocked){const target=roomCats.get(h.targetId);if(target?.hp>0)h.target=humanAim(h,target);if(h.timer<=config.lockMs)h.aimLocked=true;}
+  if(h.timer<=0){h.mode='strike';h.timer=h.strikeMs=config.strikeMs;h.attackApplied=false;}
+ }
+ if(h.mode==='strike'){
+  if(!h.attackApplied&&h.timer<h.strikeMs*.66){h.attackApplied=true;HUMAN_ATTACKS[h.pattern].release(h);}
+  if(h.timer<=0){h.mode='recover';h.timer=HUMAN_ATTACKS[h.pattern].recoveryMs;}
+ }
+ if(h.mode==='recover'&&h.timer<=0){h.mode='idle';h.timer=550+rand(0,700);}
+}}
 
 // Level-based mass and base headbutt speed share one source of truth.
 function catScaleForLevel(level){const size=DEF.cat.size;return lerp(size.min,size.max,(level-1)/(DEF.farming.maxLevel-1));}
@@ -1330,7 +1377,7 @@ function cancelCharge(){
  cat.charge.held=false;cat.charge.elapsedMs=0;cat.charge.ratio=0;
 }
 function beginCharge(){
- if(cat.charge.held||cat.motion.state==='dash'||cat.motion.state==='roll'||CAT_DISABLED_STATES.has(cat.motion.state))return;
+ if(cat.charge.held||cat.dash.cooldown.leftMs>0||cat.motion.state==='dash'||cat.motion.state==='roll'||CAT_DISABLED_STATES.has(cat.motion.state))return;
  // Even during dash cooldown, quick taps remain usable for farming.
  cat.charge.held=true;cat.charge.elapsedMs=0;cat.charge.ratio=0;
 }
@@ -1350,11 +1397,10 @@ function triggerClaw(){
  sfx('claw',.86);
 }
 function releaseCharge(){
- if(!cat.charge.held)return;
- const config=DEF.cat.charge,ratio=cat.charge.ratio,elapsed=cat.charge.elapsedMs;
- cancelCharge();
- if(elapsed<DEF.cat.claw.tapMaxMs){triggerClaw();return;}
- if(cat.dash.cooldown.leftMs>0||CAT_DISABLED_STATES.has(cat.motion.state)||cat.motion.state==='roll')return;
+ const config=DEF.cat.charge,ratio=cat.charge.ratio,elapsed=cat.charge.elapsedMs,charging=cat.charge.held,tap=cat.charge.tapPending&&cat.charge.inputMs<DEF.cat.claw.tapMaxMs;
+ cancelCharge();cat.charge.inputMs=0;cat.charge.tapPending=false;
+ if(tap){triggerClaw();return;}
+ if(!charging||cat.dash.cooldown.leftMs>0||CAT_DISABLED_STATES.has(cat.motion.state)||cat.motion.state==='roll')return;
  const speed=headbuttBaseSpeed(cat.level)*(1+(config.maxMultiplier-1)*ratio);
  const dirX=Math.sin(cat.aimYaw),dirZ=Math.cos(cat.aimYaw);
  const body=tower.catBody,velocity=body.linvel(),forwardVelocity=velocity.x*dirX+velocity.z*dirZ;
@@ -1380,7 +1426,7 @@ function clearBufferedInputs(actor=cat){if(!actor)return;
 }
 function jumpReady(){return cat.jump.canJump&&cat.jump.coyoteMs>0&&!CAT_DISABLED_STATES.has(cat.motion.state)&&cat.motion.state!=='roll';}
 function beginJumpCharge(){
- if(cat.jump.held||CAT_DISABLED_STATES.has(cat.motion.state))return;
+ if(cat.jump.held||!jumpReady())return;
  cat.jump.held=true;cat.jump.elapsedMs=0;cat.jump.ratio=0;
  cat.jump.releaseQueued=false;cat.jump.requestMs=jumpReady()?0:DEF.input.jumpBufferMs;
 }
@@ -1450,17 +1496,23 @@ function updateCat(dt,input){
  const mag=Math.hypot(mx,mz);if(mag>1){mx/=mag;mz/=mag;}
  const yaw=decodeAimYaw(input),sn=Math.sin(yaw),cs=Math.cos(yaw);cat.aimYaw=yaw;const dirX=-cs*mx+sn*mz,dirZ=sn*mx+cs*mz;
  // One input byte: charge press/release/held, jump press/release/held, and roll edge.
- const flags=input[2];if(flags&INPUT_CANCEL)clearBufferedInputs();
- const chargeStart=!!(flags&1),chargeRelease=!!(flags&2),jumpStart=!!(flags&4),rollPressed=!!(flags&8);
- const chargeHeld=!!(flags&16),jumpRelease=!!(flags&32),jumpHeld=!!(flags&64);
+ const flags=input[2],canceled=!!(flags&INPUT_CANCEL);
+ if(canceled){cancelCharge();cat.charge.inputMs=0;cat.charge.tapPending=false;clearBufferedInputs();}
+ if(cat.holdBlocked&&!(flags&(16|64)))cat.holdBlocked=false;
+ const allowed=!canceled&&!cat.holdBlocked,chargeStart=allowed&&!!(flags&1),chargeRelease=allowed&&!!(flags&2),jumpStart=allowed&&!!(flags&4),rollPressed=allowed&&!!(flags&8);
+ const chargeHeld=allowed&&!!(flags&16),jumpRelease=allowed&&!!(flags&32),jumpHeld=allowed&&!!(flags&64);
  if(!['roll','launched','dash','stunned','dead'].includes(cat.motion.state))cat.yaw=cat.aimYaw;
- if(chargeStart)beginCharge();
- if(jumpStart)beginJumpCharge();
- // Track charge independently of animation/locomotion and never slow traversal.
- // A tap below 250ms swipes; holding beyond 250ms enables headbutt charge.
- if(chargeHeld) {if(cat.charge.held)tickAttackCharge(ms);} else if(cat.charge.held&&!chargeRelease)cancelCharge();
- if(jumpHeld) {if(cat.jump.held)tickJumpCharge(ms);} else if(cat.jump.held&&!jumpRelease)cancelJumpCharge();
- if(jumpRelease)releaseJumpCharge();
+ if(chargeStart){cat.charge.inputMs=0;cat.charge.tapPending=true;}
+ if(chargeHeld){cat.charge.inputMs+=ms;cat.charge.tapPending=true;}
+ // Held bits are persistent command intent, not a second device queue.
+ if(chargeHeld||chargeStart)beginCharge();
+ if(chargeHeld&&cat.charge.held)tickAttackCharge(ms);
+ else if(!chargeRelease&&!chargeHeld){cancelCharge();cat.charge.inputMs=0;cat.charge.tapPending=false;}
+ if(jumpStart&&!jumpReady()&&!CAT_DISABLED_STATES.has(cat.motion.state)){jump.requestMs=DEF.input.jumpBufferMs;jump.releaseQueued=false;}
+ if(jumpHeld||jumpStart)beginJumpCharge();
+ if(jumpHeld&&jump.held)tickJumpCharge(ms);
+ else if(!jumpRelease&&!jumpHeld&&jump.held)cancelJumpCharge();
+ if(jumpRelease){if(jump.held)releaseJumpCharge();else if(jump.requestMs>0&&!CAT_DISABLED_STATES.has(cat.motion.state)){jump.releaseQueued=true;jump.bufferRatio=0;jump.requestMs=DEF.input.jumpBufferMs;}}
  consumeJumpBuffer();
  if(rollPressed)requestDodge(dirX,dirZ);
  if(cat.dodgeBuffer.leftMs>0)beginDodge(cat.dodgeBuffer.dx,cat.dodgeBuffer.dz);
@@ -1536,7 +1588,7 @@ function updateGame(dt,frame){if(phase!=='play'&&phase!=='collapse')return;
   if(cat.motion.state==='dead'){cat.respawn.leftMs-=dt*1000;if(cat.respawn.leftMs<=0)respawnCat();}
   else updateCat(dt,input);
  });
- updateMobs(dt);for(const appliance of vacuums)appliance.update(dt);updateHumans(dt);updateShockwaves(dt);tower.step(dt);collectMobsAfterStep();
+ updateMobs(dt);for(const appliance of vacuums)appliance.update(dt);updateHumans(dt);updateShockwaves(dt);updateProjectiles(dt);tower.step(dt);collectMobsAfterStep();
  for(const id of roomCats.keys())withCatActor(id,()=>{
   tower.syncCat();if(id!==localCat.id)collectMobsAfterStep();if(cat.motion.state!=='dead')updateCatMotion(dt);
  });
@@ -2124,15 +2176,15 @@ const HUMAN_STYLES=Object.freeze([
 ]);
 function drawHuman(g,h){
  // Friendly low-poly proportions. Simple faces, restrained hands and IK-limited reaching.
- // The humans read as enormous adults from the cat's 3rd-person eye level.
- const x=h.x,z=h.z,scale=3.10,base=ARENA.floorY-.05,style=HUMAN_STYLES[h.id];
+ // Adult height is shared with its fixed Rapier capsule, independent of camera.
+ const x=h.x,z=h.z,scale=HUMAN_BODY.scale,base=ARENA.floorY-.05,style=HUMAN_STYLES[h.id];
  const p=(a,b,c)=>[x+a*scale,base+b*scale,z+c*scale];
  const acting=h.mode==='warning'||h.mode==='strike',building=h.mode==='build',recover=h.mode==='recover';
  const warning=h.mode==='warning'?clamp(1-h.timer/Math.max(1,h.warningMs),0,1):acting?1:0;
  const strike=h.mode==='strike'?clamp(1-h.timer/Math.max(1,h.strikeMs),0,1):0;
  const breathing=Math.sin(sceneView.displaySeconds*1.7+h.id)*.02;
  const lightStep=Math.sin(sceneView.displaySeconds*1.1+h.id)*.025;
- g.disc([x,ARENA.floorY+.045,z],2.25,COLOR.shadow,.20);
+ g.disc([x,ARENA.floorY+.045,z],1.2,COLOR.shadow,.20);
  // Boots and articulated trouser legs, with no disproportionate giant feet.
  for(const side of [-1,1]){
   const hip=p(side*.27,1.51,0),knee=p(side*.30,.92,lightStep),ankle=p(side*.30,.20,0);
@@ -2159,6 +2211,7 @@ function drawHuman(g,h){
    wrist=wrist.map((v,i)=>lerp(v,clipped[i],k));
    if(h.mode==='strike')wrist[1]+=.5*Math.sin(Math.PI*strike);
   }
+  if(h.pattern==='throw'&&side===1&&(acting||recover)){const windup=p(.85,3.0,-.25),out=humanThrowOrigin(h);wrist=h.mode==='strike'?windup.map((v,i)=>lerp(v,out[i],Math.min(1,strike*3))):windup;if(!h.attackApplied)g.cube(wrist,HUMAN_THROW.size,COLOR.wood2,qyaw(Math.atan2(h.target[0]-x,h.target[2]-z)));}
   const elbow=[(shoulder[0]+wrist[0])*.5+side*.34*scale,
     Math.max(base+.98*scale,(shoulder[1]+wrist[1])*.5+.13*scale),
     (shoulder[2]+wrist[2])*.5-.12*scale];
@@ -2203,8 +2256,10 @@ function drawTower(g,viewCat){for(const b of tower.blocks){if(b.p[1]<ARENA.floor
  if(phase==='play'){const aim=tower.nearest(viewCat,1.60);if(aim){g.ring([aim.hit[0],.12,aim.hit[2]],.63,COLOR.yellow,.55);}}
 }
 
+function drawProjectiles(g){for(const shot of sceneView.projectiles){const alpha=shot.spent?clamp(shot.lifeMs/HUMAN_THROW.impactFadeMs,0,1):1;g.draw('cube',[shot.x,shot.y,shot.z],HUMAN_THROW.size,COLOR.wood2,qyaw(shot.yaw),alpha);g.draw('cube',yawPart([shot.x,shot.y,shot.z],shot.yaw,0,.222,0),[.73,.035,.22],COLOR.peach,qyaw(shot.yaw),alpha);}}
 function drawHumanWarning(g){for(const h of human){if(h.mode!=='warning'&&h.mode!=='strike')continue;
  const t=h.mode==='warning'?1-h.timer/h.warningMs:1;const p=[h.target[0],.145,h.target[2]];
+ if(h.pattern==='throw'){const origin=humanThrowOrigin(h),target=[h.target[0],Math.max(ARENA.floorY+.05,h.target[1]),h.target[2]],color=h.aimLocked?COLOR.red:COLOR.yellow;g.ring(target,.65,color,.9);limb(g,origin,target,.025,color);continue;}
  const r=patternRadius(h);g.disc(p,r,COLOR.red,.045+.12*t);g.ring(p,r,COLOR.red,.5+.3*t);
  if(h.mode==='warning')g.ring([p[0],.155,p[2]],r*(1-t*.83),COLOR.pink,.84);
  }
@@ -2273,7 +2328,7 @@ function drawWorld({alpha=0}={}){if(!renderer)return;const frameNow=performance.
  // no global reliance on 2D Renderer2D — gamekit's 2D renderer is not used for 3D meshes
  renderHouse(g);
  drawMobs(g);drawVacuums(g);for(const h of human)drawHuman(g,h);
- drawHumanWarning(g);drawTower(g,c);
+ drawHumanWarning(g);drawTower(g,c);drawProjectiles(g);
  // When a wall pushes the camera toward the avatar, progressively fade only
  // the local rendered rig so the room remains readable. Rapier body remains.
  const catCamDist=len(vsub(camera.eye,[c.x,c.y+.72*catScaleForLevel(c.level),c.z]));
@@ -2298,7 +2353,7 @@ function drawWorld({alpha=0}={}){if(!renderer)return;const frameNow=performance.
  for(const mob of sceneView.mobs){const p=mob,dx=p.x-c.x,dz=p.z-c.z,dist=Math.hypot(dx,dz);
   if(dist<3.9&&(dx*Math.sin(cat.aimYaw)+dz*Math.cos(cat.aimYaw))/Math.max(.01,dist)>.48){mobInAim=true;break;}}
  ui.target.classList.toggle('mobFocus',mobInAim);
- for(const h of human){const node=h.id===0?ui.humanA:ui.humanB,p=g.screen([h.x,12.25,h.z]);if(p&&p.x>-120&&p.x<gameCanvas.clientWidth+100){node.style.left=p.x+'px';node.style.top=p.y+'px';node.style.display='block';node.textContent=h.mode==='warning'?'⚠️ '+({slam:'내려찍기',sweep:'쓸어버리기',grab:'붙잡기'}[h.pattern]):h.mode==='build'?'🧱 탑 쌓는 중':h.mode==='recover'?'💫 빈틈!':h.noticeMs>0?h.speech:h.id?'거인 B':'거인 A';node.classList.toggle('angry',h.mode==='warning'||h.mode==='strike')}else node.style.display='none';}
+ for(const h of human){const node=h.id===0?ui.humanA:ui.humanB,p=g.screen([h.x,ARENA.floorY+HUMAN_BODY.height+.4,h.z]);if(p&&p.x>-120&&p.x<gameCanvas.clientWidth+100){node.style.left=p.x+'px';node.style.top=p.y+'px';node.style.display='block';node.textContent=h.mode==='warning'?(h.pattern==='throw'?(h.aimLocked?'투척 방향 고정!':'블록 조준 중'):'손바닥 준비!'):h.mode==='build'?'블록 쌓는 중':h.mode==='recover'?'잠깐 쉬는 중':HUMAN_PROFILES[h.id].label;node.classList.toggle('angry',h.mode==='warning'||h.mode==='strike')}else node.style.display='none';}
 }
 // GameKit action input, sampled once per fixed tick.
 const samples=Object.fromEntries(['left','right','up','down','charge','jump','dodge'].map(k=>[k,{held:false,pressed:false,released:false}]));
@@ -2333,7 +2388,7 @@ let pendingInputEdges=0;
 const INPUT_CANCEL=128,INPUT_EDGE_MASK=47|INPUT_CANCEL;
 
 const joy={id:null,x:0,y:0};
-const look={id:null,x:0,y:0},mouse={lastX:null,lastY:null};
+const look={id:null,x:0,y:0,chargeId:null},mouse={lastX:null,lastY:null};
 const lookZone=document.querySelector('#lookZone');
 function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewport.portrait){actions.consume();pendingInputEdges=0;return DEFAULT_PEER_INPUT.slice();}for(const k in samples)actions.sampleInto(k,samples[k]);const canceled=canceledTouch.size>0;for(const action of canceledTouch){samples[action].pressed=false;samples[action].released=false;}canceledTouch.clear();let x=(samples.right.held?1:0)-(samples.left.held?1:0)+joy.x,y=(samples.up.held?1:0)-(samples.down.held?1:0)+joy.y;
  const d=Math.max(1,Math.hypot(x,y));x=clamp(x/d,-1,1);y=clamp(y/d,-1,1);
@@ -2349,9 +2404,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewpo
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
- namespace:'meow-tumble-0.12.0',inputBytes:5,snapshotLimit:15000,
- inputType:91,snapshotType:92,resetType:93,startType:94,protocol:4});
-const LOBBY_VERSION='meow-tumble-0.12.0';
+ namespace:'meow-tumble-0.13.0',inputBytes:5,snapshotLimit:15000,
+ inputType:91,snapshotType:92,resetType:93,startType:94,protocol:5});
+const LOBBY_VERSION='meow-tumble-0.13.0';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};
@@ -2410,8 +2465,9 @@ class VacuumRenderModel extends RenderObject {
  static renderSchema={id:this.STEP,x:this.POSITION_X,y:this.POSITION_Y,z:this.POSITION_Z,yaw:this.ANGLE,
   radius:this.STEP,'attack.state':this.STATE_KEY,'attack.dx':this.LINEAR,'attack.dz':this.LINEAR};
 }
+class ProjectileRenderModel extends RenderObject {static renderSchema={id:this.STEP,x:this.POSITION_X,y:this.POSITION_Y,z:this.POSITION_Z,yaw:this.ANGLE,spent:this.STEP,lifeMs:this.COUNTDOWN_MS};}
 const sceneView={
- runtime:null,frame:null,cats:[],mobs:[],vacuums:[],remoteReady:false,displaySeconds:0,
+ runtime:null,frame:null,cats:[],mobs:[],vacuums:[],projectiles:[],remoteReady:false,displaySeconds:0,
  reset(){const stepMs=net.room&&!net.isHost?100:1000/NET_DEF.stepHz;
   this.runtime=new PresentationRuntime({stepMs,delayMs:stepMs});this.frame=null;this.remoteReady=false;
  },
@@ -2425,6 +2481,7 @@ const sceneView={
    source:{id:m.id,type:m.type,x:p.x,y:p.y,z:p.z,yaw:Math.atan2(v.x,v.z),speed:Math.hypot(v.x,v.z),hp:m.hp,hitMs:m.hitMs}});}
   for(const v of vacuums){const p=v.body.translation();entities.push({id:v.id,generation:0,type:VacuumRenderModel,
    source:{id:v.id,x:p.x,y:p.y,z:p.z,yaw:v.yaw,radius:v.config.radius,attack:{state:v.attack.state,dx:v.attack.dx,dz:v.attack.dz}}});}
+  for(const shot of projectiles){const p=shot.body?shot.body.translation():vec3(shot.p);entities.push({id:'throw:'+shot.id,generation:0,type:ProjectileRenderModel,source:{id:shot.id,x:p.x,y:p.y,z:p.z,yaw:shot.yaw,spent:shot.spent,lifeMs:shot.lifeMs}});}
   this.runtime.capture({revision:0,sequence:nowTicks,timeMs:seconds*1000,mode:reset?'reset':'continuous',entities},now);
   for(const c of roomCats.values())c.viewTeleport=false;
  },
@@ -2434,8 +2491,8 @@ const sceneView={
   const localClock=(nowTicks+((phase==='play'||phase==='collapse')?alpha:1))*1000/NET_DEF.stepHz;
   this.frame=this.runtime.frame(net.room&&!net.isHost?now:localClock);
   this.displaySeconds=Math.max(0,this.frame.timeMs/1000);
-  this.cats.length=this.mobs.length=this.vacuums.length=0;
-  this.frame.forEach((model,id)=>{if(id.startsWith('cat:'))this.cats.push(model);else if(id.startsWith('mob:'))this.mobs.push(model);else this.vacuums.push(model);});
+  this.cats.length=this.mobs.length=this.vacuums.length=this.projectiles.length=0;
+  this.frame.forEach((model,id)=>{if(id.startsWith('cat:'))this.cats.push(model);else if(id.startsWith('mob:'))this.mobs.push(model);else if(id.startsWith('throw:'))this.projectiles.push(model);else this.vacuums.push(model);});
  },
  cat(id){return this.frame?.sample('cat:'+id,0)??null;},
  mob(id){return this.frame?.sample('mob:'+id,0)??null;}
@@ -2620,7 +2677,8 @@ const net={
     b.id,round(b.p[0]),round(b.p[1]),round(b.p[2]),...b.q.map(round),b.fallen?1:0]),
     v:vacuums.map(v=>{const p=v.body.translation(),a=v.attack;return[v.id,round(p.x),round(p.y),round(p.z),round(v.yaw),a.state,round(a.leftMs),round(a.dx),round(a.dz)]}),
     cats:actors,m:mobs.map(m=>{const p=m.body.translation();return[m.id,m.type,round(p.x),round(p.y),round(p.z),m.hp,m.hitMs]}),
-    h:human.map(h=>[h.id,h.mode,h.pattern,round(h.timer),round(h.anim),...h.target.map(round),h.attacks,h.builds]),
+    h:human.map(h=>[h.id,h.mode,h.pattern,round(h.timer),round(h.anim),...h.target.map(round),h.attacks,h.builds,h.targetId,h.aimLocked?1:0]),
+    p:projectiles.map(p=>[p.id,p.owner,...p.p.map(round),round(p.yaw),p.spent?1:0,round(p.lifeMs)]),throwStats,
     n:tower.layers,f:tower.scattered,k:kills,w:shockwaves.map(w=>[w.id,round(w.x),round(w.z),round(w.r),round(w.maxRadius),w.pattern,round(w.age)])};
   const raw=new TextEncoder().encode(JSON.stringify(state));if(raw.length+2>NET_DEF.snapshotLimit){console.warn('게임 상태가 패킷 예산 초과',raw.length);return;}
   const out=new Uint8Array(raw.length+2);out[0]=NET_DEF.snapshotType;out[1]=NET_DEF.protocol;out.set(raw,2);
@@ -2646,13 +2704,13 @@ const net={
    const [id,x,y,z,yaw,hp,level,xp,vy,dashMs,visual]=row;
    const actor=roomCats.get(id);if(!actor)continue;
    // Authoritative pose stays untouched by the render timeline.
-   const teleported=actor.motion.state==='dead'&&visual.motion.state!=='dead';
+   const teleported=actor.motion.state==='dead'&&visual.motion.state!=='dead',died=actor.motion.state!=='dead'&&visual.motion.state==='dead';
    actor.x=x;actor.y=y;actor.z=z;actor.yaw=yaw;
    if(actor===localCat&&actor.motion.state!=='dead'&&visual.motion.state==='dead')announce('🐾 사망 · LV '+levelLabel(level)+' · 잠시 후 부활 (젠가 유지)',2200);
    if(teleported&&actor===localCat)camera.boom?.reset(LOOK.followDistance);
    actor.viewTeleport=teleported;actor.hp=hp;actor.level=level;actor.xp=xp;actor.vy=vy;
    actor.dash.leftMs=dashMs;actor.charge={...visual.charge};actor.jump={...visual.jump};
-   actor.motion={...visual.motion};actor.speed=visual.speed;actor.surfaceY=visual.surfaceY;
+   actor.motion={...visual.motion};if(actor===localCat&&died)mobileViewport.resetInput?.();actor.speed=visual.speed;actor.surfaceY=visual.surfaceY;
    actor.claw.animation={...visual.claw.animation};actor.claw.side=visual.claw.side;actor.invuln=visual.invuln;
   }
   const alive=new Set();
@@ -2669,9 +2727,10 @@ const net={
   }
   for(let i=mobs.length-1;i>=0;i--){if(!alive.has(mobs[i].id)){combatUI.unregister(mobs[i]);tower.world.removeRigidBody(mobs[i].body);mobs.splice(i,1);}}
   for(const row of state.h){const h=human[row[0]];if(!h)continue;
-   [h.id,h.mode,h.pattern,h.timer,h.anim,h.target[0],h.target[1],h.target[2],h.attacks,h.builds]=row;
-   h.warningMs=DEF.humans.attackWarningMs;h.strikeMs=DEF.humans.attackDurationMs;
+   [h.id,h.mode,h.pattern,h.timer,h.anim,h.target[0],h.target[1],h.target[2],h.attacks,h.builds,h.targetId,h.aimLocked]=row;
+   h.warningMs=HUMAN_ATTACKS[h.pattern].warningMs;h.strikeMs=HUMAN_ATTACKS[h.pattern].strikeMs;
   }
+  projectiles=state.p.map(([id,owner,x,y,z,yaw,spent,lifeMs])=>({id,owner,p:[x,y,z],yaw,spent:!!spent,lifeMs}));throwStats=state.throwStats;
   if(state.phase==='collapse'&&phase==='play')beginCollapse(true);
   if(state.phase==='win'&&(phase==='play'||phase==='collapse'))endRound(true);
   if(cat?.motion.state==='dead')ui.respawn.classList.remove('hidden');else ui.respawn.classList.add('hidden');
@@ -2748,7 +2807,7 @@ function bindMenu(){
 }
 function bindControls(){const keyboard={KeyW:'up',ArrowUp:'up',KeyS:'down',ArrowDown:'down',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right'};
  const discrete={ShiftLeft:'dodge',ShiftRight:'dodge'};const chargeKeys=new Set(['KeyF']);const jumpKeys=new Set(['Space']);
- document.addEventListener('keydown',e=>{if(e.code==='KeyR'&&!e.repeat&&['win','lose'].includes(phase)&&!net.room){start();return;}if(navigation.snapshot().screen!=='play'||e.target.closest?.('input,textarea,summary')||(e.target.closest?.('button')&&['Space','Enter'].includes(e.code)))return;if(keyboard[e.code]){actions.set(keyboard[e.code],'keyboard-'+e.code,true);e.preventDefault()}else if(chargeKeys.has(e.code)){actions.set('charge','keyboard-'+e.code,true);e.preventDefault()}else if(jumpKeys.has(e.code)){actions.set('jump','keyboard-'+e.code,true);e.preventDefault()}else if(discrete[e.code]){if(!e.repeat)actions.pulse(discrete[e.code]);e.preventDefault()}else if(e.code==='Escape'&&document.pointerLockElement===gameCanvas){document.exitPointerLock?.();e.preventDefault()}});
+ document.addEventListener('keydown',e=>{if(e.code==='KeyR'&&!e.repeat&&['win','lose'].includes(phase)&&!net.room){start();return;}if(navigation.snapshot().screen!=='play'||e.target.closest?.('input,textarea,summary')||(e.target.closest?.('button')&&['Space','Enter'].includes(e.code)))return;if(keyboard[e.code]){actions.set(keyboard[e.code],'keyboard-'+e.code,true);e.preventDefault()}else if(chargeKeys.has(e.code)){if(e.repeat)return;actions.set('charge','keyboard-'+e.code,true);e.preventDefault()}else if(jumpKeys.has(e.code)){if(e.repeat)return;actions.set('jump','keyboard-'+e.code,true);e.preventDefault()}else if(discrete[e.code]){if(!e.repeat)actions.pulse(discrete[e.code]);e.preventDefault()}else if(e.code==='Escape'&&document.pointerLockElement===gameCanvas){document.exitPointerLock?.();e.preventDefault()}});
  document.addEventListener('keyup',e=>{if(keyboard[e.code])actions.set(keyboard[e.code],'keyboard-'+e.code,false);if(chargeKeys.has(e.code))actions.set('charge','keyboard-'+e.code,false);if(jumpKeys.has(e.code))actions.set('jump','keyboard-'+e.code,false)});
  const heldPointerResets=[];const resetHeld=()=>{for(const abandon of heldPointerResets)abandon();for(const [surface,id] of [[ui.joy,joy.id],[lookZone,look.id]]){if(id!==null&&surface.hasPointerCapture?.(id))surface.releasePointerCapture(id);}document.querySelectorAll('[data-action].pressed').forEach(button=>button.classList.remove('pressed'));canceledTouch.clear();actions.releaseAll();actions.consume();pendingInputEdges=0;cancelCharge();clearBufferedInputs(localCat);net.releaseInput();joy.x=joy.y=0;joy.id=null;look.id=null;mouse.lastX=mouse.lastY=null;ui.chargeButton.classList.remove('pressed');ui.jumpButton.classList.remove('pressed');ui.knob.style.transform='translate(0px,0px)';};
  mobileViewport.resetInput=resetHeld;window.addEventListener('blur',resetHeld);document.addEventListener('visibilitychange',()=>{if(document.hidden)resetHeld()});
@@ -2772,7 +2831,7 @@ function bindControls(){const keyboard={KeyW:'up',ArrowUp:'up',KeyS:'down',Arrow
  // Right-side touch look is a dedicated pointer surface under HUD/buttons.
  // Its pointer is independent of the left joystick and can move at the same time.
  lookZone.addEventListener('pointerdown',e=>{
-  if(navigation.snapshot().screen!=='play'||phase!=='play'||look.id!==null)return;
+  if(navigation.snapshot().screen!=='play'||phase!=='play'||look.id!==null||e.pointerId===look.chargeId)return;
   e.preventDefault();look.id=e.pointerId;look.x=e.clientX;look.y=e.clientY;
   lookZone.setPointerCapture?.(e.pointerId);
  });
@@ -2791,22 +2850,23 @@ function bindControls(){const keyboard={KeyW:'up',ArrowUp:'up',KeyS:'down',Arrow
  // Jump and headbutt each own an independent hold source, including multitouch.
  // When another finger moves or looks, neither held charge is reset.
  document.querySelectorAll('[data-action]').forEach(button=>{
-  const action=button.dataset.action,holdAction=action==='charge'||action==='jump';let pointerId=null;
+  const action=button.dataset.action,holdAction=action==='charge'||action==='jump';let pointerId=null,drag=null;
   button.addEventListener('pointerdown',e=>{
    e.preventDefault();e.stopPropagation();if(navigation.snapshot().screen!=='play'||phase!=='play')return;
    if(holdAction){
     if(pointerId!==null)return;
-    pointerId=e.pointerId;try{button.setPointerCapture(e.pointerId)}catch{}
+    pointerId=e.pointerId;if(action==='charge'&&e.pointerType!=='mouse'){look.chargeId=pointerId;drag={x:e.clientX,y:e.clientY,active:false};}try{button.setPointerCapture(e.pointerId)}catch{}
     actions.set(action,'touch-'+e.pointerId,true);button.classList.add('pressed');
    }else{actions.pulse(action);button.classList.add('pressed');}
   });
   if(holdAction){
-   const abandon=()=>{if(pointerId!==null){const id=pointerId;pointerId=null;actions.set(action,'touch-'+id,false);if(button.hasPointerCapture?.(id))button.releasePointerCapture(id);}button.classList.remove('pressed');};
+   if(action==='charge')document.addEventListener('pointermove',e=>{if(e.pointerId!==pointerId||!drag||navigation.snapshot().screen!=='play')return;e.preventDefault();e.stopPropagation();let dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(!drag.active){const d=Math.hypot(dx,dy);if(d<=DEF.input.chargeLookDeadzonePx)return;const excess=(d-DEF.input.chargeLookDeadzonePx)/d;dx*=excess;dy*=excess;drag.active=true;}rotateLook(dx,dy,LOOK.touchRadPerPx);drag.x=e.clientX;drag.y=e.clientY;},{passive:false});
+   const abandon=()=>{drag=null;if(action==='charge')look.chargeId=null;if(pointerId!==null){const id=pointerId;pointerId=null;actions.set(action,'touch-'+id,false);if(button.hasPointerCapture?.(id))button.releasePointerCapture(id);}button.classList.remove('pressed');};
    heldPointerResets.push(abandon);
    navigation.subscribe(route=>{if(route.screen!=='play')abandon()});
    const finish=(e,cancel=false)=>{
     if(e.pointerId!==pointerId)return;
-    actions.set(action,'touch-'+pointerId,false);pointerId=null;button.classList.remove('pressed');
+    actions.set(action,'touch-'+pointerId,false);pointerId=null;drag=null;if(action==='charge')look.chargeId=null;button.classList.remove('pressed');
     if(cancel){actions.sampleInto(action,samples[action]);if(!samples[action].held){canceledTouch.add(action);if(action==='charge')cancelCharge();else cancelJumpCharge();}}
    };
    button.addEventListener('pointerup',e=>finish(e));
@@ -2840,7 +2900,8 @@ async function main(){try{
 window.__meowTumble={get state(){return{product:"와르르냥 / Meow Tumble",phase,seconds,fallen:tower.scattered,total:tower.blocks.length,movingBlocks:tower.movingBlocks,collapse:collapseState?{...collapseState}:null,
  level:cat?.level,xp:cat?.xp,mass:cat?.mass,hp:cat?.hp,animation:cat?.motion?.state,animationMs:cat?.motion?.elapsedMs,maxHp:DEF.cat.maxHp,kills:{...kills},vacuums:vacuums.map(v=>({id:v.id,state:v.attack.state,leftMs:v.attack.leftMs,cooldownMs:v.attack.cooldownMs,p:v.body.translation()})),mobs:mobs.length,zone:cat?zoneAt(cat.x,cat.z):null,respawning:cat?.motion?.state==='dead',cat:cat?{x:cat.x,z:cat.z,y:cat.y,yaw:cat.yaw,
  knockX:cat.knockX,knockZ:cat.knockZ,vy:cat.vy}:null,camera:camera?{yaw:camera.yaw,pitch:camera.pitch,eye:camera.eye.slice()}:null,
- controls:{lookPointer:look.id,joyPointer:joy.id},layers:tower.layers,activeBodies:tower.blocks.length-tower.sleeperCount,
+ controls:{lookPointer:look.id,chargeLookPointer:look.chargeId,joyPointer:joy.id},layers:tower.layers,activeBodies:tower.blocks.length-tower.sleeperCount,
+ humans:(human??[]).map(h=>({id:h.id,label:HUMAN_PROFILES[h.id].label,pattern:h.pattern,mode:h.mode,target:h.target.slice(),aimLocked:h.aimLocked,height:HUMAN_BODY.height,scale:HUMAN_BODY.scale})),projectiles:projectiles.map(p=>({id:p.id,owner:p.owner,p:p.p.slice(),spent:p.spent})),throwPhysics:{reference:throwReference(),mass:HUMAN_THROW.mass,speed:HUMAN_THROW.speed,stats:throwStats},
  shockwaves:shockwaves.length,impulses:tower.totalImpulses,physicsEngine:'Rapier 3D 0.21.0',physicsVersion:DEF.version,motion:cat?.motion?.state,motionElapsedMs:cat?.motion?.elapsedMs,giantHits:cat?.giantHits,successfulRolls:cat?.successfulRolls,landings:cat?.landings,chargePercent:cat?Math.round(cat.charge.ratio*100):0,chargeHeld:cat?.charge.held,clawCooldownMs:cat?.claw.cooldown.leftMs,clawAnimationMs:cat?.claw.animation.leftMs,clawHitPending:cat?.claw.pendingHit,clawAttacks:cat?.claw.attacks,clawLastHits:cat?.claw.lastHits,jumpHeld:cat?.jump.held,jumpPercent:cat?Math.round(cat.jump.ratio*100):0,jumpLaunchVelocity:cat?.jump.lastVelocity,headbuttBaseSpeed:cat?headbuttBaseSpeed(cat.level):null,dashVelocity:cat?.dash.velocity,dashCooldownMs:cat?.dash.cooldown.leftMs,
  catBodyMass:tower.catBody?.mass(),contacts:tower.contacts,loopRunning:simLoop.running,drawCalls:renderer?.drawCalls,
  mobVitals:[...combatUI.plates].filter(([,p])=>p.mob).map(([id,p])=>({id,type:p.type,hp:p.mob.hp,maxHp:MOB_TYPES[p.type].maxHp,display:p.node.style.display})),
