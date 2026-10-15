@@ -2,7 +2,7 @@
 
 집 안을 누비는 작은 고양이가 쥐·곤충을 사냥하며 성장하고, 사람의 공격을 피하며 거대한 젠가탑을 무너뜨리는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.17.2** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.17.3** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -163,3 +163,9 @@ When a cat keeps a movement, dash, or roll intent but makes almost no progress f
 
 The multiplayer namespace/protocol advances to 0.17.2/10 for the revised host simulation.
 
+
+## v0.17.3: cause-directed human reactions
+
+The host tracks a cat's directional Rapier contact with a block only when that contact also produces real block movement. Both people first flinch and look back at the shaken block; the closer person braces with their free fixed-length arm, then looks to the exact cat owner. After a short nonverbal reaction, that person's existing attack pattern targets the responsible cat. Repeated contacts are debounced, and the building hand, block carry cycle, and player input remain active throughout. Reactions are included in host snapshots so two-player viewers see the same owner-directed response.
+
+The multiplayer namespace/protocol advances to 0.17.3/11 for the added reaction snapshot fields. No explanatory popup or new attack type is introduced.
