@@ -1065,14 +1065,26 @@ function humanAim(h,c){
 }
 function beginHumanAttack(h,c){const config=HUMAN_ATTACKS[h.pattern];h.targetId=c.id;h.target=humanAim(h,c);h.aimLocked=false;h.mode='warning';h.timer=h.warningMs=config.warningMs;h.attackApplied=false;h.attacks++;
  blinkHuman(h,h.pattern==='throw'?'여길 봐! 장난감 공 던진다!':'가까이 오면 손바닥 공격!',1550);sfx('warn');}
+function removeOldestToyBall(){
+ // Host simulation owns FIFO; equal creation ticks use the monotonically increasing entity ID.
+ const oldest=projectiles.reduce((a,b)=>!a||b.createdTick<a.createdTick||(b.createdTick===a.createdTick&&b.id<a.id)?b:a,null);
+ if(!oldest)return;
+ const handle=oldest.collider.handle;
+ for(const shot of projectiles)shot.touching?.delete(handle);
+ oldest.touching.clear();tower.world.removeRigidBody(oldest.body);
+ oldest.body=null;oldest.collider=null;oldest.beforeVelocity=null;
+ projectiles=projectiles.filter(shot=>shot!==oldest);
+ sceneView.projectiles=sceneView.projectiles.filter(shot=>shot.id!==oldest.id);
+ throwStats.recycled++;throwStats.lastRemovedId=oldest.id;
+}
 function launchHumanToyBall(h){
- if(projectiles.length>=HUMAN_THROW.maxBalls){blinkHuman(h,'공 24개가 모두 나왔네. 새 공은 잠깐 쉬자.',1800);return;}
+ while(projectiles.length>=HUMAN_THROW.maxBalls)removeOldestToyBall();
  const p=humanThrowOrigin(h),target=h.target,dx=target[0]-p[0],dz=target[2]-p[2],dy=target[1]-p[1],distance=Math.max(.01,Math.hypot(dx,dz)),speed=HUMAN_THROW.speed,g=PHYS.gravity;
  const disc=speed**4-g*(g*distance**2+2*dy*speed**2),tan=disc>=0?(speed**2-Math.sqrt(disc))/(g*distance):1;
  const horizontal=speed/Math.sqrt(1+tan*tan),v=[dx/distance*horizontal,horizontal*tan,dz/distance*horizontal],yaw=Math.atan2(dx,dz);
  const body=tower.world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(...p).setRotation(quat(qyaw(yaw))).setLinvel(...v).setLinearDamping(HUMAN_THROW.linearDamping).setAngularDamping(HUMAN_THROW.angularDamping).setCcdEnabled(true));
  const collider=tower.world.createCollider(RAPIER.ColliderDesc.ball(HUMAN_THROW.radius).setMass(HUMAN_THROW.mass).setFriction(HUMAN_THROW.friction).setRestitution(HUMAN_THROW.restitution).setRestitutionCombineRule(RAPIER.CoefficientCombineRule.Max),body);
- projectiles.push({id:nextProjectileId++,owner:h.id,p,q:qyaw(yaw),yaw,body,collider,touching:new Map(),firstImpact:false,sleeping:false,launchVelocity:v,launchMomentum:HUMAN_THROW.mass*len(v),hitBlocks:[],contactImpulse:0,netImpulse:0});
+ projectiles.push({id:nextProjectileId++,createdTick:nowTicks,owner:h.id,p,q:qyaw(yaw),yaw,body,collider,touching:new Map(),firstImpact:false,sleeping:false,launchVelocity:v,launchMomentum:HUMAN_THROW.mass*len(v),hitBlocks:[],contactImpulse:0,netImpulse:0});
  throwStats.spawned++;sfx('dash',.65);
 }
 function updateProjectiles(){for(const shot of projectiles){if(!shot.body)continue;const p=shot.body.translation(),q=shot.body.rotation();shot.p=[p.x,p.y,p.z];
@@ -1094,9 +1106,9 @@ function resolveProjectileContacts(){for(const shot of projectiles){
   throwStats.lastCatHit={id,ballId:shot.id,tick:nowTicks,before:prior.slice(),after:[v.x,v.y,v.z],change,impulse:hit.impulse};
  });}
  particle(shot.p,'mint',6,1.2);
- // No TTL, despawn, kinematic flight or scripted contact impulse: this body remains dynamic.
+ // No TTL or contact despawn: dynamic until FIFO capacity replacement or round reset.
 }}
-function resetWorld(){projectiles=[];nextProjectileId=1;throwStats={spawned:0,impacts:0,contacts:0,maxContactImpulse:0,last:null,lastCatHit:null,lastTowerHit:null};combatUI.reset();net.resetView();cat=null;roomCats.clear();mobs=[];vacuums=[];nextMobId=1;kills={mouse:0,beetle:0,spider:0};rng.state=702104;vfxRng.state=91011;tower.init();cat=makeCat();localCat=cat;
+function resetWorld(){projectiles=[];nextProjectileId=1;throwStats={spawned:0,recycled:0,lastRemovedId:null,impacts:0,contacts:0,maxContactImpulse:0,last:null,lastCatHit:null,lastTowerHit:null};combatUI.reset();net.resetView();cat=null;roomCats.clear();mobs=[];vacuums=[];nextMobId=1;kills={mouse:0,beetle:0,spider:0};rng.state=702104;vfxRng.state=91011;tower.init();cat=makeCat();localCat=cat;
  if(net.room){
    cat.id=net.localId;
    const members=net.room.players;
@@ -1331,8 +1343,7 @@ function updateShockwaves(dt){for(let i=shockwaves.length-1;i>=0;i--){const w=sh
 function updateHumans(dt){for(const h of human){h.anim+=dt;h.noticeMs=Math.max(0,h.noticeMs-dt*1000);h.timer-=dt*1000;
  const profile=HUMAN_PROFILES[h.id];
  if(h.mode==='idle'&&h.timer<=0){h.pattern=profile.patterns[h.attacks%profile.patterns.length];const config=HUMAN_ATTACKS[h.pattern];
-  const ballFull=h.pattern==='throw'&&projectiles.length>=HUMAN_THROW.maxBalls;
-  const target=[...roomCats.values()].filter(c=>!ballFull&&c.hp>0&&(config.battleArea?Math.abs(c.x)<ARENA.halfX+6&&Math.abs(c.z)<ARENA.halfZ+6&&c.y>config.minY:c.y>=config.minY&&c.z>h.z+1.2&&Math.hypot(c.x-h.x,c.z-h.z)<=config.range)).sort((a,b)=>Math.hypot(a.x-h.x,a.z-h.z)-Math.hypot(b.x-h.x,b.z-h.z))[0];
+  const target=[...roomCats.values()].filter(c=>c.hp>0&&(config.battleArea?Math.abs(c.x)<ARENA.halfX+6&&Math.abs(c.z)<ARENA.halfZ+6&&c.y>config.minY:c.y>=config.minY&&c.z>h.z+1.2&&Math.hypot(c.x-h.x,c.z-h.z)<=config.range)).sort((a,b)=>Math.hypot(a.x-h.x,a.z-h.z)-Math.hypot(b.x-h.x,b.z-h.z))[0];
   const canBuild=tower.layers<TOWER.maxLayers&&tower.scattered<5&&!human.some(other=>other!==h&&other.mode==='build');
   if(canBuild&&(!target||rng.nextInt(100)<(h.id===0?40:18))){h.mode='build';h.timer=DEF.humans.buildDurationMs;h.buildDone=false;h.buildPlan={...tower.getNextBlockSpec(),blockId:null};blinkHuman(h,'블록 하나 더!',1500);}
   else if(target)beginHumanAttack(h,target);else h.timer=800;
@@ -2370,7 +2381,7 @@ function drawWorld({alpha=0}={}){if(!renderer)return;const frameNow=performance.
  for(const mob of sceneView.mobs){const p=mob,dx=p.x-c.x,dz=p.z-c.z,dist=Math.hypot(dx,dz);
   if(dist<3.9&&(dx*Math.sin(cat.aimYaw)+dz*Math.cos(cat.aimYaw))/Math.max(.01,dist)>.48){mobInAim=true;break;}}
  ui.target.classList.toggle('mobFocus',mobInAim);
- for(const h of human){const node=h.id===0?ui.humanA:ui.humanB,p=g.screen([h.x,HUMAN_MODEL.labelY,h.z]);if(p&&p.x>-120&&p.x<gameCanvas.clientWidth+100){node.style.left=p.x+'px';node.style.top=p.y+'px';node.style.display='block';node.textContent=h.mode==='warning'?(h.pattern==='throw'?(h.aimLocked?'투척 방향 고정!':'장난감 공 조준 중'):'손바닥 준비!'):h.mode==='build'?('블록 '+(humanBuildPose(h)?.stage??'쌓는 중')):h.mode==='recover'?'잠깐 쉬는 중':h.pattern==='throw'&&projectiles.length>=HUMAN_THROW.maxBalls?'공 24개 · 새 공 대기':HUMAN_PROFILES[h.id].label;node.classList.toggle('angry',h.mode==='warning'||h.mode==='strike')}else node.style.display='none';}
+ for(const h of human){const node=h.id===0?ui.humanA:ui.humanB,p=g.screen([h.x,HUMAN_MODEL.labelY,h.z]);if(p&&p.x>-120&&p.x<gameCanvas.clientWidth+100){node.style.left=p.x+'px';node.style.top=p.y+'px';node.style.display='block';node.textContent=h.mode==='warning'?(h.pattern==='throw'?(h.aimLocked?'투척 방향 고정!':'장난감 공 조준 중'):'손바닥 준비!'):h.mode==='build'?('블록 '+(humanBuildPose(h)?.stage??'쌓는 중')):h.mode==='recover'?'잠깐 쉬는 중':h.pattern==='throw'&&projectiles.length>=HUMAN_THROW.maxBalls?'공 24개 · 오래된 공 교체':HUMAN_PROFILES[h.id].label;node.classList.toggle('angry',h.mode==='warning'||h.mode==='strike')}else node.style.display='none';}
 }
 // GameKit action input, sampled once per fixed tick.
 const samples=Object.fromEntries(['left','right','up','down','charge','jump','dodge'].map(k=>[k,{held:false,pressed:false,released:false}]));
@@ -2509,7 +2520,7 @@ const sceneView={
   this.frame=this.runtime.frame(net.room&&!net.isHost?now:localClock);
   this.displaySeconds=Math.max(0,this.frame.timeMs/1000);
   this.cats.length=this.mobs.length=this.vacuums.length=this.projectiles.length=0;
-  this.frame.forEach((model,id)=>{if(id.startsWith('cat:'))this.cats.push(model);else if(id.startsWith('mob:'))this.mobs.push(model);else if(id.startsWith('throw:'))this.projectiles.push(model);else this.vacuums.push(model);});
+  this.frame.forEach((model,id)=>{if(id.startsWith('cat:'))this.cats.push(model);else if(id.startsWith('mob:'))this.mobs.push(model);else if(id.startsWith('throw:')){if(projectiles.some(shot=>shot.id===model.id))this.projectiles.push(model);}else this.vacuums.push(model);});
  },
  cat(id){return this.frame?.sample('cat:'+id,0)??null;},
  mob(id){return this.frame?.sample('mob:'+id,0)??null;}
