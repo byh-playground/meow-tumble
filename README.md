@@ -2,7 +2,7 @@
 
 집 안을 누비는 작은 고양이가 쥐·곤충을 사냥하며 성장하고, 사람의 공격을 피하며 거대한 젠가탑을 무너뜨리는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.17.3** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.17.6** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -178,3 +178,9 @@ Human shoulder/rest-hand anchors now use model-local coordinates once before app
 Work-point selection checks the fixed-arm reachable path for pickup, carry, raised approach, alignment, and lowering, with a larger reach reserve for high targets. If no complete path fits, the person skips that slot without spawning a carried block, changing scale, or stretching the arm. In isolated Chrome gameplay, the normal next-layer slot and a layer-12 target placed and settled; a layer-16 target was cleanly rejected as unreachable with character scale still 3.10. The exact highest reachable layer depends on slot and stance; layers 13–15 were not exhaustively measured. The 8-layer start, 17-layer cap, 20-unit block mass, camera, cat movement, and damage rules are unchanged.
 
 The room namespace/protocol advances to 0.17.4/12 for the revised build simulation.
+
+## v0.17.6: stationary human stacking and cat-directed reactions
+
+People now remain at a fixed tower-side work position. A single real mass-20 dynamic Rapier block appears in the waiting hand, stays that same body through a short lift, raised approach, careful alignment and lowering, then releases to Rapier physics. The existing 3.10 human scale and 5.115-unit fixed two-segment reach stay intact. A higher clearance supports a layer-12 placement, and an alignment timeout releases a genuinely obstructed block and marks that slot unreachable rather than leaving a builder stuck.
+
+An actual directionally attributed cat-to-block Rapier impulse starts a nonverbal human response: surprise, a protective brace, then anger directed toward the responsible cat. The impulse event uses the solver contact point rather than an uninitialized render cache, and the response is carried in multiplayer snapshots. No explanatory center text, new attack type, platform, ladder, camera snap, or cat/damage physics change is introduced. The room namespace/protocol advances to 0.17.6/14.
