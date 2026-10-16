@@ -2,7 +2,7 @@
 
 집 안을 누비는 작은 고양이가 쥐·곤충을 사냥하며 성장하고, 사람의 공격을 피하며 거대한 젠가탑을 무너뜨리는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.18.2** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.18.3** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -210,3 +210,8 @@ The game keeps an 8-layer starting tower, restores the historical 26-layer cap, 
 The two-segment arm now keeps a stable down-and-out elbow pole during stacking, throwing, and slamming so the elbow does not flip upward as the wrist target changes. A render-only wrist cuff and smoothly constrained palm rotation follow the carried block orientation during the grip, then articulate for throw and floor-slam poses. Wrist rendering does not add physics joints or move the Rapier contact point; the one mass-20 dynamic block still stays at its physical hand contact. The production camera, builder scale (6.20), stand-off, crouch profile, 8-layer starting tower, 26-layer cap, and mass-20 Jenga blocks are unchanged.
 
 The ceiling clears the 24.335-unit builders by 5 units; perimeter walls, ceiling mesh, and Rapier colliders derive from one shared shell geometry. The wall/roof overlap seals the former top seam, and a fixed ceiling collider closes the physical boundary. Intentional door openings between rooms remain open. Ceiling fixtures follow the raised roof. Multiplayer namespace/protocol advances to 0.18.2/17; packet layouts are unchanged.
+## v0.18.3: raise interior room partitions to the tall shell
+
+The v0.18.2 update raised the perimeter walls and ceiling but left the fourteen visible interior partition segments at their old 9-unit height. Their Rapier colliders were still 9 units high, the wall caps remained at y=6.20, and door casing trim remained about 9.35 units tall. This left low barriers inside the room around 6.20-scale builders.
+
+The interior wall mesh, colliders, wall caps, door posts, and headers now derive from the same `HOUSE_SHELL` as the perimeter. The wall segments reach the ceiling overlap while their existing doorway gaps stay open. The tabletop/floor coordinate remains y=0; a standing builder is 24.335 units tall, the ceiling collision/mesh underside is y=28.725, and the perimeter and interior walls overlap it by 0.22 units. No camera framing, human scale, 10.23-unit arm reach, 8-layer start, 26-layer cap, or mass-20 block change was made. Multiplayer namespace/protocol advances to 0.18.3/18 for the changed static collision world.
