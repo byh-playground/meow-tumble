@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"/>
 <meta name="theme-color" content="#182438"/>
-<title>와르르냥 / Meow Tumble · 사람이 쌓는 젠가 · v0.18.0</title>
+<title>와르르냥 / Meow Tumble · 사람이 쌓는 젠가 · v0.18.1</title>
 <style>
 :root{color-scheme:dark;--bg:#17283c;--ink:#fffaf0;--sub:#c8d1da;--mint:#93edcb;--pink:#ffaaa6;--yellow:#ffe49e}
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:ui-rounded,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}button,input,summary{font:inherit}button,summary{cursor:pointer;touch-action:manipulation}button{color:inherit;min-height:48px}button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}button:disabled{opacity:.55;cursor:default}.hidden{display:none!important}
@@ -119,7 +119,7 @@
  <div class="bottomRight"><div id="status" class="status"></div><div class="dashbar"><i id="dashReady"></i></div></div>
  </div>
  <div id="netRoster" aria-label="멀티플레이 참가자"></div><div id="netLabels" aria-hidden="true"></div>
- <div id="buildTag">v0.18.0 · MEOW TUMBLE</div>
+ <div id="buildTag">v0.18.1 · MEOW TUMBLE</div>
  <div id="touch"><div id="stick" class="joystick"><div id="knob" class="knob"></div></div><div class="actionPad"><button type="button" class="action" data-action="charge" aria-label="짧게 누르면 할퀴기, 0.25초 이상 길게 누르고 떼면 박치기"><strong>🐾</strong><small>홀드 박치기<br>드래그 조준</small><span class="chargeTrack"><i id="touchChargeFill"></i></span></button><button type="button" class="action" data-action="jump" aria-label="점프: 1초까지 누르고 떼서 점프"><strong>↥</strong><small>길게 눌러 점프</small><span class="chargeTrack jumpTrack"><i id="touchJumpFill"></i></span></button><button type="button" class="action" data-action="dodge"><strong>↻</strong><small>구르기</small></button></div></div>
  <section id="intro" class="cover" aria-label="게임 메뉴"><div class="hero">
  <div data-screen="main"><div class="eyebrow">MEOW TUMBLE</div><h1>와르르<em>냥</em></h1><p>작은 고양이로 사냥하고 성장해<br>거대한 젠가탑을 무너뜨리세요.</p><button type="button" class="primary" data-route="modes">시작하기</button><div class="menuLinks"><button data-route="help">게임 방법</button><button data-route="settings">설정</button></div><small>1–4명 · PC / 터치 · 인터넷 연결 필요</small></div>
@@ -367,11 +367,11 @@ function limb(g,p0,p1,r,col){const d=vsub(p1,p0),mid=vmul(vadd(p0,p1),.5),axis=n
    All wooden pieces and the cat are dynamic rigid bodies; joints, supports,
    scripted collapse, block HP and level immunities do not exist. */
 const PHYS={gravity:17.5,solverIterations:10,friction:1.1,restitution:0.025};
-const TOWER={width:1.07,length:3.48,height:.70,gap:.025,initialLayers:8,maxLayers:17,mass:20,winScattered:32};
+const TOWER={width:1.07,length:3.48,height:.70,gap:.025,initialLayers:8,maxLayers:26,mass:20,winScattered:32};
 const ARENA={halfX:10.9,halfZ:8.6,edgeX:10.35,edgeZ:8.0,floorY:-3.05,houseHalfX:46,houseHalfZ:36,spawnX:0,spawnZ:23.5};
 // Exact model/placement anchors from pre-shrink d82b224 (0.12.1); no human rigid bodies existed there.
-const HUMAN_MODEL=Object.freeze({scale:3.10,height:3.925*3.10,z:-10.0,labelY:12.25,shadowRadius:2.25});
-const HUMAN_THROW=Object.freeze({referenceLevel:4,mass:2,speed:20,radius:.45,maxBalls:24,releaseHeight:3.77,releaseForward:2.05,friction:.55,restitution:.15,linearDamping:.16,angularDamping:.5});
+const HUMAN_MODEL=Object.freeze({scale:6.20,height:3.925*6.20,z:-10.0,labelY:3.925*6.20+.08,shadowRadius:3.85*6.20/5.30});
+const HUMAN_THROW=Object.freeze({referenceLevel:4,mass:2,speed:20,radius:.45,maxBalls:24,releaseHeight:3.77*(HUMAN_MODEL.scale/3.10),releaseForward:2.05*(HUMAN_MODEL.scale/3.10),friction:.55,restitution:.15,linearDamping:.16,angularDamping:.5});
 const LOOK={mouseRadPerPx:.0029,touchRadPerPx:.0062,pitchMin:-.86,pitchMax:1.22,
  followDistance:4.85,eyeHeight:1.42,
  cameraRadius:.22,armCollisionMargin:.08,boomHoldMs:150,boomReleaseHalfLifeMs:180};
@@ -391,12 +391,12 @@ const RAMP=(()=>{
   lowerZ:centerZ+run,upperZ:centerZ-run,topAtTable:0,topAtFloor:ARENA.floorY});
 })();
 const HUMAN_BUILD=Object.freeze({
-  walkSpeed:.90,walkAcceleration:4.2,turnSpeed:7.0,sourceY:2.15,sourceLateral:.82,sourceClearance:.30,workZ:-1.20,
-  towerSideX:2.6,approachInset:.48,shoulderSide:0.77*HUMAN_MODEL.scale,armUpper:.88*HUMAN_MODEL.scale,
+  walkSpeed:.90,walkAcceleration:4.2,turnSpeed:7.0,sourceY:2.15*(HUMAN_MODEL.scale/3.10),sourceLateral:.82,sourceClearance:.30,workZ:-1.20,
+  towerSideX:TOWER.length*.5+.49*HUMAN_MODEL.scale+.30+.48,buildStandOff:.70*HUMAN_MODEL.scale,approachInset:.48,shoulderSide:0.77*HUMAN_MODEL.scale,armUpper:.88*HUMAN_MODEL.scale,
   armForearm:.77*HUMAN_MODEL.scale,pickupMs:120,liftMs:180,turnLiftMs:300,
   alignMs:360,alignPauseMs:300,lowerMs:650,settleMs:180,retractMs:180,
-   placementStableMs:100,carryClearance:.55,carryHeight:5.35,carryLiftMaxSpeed:1.2,
-  carryPointKp:300,carryPointKd:150,carryPointMaxImpulse:20,
+   placementStableMs:100,carryClearance:.55,carryHeight:2.0*HUMAN_MODEL.scale,carryLiftMaxSpeed:1.2,
+  carryPointKp:300,carryPointKd:150,carryPointMaxImpulse:24,
   gripBreakSpeed:15,gripBreakSpin:26,carryAngularDamping:2.0,carryHoldKp:180,carryHoldKd:40,carryHoldMaxImpulse:20,
   carryStableAngle:.95,carryStableSpin:.5,placementAngle:.14,placementSpin:.24,placementStableMs:80,
   settleStableAngle:.20,settleStableSpin:.40
@@ -602,7 +602,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
  const DEF={
-    build:'20261016-full-body-human-stacking-v0180',version:'0.18.0',
+    build:'20261016-full-body-human-stacking-v0181',version:'0.18.1',
   // After the success threshold, physics keeps stepping until the debris is quiet.
   // These are PRESENTATION timings only; they never influence Rapier impulses.
   round:{durationMs:0,winBlocks:TOWER.winScattered,
@@ -1159,8 +1159,8 @@ const HUMAN_ATTACKS=Object.freeze({
  throw:{range:24,minY:ARENA.floorY-1,radius:.65,warningMs:1500,lockMs:450,strikeMs:420,recoveryMs:2400,release:launchHumanToyBall}
 });
 function makeHuman(id){const side=id===0?-1:1,x=side*HUMAN_BUILD.towerSideX,z=HUMAN_BUILD.workZ;return{id,x,y:humanGroundY(x,z),z,yaw:side<0?Math.PI/2:-Math.PI/2,pattern:HUMAN_PROFILES[id].patterns[0],mode:'idle',timer:id===0?1600:3100,anim:0,target:[0,0,0],targetId:null,aimLocked:false,attackApplied:false,buildDone:false,buildStage:null,buildStageMs:0,buildRoute:null,buildRouteIndex:0,handTarget:null,retractFrom:null,grip:null,reaction:null,pendingReactionTargetId:null,anger:0,noticeMs:0,buildSatisfactionMs:0,speech:HUMAN_PROFILES[id].label,attacks:0,builds:0};}
-// A low underhand release preserves the approved 0.14.0 world height and momentum.
-function humanThrowOrigin(h){return[h.x+.1,h.y+HUMAN_THROW.releaseHeight,h.z+HUMAN_THROW.releaseForward];}
+// Keep the low underhand release proportional to the canonical 3.10 human; preserve throw mass, speed, and momentum.
+function humanThrowOrigin(h){const scale=HUMAN_MODEL.scale;return[h.x+.1*(scale/3.10),h.y+HUMAN_THROW.releaseHeight,h.z+HUMAN_THROW.releaseForward];}
 function throwReference(){const level=HUMAN_THROW.referenceLevel,mass=catMassForLevel(level),speed=headbuttBaseSpeed(level)*DEF.cat.charge.maxMultiplier;return{level,mass,speed,momentum:mass*speed};}
 function humanAim(h,c){
  if(h.pattern==='throw')return[c.x,Math.max(c.y+catRadiusForLevel(c.level),c.surfaceY+HUMAN_THROW.radius),c.z];
@@ -1488,9 +1488,13 @@ function humanCarryClearY(h){
  const level=h.buildPlan?.level??tower.layers;
  return level*TOWER.height+TOWER.height*.5+HUMAN_BUILD.carryClearance;
 }
-const humanCarryBaseY=h=>h.y+HUMAN_BUILD.carryHeight;
+const humanCarryBaseY=(h,clearY=h.buildPlan?.clearY??humanCarryClearY(h))=>h.y+Math.max(HUMAN_BUILD.sourceY+1.0,Math.min(HUMAN_BUILD.carryHeight,clearY-.40));
 function humanCarryTravelDurationMs(distance,minMs){return Math.max(minMs,distance*1000/HUMAN_BUILD.carryLiftMaxSpeed);}
 function humanCarryLiftDurationMs(fromY,toY,minMs){return humanCarryTravelDurationMs(Math.abs(toY-fromY),minMs);}
+function humanBuildPoseProfile(level){
+ const t=clamp((level-8)/17,0,1),mix=(low,high)=>lerp(low,high,t);
+ return{pickup:{lean:mix(.30,.34),crouch:mix(1.45,1.22)},lift:{lean:mix(.28,.18),crouch:mix(1.40,.05)},upright:{lean:mix(.24,.04),crouch:mix(1.32,0)},align:{lean:mix(.22,.14),crouch:mix(1.22,.08)},extend:{lean:mix(.28,.22),crouch:mix(1.34,.12)},lower:{lean:mix(.30,.25),crouch:mix(1.38,.18)}};
+}
 function humanBuildPlanKey(plan){return plan?plan.level+':'+Math.round(plan.p[0]*1000)+':'+Math.round(plan.p[2]*1000):null;}
 function humanBuilderTurnId(){const completed=(human??[]).reduce((sum,actor)=>sum+(actor.builds??0),0);return completed%2?1:0;}
 function humanTowerXBounds(){
@@ -1501,29 +1505,30 @@ function humanTowerXBounds(){
 function startHumanBuild(h){
  if(h.id!==humanBuilderTurnId())return false;
  const side=h.id===0?-1:1,plan=tower.getNextBlockSpec(),towerYaw=side<0?Math.PI/2:-Math.PI/2;
- const stance=[side*(HUMAN_BUILD.towerSideX-HUMAN_BUILD.approachInset),0,HUMAN_BUILD.workZ];
- const gripLocal=[side*(TOWER.width*.5-.04),0,0],sourceQ=plan.q.slice();
- const pickupPose={lean:.36,crouch:1},liftPose={lean:.09,crouch:.05},uprightPose={lean:.04,crouch:0};
- const pose={...h,x:stance[0],y:humanGroundY(stance[0],stance[2]),z:stance[2],yaw:towerYaw,mode:'build',buildStage:'pickup',buildStageMs:0};
- const shoulder=humanBuildShoulder(pose,pickupPose.lean,towerYaw,pickupPose.crouch);
- const sourceHalfX=Math.abs(qrotate(sourceQ,[plan.size[0]*.5,0,0])[0])+Math.abs(qrotate(sourceQ,[0,plan.size[1]*.5,0])[0])+Math.abs(qrotate(sourceQ,[0,0,plan.size[2]*.5])[0]),towerBounds=humanTowerXBounds();
- // Spawn the one dynamic piece low and beyond the measured block footprint,
- // so its first lift is not trapped against the existing tower.
- const source=[side<0?towerBounds.minX-sourceHalfX-HUMAN_BUILD.sourceClearance:towerBounds.maxX+sourceHalfX+HUMAN_BUILD.sourceClearance,HUMAN_BUILD.sourceY,shoulder[2]+HUMAN_BUILD.sourceLateral];
- const gripOffset=qrotate(sourceQ,gripLocal),sourceContact=vadd(source,gripOffset),targetContact=vadd(plan.p,qrotate(plan.q,gripLocal));
- const clearY=plan.level*TOWER.height+TOWER.height*.5+HUMAN_BUILD.carryClearance;
- const liftedSource=[source[0],humanCarryBaseY(h),source[2]],raisedSource=[source[0],clearY,source[2]],alignEnd=[plan.p[0],clearY,plan.p[2]];
- const armMargin=plan.level>=12?.42:.12;
- const completePathReachable=humanBuildPoseReachable(pose,sourceContact,stance,towerYaw,pickupPose.lean,pickupPose.crouch,armMargin)&&
-  humanCarryPathReachable(h,stance,towerYaw,pickupPose,liftPose,source,liftedSource,gripLocal,.20,sourceQ,sourceQ,armMargin)&&
-  humanCarryPathReachable(h,stance,towerYaw,liftPose,uprightPose,liftedSource,raisedSource,gripLocal,.20,sourceQ,sourceQ,armMargin)&&
- humanCarryPathReachable(h,stance,towerYaw,uprightPose,uprightPose,raisedSource,raisedSource,gripLocal,.20,sourceQ,plan.q,armMargin)&&
- humanCarryPathReachable(h,stance,towerYaw,uprightPose,uprightPose,raisedSource,alignEnd,gripLocal,.22,plan.q,plan.q,armMargin)&&
-  humanCarryPathReachable(h,stance,towerYaw,uprightPose,uprightPose,alignEnd,plan.p,gripLocal,.18,plan.q,plan.q,armMargin);
- if(!completePathReachable){h.mode='idle';h.timer=900;h.unreachableBuildKey=humanBuildPlanKey(plan);return false;}
+ const gripLocal=[side*(TOWER.width*.5-.04),0,0],sourceQ=plan.q.slice(),stanceBaseX=side*(HUMAN_BUILD.towerSideX+HUMAN_BUILD.buildStandOff-HUMAN_BUILD.approachInset);
+ const poseProfile=humanBuildPoseProfile(plan.level),{pickup:pickupPose,lift:liftPose,upright:uprightPose,align:alignPose,extend:extendPose,lower:lowerPose}=poseProfile;
+ const sourceHalfX=Math.abs(qrotate(sourceQ,[plan.size[0]*.5,0,0])[0])+Math.abs(qrotate(sourceQ,[0,plan.size[1]*.5,0])[0])+Math.abs(qrotate(sourceQ,[0,0,plan.size[2]*.5])[0]),towerBounds=humanTowerXBounds(),clearY=plan.level*TOWER.height+TOWER.height*.5+HUMAN_BUILD.carryClearance,armMargin=plan.level>=12?.18:.12;
+ // Walk to the first feasible stance around the tower on the existing table plane.
+ // Stand farther back, then walk along the table edge to a reachable forward stance without stretching either arm.
+ const stanceOffsets=[[0,0],[side*.15,0],[0,-.8],[side*.15,-.8],[0,.8],[side*.15,.8],[0,-1.6],[side*.15,-1.6],[0,1.6],[side*.15,1.6],[side*.30,0]];
+ let chosen=null;
+ for(const [dx,dz] of stanceOffsets){
+  const stance=[stanceBaseX+dx,0,HUMAN_BUILD.workZ+dz],pose={...h,x:stance[0],y:humanGroundY(stance[0],stance[2]),z:stance[2],yaw:towerYaw,mode:'build',buildStage:'pickup',buildStageMs:0};
+  const shoulder=humanBuildShoulder(pose,pickupPose.lean,towerYaw,pickupPose.crouch),source=[side<0?towerBounds.minX-sourceHalfX-HUMAN_BUILD.sourceClearance:towerBounds.maxX+sourceHalfX+HUMAN_BUILD.sourceClearance,HUMAN_BUILD.sourceY,shoulder[2]+HUMAN_BUILD.sourceLateral],sourceContact=vadd(source,qrotate(sourceQ,gripLocal));
+  const liftedSource=[source[0],humanCarryBaseY(h,clearY),source[2]],raisedSource=[source[0],clearY,source[2]],alignEnd=[plan.p[0],clearY,plan.p[2]];
+  const completePathReachable=humanBuildPoseReachable(pose,sourceContact,stance,towerYaw,pickupPose.lean,pickupPose.crouch,armMargin)&&
+   humanCarryPathReachable(h,stance,towerYaw,pickupPose,liftPose,source,liftedSource,gripLocal,.20,sourceQ,sourceQ,armMargin)&&
+   humanCarryPathReachable(h,stance,towerYaw,liftPose,uprightPose,liftedSource,raisedSource,gripLocal,.20,sourceQ,sourceQ,armMargin)&&
+   humanCarryPathReachable(h,stance,towerYaw,alignPose,alignPose,raisedSource,raisedSource,gripLocal,.20,sourceQ,plan.q,armMargin)&&
+   humanCarryPathReachable(h,stance,towerYaw,alignPose,extendPose,raisedSource,alignEnd,gripLocal,.22,plan.q,plan.q,armMargin)&&
+   humanCarryPathReachable(h,stance,towerYaw,extendPose,lowerPose,alignEnd,plan.p,gripLocal,.18,plan.q,plan.q,armMargin);
+  if(completePathReachable){chosen={stance,source};break;}
+ }
+ if(!chosen){h.mode='idle';h.timer=900;h.unreachableBuildKey=humanBuildPlanKey(plan);return false;}
+ const {stance,source}=chosen;
  h.unreachableBuildKey=null;h.mode='build';h.timer=0;h.buildDone=false;h.buildSatisfactionMs=0;
  h.targetId=null;h.pendingReactionTargetId=null;h.aimLocked=false;h.attackApplied=false;
- h.buildPlan={...plan,p:plan.p.slice(),q:plan.q.slice(),sourceQ, size:plan.size.slice(),blockId:null,source,gripLocal,stance,workYaw:towerYaw,clearY};
+ h.buildPlan={...plan,p:plan.p.slice(),q:plan.q.slice(),sourceQ, size:plan.size.slice(),blockId:null,source,gripLocal,stance,workYaw:towerYaw,clearY,poseProfile};
  h.buildStage='approach';h.buildStageMs=0;h.alignStableMs=0;h.grip=null;h.handTarget=null;h.retractFrom=null;
  h.buildRoute=[[stance[0],stance[2]]];h.buildRouteIndex=0;h.buildVelocity=[0,0];
  return true;
@@ -2580,15 +2585,15 @@ function humanBuildLean(h){
  if(h.mode==='build'&&h.buildPlan){
   const stage=h.buildStage,duration=stage==='retract'?HUMAN_BUILD.retractMs:stage==='raise'?(h.buildStageDurationMs||HUMAN_BUILD.turnLiftMs):stage==='lift'?(h.buildStageDurationMs||HUMAN_BUILD.liftMs):1;
   let t=clamp(h.buildStageMs/Math.max(1,duration),0,1);if(stage==='lift'&&h.grip&&humanCarryContactError(h)>.22)t=Math.min(t,.65);const smooth=t*t*(3-2*t);
-  if(stage==='approach')return .08;
-  if(stage==='pickup')return .36;
-  if(stage==='lift')return lerp(.36,.04,smooth);
-  if(stage==='raise')return .04;
-  if(stage==='align')return .04;
-  if(stage==='extend')return .04;
-  if(stage==='lower')return .05;
-  if(stage==='settle')return .04;
-  if(stage==='retract')return .04*(1-smooth);
+  const p=h.buildPlan.poseProfile??humanBuildPoseProfile(h.buildPlan.level);
+  if(stage==='approach')return .10;
+  if(stage==='pickup')return p.pickup.lean;
+  if(stage==='lift')return lerp(p.pickup.lean,p.lift.lean,smooth);
+  if(stage==='raise')return lerp(p.lift.lean,p.upright.lean,smooth);
+  if(stage==='align')return p.align.lean;
+  if(stage==='extend')return p.extend.lean;
+  if(stage==='lower'||stage==='settle')return p.lower.lean;
+  if(stage==='retract')return p.lower.lean*(1-smooth);
  }
  if((h.pattern==='slam'||h.pattern==='sweep')&&['warning','strike','recover'].includes(h.mode)){
   if(h.mode==='warning')return lerp(.12,.38,clamp(1-h.timer/Math.max(1,h.warningMs),0,1));
@@ -2605,12 +2610,15 @@ function humanBuildCrouch(h){
  if(h.mode==='build'&&h.buildPlan){
   const stage=h.buildStage,duration=stage==='retract'?HUMAN_BUILD.retractMs:stage==='raise'?(h.buildStageDurationMs||HUMAN_BUILD.turnLiftMs):stage==='lift'?(h.buildStageDurationMs||HUMAN_BUILD.liftMs):1;
   let t=clamp(h.buildStageMs/Math.max(1,duration),0,1);if(stage==='lift'&&h.grip&&humanCarryContactError(h)>.22)t=Math.min(t,.65);const smooth=t*t*(3-2*t);
-  if(stage==='approach')return .06;
-  if(stage==='pickup')return .95;
-  if(stage==='lift')return lerp(.95,.04,smooth);
-  if(stage==='raise'||stage==='align')return .02;
-  if(stage==='lower'||stage==='settle')return .04;
-  if(stage==='retract')return .04*(1-smooth);
+  const p=h.buildPlan.poseProfile??humanBuildPoseProfile(h.buildPlan.level);
+  if(stage==='approach')return .08;
+  if(stage==='pickup')return p.pickup.crouch;
+  if(stage==='lift')return lerp(p.pickup.crouch,p.lift.crouch,smooth);
+  if(stage==='raise')return lerp(p.lift.crouch,p.upright.crouch,smooth);
+  if(stage==='align')return p.align.crouch;
+  if(stage==='extend')return p.extend.crouch;
+  if(stage==='lower'||stage==='settle')return p.lower.crouch;
+  if(stage==='retract')return p.lower.crouch*(1-smooth);
  }
  if((h.pattern==='slam'||h.pattern==='sweep')&&['warning','strike','recover'].includes(h.mode)){
   if(h.mode==='warning')return lerp(.10,.36,clamp(1-h.timer/Math.max(1,h.warningMs),0,1));
@@ -2673,7 +2681,7 @@ function drawHuman(g,h){
   const crouch=humanBuildCrouch(h),lean=humanBuildLean(h)+reactionLean;
  g.disc([h.x,h.y+.045,h.z],HUMAN_MODEL.shadowRadius,COLOR.shadow,.20);
  for(const side of [-1,1]){
-   const hip=p(side*.27,1.51-.42*crouch,0),knee=p(side*.30,.92,.52*crouch+lightStep),ankle=p(side*.30,.20,.28*crouch+gait*.16);
+   const hip=p(side*.27,1.51-.42*crouch,0),knee=p(side*.30,.92-.22*crouch,.52*crouch+lightStep),ankle=p(side*.30,.20,.28*crouch+gait*.16);
   limb(g,hip,knee,.22*scale,style.pants);limb(g,knee,ankle,.205*scale,style.pants);
    g.cube(p(side*.30,.11,.18+.28*crouch+gait*.15),[.48*scale,.21*scale,.77*scale],style.shoe,qyaw(h.yaw));
  }
@@ -2719,7 +2727,7 @@ function drawHuman(g,h){
   let elbow;
   if(active){
    const upper=HUMAN_BUILD.armUpper,forearm=HUMAN_BUILD.armForearm,distance=clamp(rawDistance,Math.abs(upper-forearm)+.001,upper+forearm-.001),direction=norm(delta);
-   const pole=yawPart([0,0,0],h.yaw,0,0,-1),projected=vsub(pole,vmul(direction,dot(pole,direction)));
+   const pole=yawPart([0,0,0],h.yaw,0,0,buildPose?1:-1),projected=vsub(pole,vmul(direction,dot(pole,direction)));
    const perpendicular=len(projected)>.02?norm(projected):norm(cross(direction,[1,0,0]));
    const along=(upper*upper-forearm*forearm+distance*distance)/(2*distance),bend=Math.sqrt(Math.max(0,upper*upper-along*along));
    elbow=vadd(shoulder,vadd(vmul(direction,along),vmul(perpendicular,bend)));
@@ -2924,9 +2932,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewpo
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
-  namespace:'meow-tumble-0.18.0',inputBytes:5,snapshotLimit:15000,
-  inputType:91,snapshotType:92,resetType:93,startType:94,protocol:15});
-const LOBBY_VERSION='meow-tumble-0.18.0';
+  namespace:'meow-tumble-0.18.1',inputBytes:5,snapshotLimit:15000,
+  inputType:91,snapshotType:92,resetType:93,startType:94,protocol:16});
+const LOBBY_VERSION='meow-tumble-0.18.1';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};
@@ -3432,3 +3440,8 @@ main();
 </script>
 </body>
 </html>
+
+
+
+
+

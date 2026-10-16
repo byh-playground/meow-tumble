@@ -2,7 +2,7 @@
 
 집 안을 누비는 작은 고양이가 쥐·곤충을 사냥하며 성장하고, 사람의 공격을 피하며 거대한 젠가탑을 무너뜨리는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.18.0** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.18.1** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -196,3 +196,10 @@ Playwright used Chrome because installed Edge 155 exited during launch with a cr
 Human builders alternate turns and walk 0.48 units toward the tower before pickup. Their existing 3.10 scale and two-segment 5.115-unit arm reach stay fixed. One real mass-20 Rapier cuboid remains in contact through pickup, lift, raise, align, extend, lower, and settle; it is released to Rapier physics before the hand retracts. A capped point-impulse and torque controller move the same dynamic body. There is no kinematic hand anchor or body-position teleport. A real ball impact can wobble the carried block; if the existing grip thresholds are exceeded, the block is released. Builders do not attack while stacking.
 
 The full carry path is checked before a block is spawned, and an unreachable slot is marked instead of extending the arm. The 17-layer tower cap, human size, block mass, cat and ball physics, directional damage, and camera behavior remain unchanged. The fixed human does not reach every height in the current table layout: after the initial layer-8 placements complete, the next plan at level 9 fails reach preflight. Supporting more height requires a separately approved physical access or layout design.
+
+
+## v0.18.1: 2× human builders reach the 26-layer tower
+
+The builders now use scale 6.20—exactly twice the canonical 3.10 human size—with the same upper-arm and forearm proportions and a fixed 10.23-unit reach. They walk to a farther work stance and bend the elbow toward the work. Their waist, hips, and knees stay deeply crouched for low placements, then gradually straighten as the target rises. The pickup, carry, placement, and reach checks use the same height-based poses.
+
+The game keeps an 8-layer starting tower, restores the historical 26-layer cap, and preserves mass-20 Jenga blocks. One real dynamic Rapier body moves through the handoff by capped impulses and torque, without kinematic anchoring or body-position teleporting. Building continues to suppress human attacks. Combat hit radii and toy-ball mass, speed, and radius remain unchanged; only the throw release anchor scales with the enlarged body. No ladder, platform, or camera snap is introduced. The multiplayer namespace/protocol advances to 0.18.1/16; packet fields and message types stay the same.
