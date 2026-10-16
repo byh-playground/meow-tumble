@@ -2,7 +2,7 @@
 
 집 안을 누비는 작은 고양이가 쥐·곤충을 사냥하며 성장하고, 사람의 공격을 피하며 거대한 젠가탑을 무너뜨리는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.17.6** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.18.0** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -189,3 +189,10 @@ An actual directionally attributed cat-to-block Rapier impulse starts a nonverba
 Local Chromium gameplay checks completed a normal 8-layer placement in 4.03 s and a layer-12 placement in 6.50 s. Both kept the human stationary at scale 3.10 and preserved one real dynamic mass-20 body through release; the block settled under Rapier. A layer-16 target was rejected without retrying or creating a carry body. An 844×390 landscape viewport showed the touch controls and active play. Two separate browsers matched the carried block ID, mass, and stage with a 0.00025-unit position delta. A real Rapier cat impact emitted the owner-attributed flinch→brace→anger reaction and moved a tower block; one block fell while play continued.
 
 Playwright used Chrome because installed Edge 155 exited during launch with a crashpad `TransactNamedPipe` error (0x6D). Mobile hardware and placements above layer 12 were not covered.
+
+
+## v0.18.0: human builders walk the Jenga block
+
+Human builders alternate turns and walk 0.48 units toward the tower before pickup. Their existing 3.10 scale and two-segment 5.115-unit arm reach stay fixed. One real mass-20 Rapier cuboid remains in contact through pickup, lift, raise, align, extend, lower, and settle; it is released to Rapier physics before the hand retracts. A capped point-impulse and torque controller move the same dynamic body. There is no kinematic hand anchor or body-position teleport. A real ball impact can wobble the carried block; if the existing grip thresholds are exceeded, the block is released. Builders do not attack while stacking.
+
+The full carry path is checked before a block is spawned, and an unreachable slot is marked instead of extending the arm. The 17-layer tower cap, human size, block mass, cat and ball physics, directional damage, and camera behavior remain unchanged. The fixed human does not reach every height in the current table layout: after the initial layer-8 placements complete, the next plan at level 9 fails reach preflight. Supporting more height requires a separately approved physical access or layout design.
