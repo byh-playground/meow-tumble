@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"/>
 <meta name="theme-color" content="#182438"/>
-<title>와르르냥 / Meow Tumble · 사람이 쌓는 젠가 · v0.18.2</title>
+<title>와르르냥 / Meow Tumble · 사람이 쌓는 젠가 · v0.18.3</title>
 <style>
 :root{color-scheme:dark;--bg:#17283c;--ink:#fffaf0;--sub:#c8d1da;--mint:#93edcb;--pink:#ffaaa6;--yellow:#ffe49e}
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:ui-rounded,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}button,input,summary{font:inherit}button,summary{cursor:pointer;touch-action:manipulation}button{color:inherit;min-height:48px}button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}button:disabled{opacity:.55;cursor:default}.hidden{display:none!important}
@@ -119,7 +119,7 @@
  <div class="bottomRight"><div id="status" class="status"></div><div class="dashbar"><i id="dashReady"></i></div></div>
  </div>
  <div id="netRoster" aria-label="멀티플레이 참가자"></div><div id="netLabels" aria-hidden="true"></div>
- <div id="buildTag">v0.18.2 · MEOW TUMBLE</div>
+ <div id="buildTag">v0.18.3 · MEOW TUMBLE</div>
  <div id="touch"><div id="stick" class="joystick"><div id="knob" class="knob"></div></div><div class="actionPad"><button type="button" class="action" data-action="charge" aria-label="짧게 누르면 할퀴기, 0.25초 이상 길게 누르고 떼면 박치기"><strong>🐾</strong><small>홀드 박치기<br>드래그 조준</small><span class="chargeTrack"><i id="touchChargeFill"></i></span></button><button type="button" class="action" data-action="jump" aria-label="점프: 1초까지 누르고 떼서 점프"><strong>↥</strong><small>길게 눌러 점프</small><span class="chargeTrack jumpTrack"><i id="touchJumpFill"></i></span></button><button type="button" class="action" data-action="dodge"><strong>↻</strong><small>구르기</small></button></div></div>
  <section id="intro" class="cover" aria-label="게임 메뉴"><div class="hero">
  <div data-screen="main"><div class="eyebrow">MEOW TUMBLE</div><h1>와르르<em>냥</em></h1><p>작은 고양이로 사냥하고 성장해<br>거대한 젠가탑을 무너뜨리세요.</p><button type="button" class="primary" data-route="modes">시작하기</button><div class="menuLinks"><button data-route="help">게임 방법</button><button data-route="settings">설정</button></div><small>1–4명 · PC / 터치 · 인터넷 연결 필요</small></div>
@@ -371,6 +371,7 @@ const TOWER={width:1.07,length:3.48,height:.70,gap:.025,initialLayers:8,maxLayer
 const ARENA={halfX:10.9,halfZ:8.6,edgeX:10.35,edgeZ:8.0,floorY:-3.05,houseHalfX:46,houseHalfZ:36,spawnX:0,spawnZ:23.5};
 // Exact model/placement anchors from pre-shrink d82b224 (0.12.1); no human rigid bodies existed there.
 const HUMAN_MODEL=Object.freeze({scale:6.20,height:3.925*6.20,z:-10.0,labelY:3.925*6.20+.08,shadowRadius:3.85*6.20/5.30});
+const HOUSE_SHELL=Object.freeze((()=>{const roof=HUMAN_MODEL.height+5.0,roofCenter=roof-.45,ceilingHalf=.16,ceilingBottom=roofCenter-ceilingHalf,wallBottom=ARENA.floorY-.02,wallTop=ceilingBottom+.22,wallHeight=wallTop-wallBottom;return{roof,roofCenter,ceilingHalf,ceilingBottom,wallBottom,wallTop,wallHeight,wallCenter:(wallBottom+wallTop)*.5};})());
 const HUMAN_THROW=Object.freeze({referenceLevel:4,mass:2,speed:20,radius:.45,maxBalls:24,releaseHeight:3.77*(HUMAN_MODEL.scale/3.10),releaseForward:2.05*(HUMAN_MODEL.scale/3.10),friction:.55,restitution:.15,linearDamping:.16,angularDamping:.5});
 const LOOK={mouseRadPerPx:.0029,touchRadPerPx:.0062,pitchMin:-.86,pitchMax:1.22,
  followDistance:4.85,eyeHeight:1.42,
@@ -604,7 +605,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
  const DEF={
-    build:'20261016-full-body-human-stacking-v0182',version:'0.18.2',
+    build:'20261016-all-room-walls-v0183',version:'0.18.3',
   // After the success threshold, physics keeps stepping until the debris is quiet.
   // These are PRESENTATION timings only; they never influence Rapier impulses.
   round:{durationMs:0,winBlocks:TOWER.winScattered,
@@ -776,15 +777,16 @@ class CombatPresentation {
 const combatUI=new CombatPresentation();
 
 let mobs=[],nextMobId=1,mobRespawnMs=0,kills={mouse:0,beetle:0,spider:0};
+const wallPart=(x,z,hx,hz)=>Object.freeze([x,HOUSE_SHELL.wallCenter,z,hx,HOUSE_SHELL.wallHeight*.5,hz,'wall']);
 const HOUSE_SOLIDS=[
- // Apartment-like shell: the central dining room stays open, while side rooms connect through wide interior doorways.
+ // Tall shared interior partitions; the gaps between segments remain the existing open doorways.
  ...[
-  [-20.7,ARENA.floorY+4.5,-21.5,.34,4.5,6.0,'wall'],[-20.7,ARENA.floorY+4.5,0,.34,4.5,6.1,'wall'],[-20.7,ARENA.floorY+4.5,21.5,.34,4.5,6.0,'wall'],
-  [20.7,ARENA.floorY+4.5,-21.5,.34,4.5,6.0,'wall'],[20.7,ARENA.floorY+4.5,0,.34,4.5,6.1,'wall'],[20.7,ARENA.floorY+4.5,21.5,.34,4.5,6.0,'wall'],
-  [-31,ARENA.floorY+4.5,-0.3,10.0,4.5,.34,'wall'],[31,ARENA.floorY+4.5,-0.3,10.0,4.5,.34,'wall'],
-  [-13.9,ARENA.floorY+4.5,-24.2,5.3,4.5,.34,'wall'],[13.9,ARENA.floorY+4.5,-24.2,5.3,4.5,.34,'wall'],
-  [-13.9,ARENA.floorY+4.5,24.2,5.3,4.5,.34,'wall'],[13.9,ARENA.floorY+4.5,24.2,5.3,4.5,.34,'wall'],
-  [-31,ARENA.floorY+4.5,14.2,10.0,4.5,.34,'wall'],[31,ARENA.floorY+4.5,14.2,10.0,4.5,.34,'wall']
+  wallPart(-20.7,-21.5,.34,6.0),wallPart(-20.7,0,.34,6.1),wallPart(-20.7,21.5,.34,6.0),
+  wallPart(20.7,-21.5,.34,6.0),wallPart(20.7,0,.34,6.1),wallPart(20.7,21.5,.34,6.0),
+  wallPart(-31,-.3,10.0,.34),wallPart(31,-.3,10.0,.34),
+  wallPart(-13.9,-24.2,5.3,.34),wallPart(13.9,-24.2,5.3,.34),
+  wallPart(-13.9,24.2,5.3,.34),wallPart(13.9,24.2,5.3,.34),
+  wallPart(-31,14.2,10.0,.34),wallPart(31,14.2,10.0,.34)
  ],
  // Kitchen: U counters, island and fridge along the west wing.
  [-39,-1.65,-19.5,4.8,1.35,1.35,'wood3'],[-39,-1.65,-10,1.6,1.35,4.6,'wood3'],[-31.5,-1.65,-19.5,2.6,1.35,1.35,'wood3'],[-31,-1.8,-15.3,3.2,1.2,2.1,'table'],[-42,-.55,-8,1.8,2.45,1.8,'white'],
@@ -2013,11 +2015,11 @@ function updateGame(dt,frame){if(phase!=='play'&&phase!=='collapse')return;
    the large colliders enumerated by HOUSE_SOLIDS (single authoritative physics list).
    All art parameters live in these presets; renderer retains no scene logic. */
 const HOUSE_STYLE=Object.freeze({
-  walls:{base:ARENA.floorY,roof:HUMAN_MODEL.height+5.0,inside:9.0},
+  walls:{base:ARENA.floorY,roof:HOUSE_SHELL.roof,inside:HOUSE_SHELL.wallHeight},
   rooms:{kitchen:{x:-33,z:-14},living:{x:33,z:-14},bedroom:{x:-33,z:23},study:{x:33,z:23},bath:{x:0,z:-30},foyer:{x:0,z:29}},
   palette:{wall:[.95,.93,.86,1],trim:[.99,.96,.90,1],oak:[.95,.90,.81,1],shadow:[.11,.12,.12,1]},
 });
-const HOUSE_SHELL=Object.freeze((()=>{const roofCenter=HOUSE_STYLE.walls.roof-.45,ceilingHalf=.16,ceilingBottom=roofCenter-ceilingHalf,wallBottom=HOUSE_STYLE.walls.base-.02,wallTop=ceilingBottom+.22,wallHeight=wallTop-wallBottom;return{roofCenter,ceilingHalf,ceilingBottom,wallBottom,wallTop,wallHeight,wallCenter:(wallBottom+wallTop)*.5};})());
+
 const HOUSE_FURNITURE=Object.freeze({
   sofa:{at:[35,-1.78,-18.2],size:[10.4,2.24,4.4]},
   bed:{at:[-35.5,-2.28,22.5],size:[12.7,1.5,8.0]},
@@ -2035,7 +2037,7 @@ function buildHouse(g){
  box([0,foundation-.47,0],[92,.94,72],'stone',neutral);
  for(const [x,z,w,d,mat,col] of [[-33,-14,22,21,'tile',white],[33,-14,22,21,'planks',neutral],[-33,23,22,22,'planks',neutral],[33,23,22,22,'planks',neutral],[0,-30,17,11,'tile',smoke],[0,29,26,13,'planks',neutral],[0,0,40,39,'planks',neutral]])
   box([x,foundation+.016,z],[w,.035,d],mat,col);
- // Perimeter walls are tall enough to meet the roof; inside walls retain their real collider size.
+ // Perimeter and interior walls share the tall shell; the existing doorway gaps remain open.
  for(const xx of [-ARENA.houseHalfX,ARENA.houseHalfX])box([xx,shell.wallCenter,0],[.9,shell.wallHeight,2*ARENA.houseHalfZ],'paint',wallTint);
  for(const zz of [-ARENA.houseHalfZ,ARENA.houseHalfZ])box([0,shell.wallCenter,zz],[2*ARENA.houseHalfX,shell.wallHeight,.9],'paint',wallTint);
  for(const [x,y,z,hx,hy,hz,c] of HOUSE_SOLIDS){
@@ -2051,14 +2053,14 @@ function buildHouse(g){
  for(const zz of [-35.37,35.37]){box([0,foundation+.36,zz],[91,.72,.20],'paint',neutral);box([0,shell.ceilingBottom-.24,zz],[2*ARENA.houseHalfX,.46,.36],'paint',white)}
  for(const [x,z,hx,hz] of HOUSE_SOLIDS.filter(o=>o[6]==='wall').map(o=>[o[0],o[2],o[3],o[5]])){
   box([x,foundation+.28,z],[hx*2+.1,.55,hz*2+.1],'paint',neutral);
-  box([x,6.20,z],[hx*2+.2,.19,hz*2+.2],'paint',neutral);
+  box([x,shell.wallTop-.16,z],[hx*2+.2,.39,hz*2+.2],'paint',neutral);
  }
  // Door casings, visibly open passageways. Wall openings remain collision-free.
- function doorX(x,z,w=10){const y=foundation+4.7;for(const zz of [-w/2,w/2])box([x,y,z+zz],[.28,9.35,.30],'oak',neutral);
-  box([x,foundation+9.25,z],[.32,.39,w+.4],'oak',neutral);
-  for(const zz of [-w/2-.37,w/2+.37])box([x+.18,y,z+zz],[.08,8.9,.075],'paint',neutral);}
- function doorZ(x,z,w=15){const y=foundation+4.7;for(const xx of [-w/2,w/2])box([x+xx,y,z],[.30,9.35,.28],'oak',neutral);
-  box([x,foundation+9.25,z],[w+.4,.39,.32],'oak',neutral);}
+ function doorX(x,z,w=10){const y=shell.wallCenter,postHeight=shell.wallHeight;for(const zz of [-w/2,w/2])box([x,y,z+zz],[.28,postHeight,.30],'oak',neutral);
+  box([x,shell.wallTop-.17,z],[.32,.39,w+.4],'oak',neutral);
+  for(const zz of [-w/2-.37,w/2+.37])box([x+.18,y,z+zz],[.08,postHeight-.55,.075],'paint',neutral);}
+ function doorZ(x,z,w=15){const y=shell.wallCenter;for(const xx of [-w/2,w/2])box([x+xx,y,z],[.30,shell.wallHeight,.28],'oak',neutral);
+  box([x,shell.wallTop-.17,z],[w+.4,.39,.32],'oak',neutral);}
  for(const xx of [-20.7,20.7])for(const zz of [-10.6,10.6])doorX(xx,zz,9.5);
  for(const zz of [-24.2,24.2])doorZ(0,zz,17);
  // Windows: frames, sill, glass reflection and curtains (seen from inside); wall behind is simply painted.
@@ -2961,9 +2963,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewpo
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
-  namespace:'meow-tumble-0.18.2',inputBytes:5,snapshotLimit:15000,
-  inputType:91,snapshotType:92,resetType:93,startType:94,protocol:17});
-const LOBBY_VERSION='meow-tumble-0.18.2';
+  namespace:'meow-tumble-0.18.3',inputBytes:5,snapshotLimit:15000,
+  inputType:91,snapshotType:92,resetType:93,startType:94,protocol:18});
+const LOBBY_VERSION='meow-tumble-0.18.3';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};
