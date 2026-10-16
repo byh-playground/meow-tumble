@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"/>
 <meta name="theme-color" content="#182438"/>
-<title>와르르냥 / Meow Tumble · 사람이 쌓는 젠가 · v0.18.4</title>
+<title>와르르냥 / Meow Tumble · 사람이 쌓는 젠가 · v0.18.5</title>
 <style>
 :root{color-scheme:dark;--bg:#17283c;--ink:#fffaf0;--sub:#c8d1da;--mint:#93edcb;--pink:#ffaaa6;--yellow:#ffe49e}
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:ui-rounded,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}button,input,summary{font:inherit}button,summary{cursor:pointer;touch-action:manipulation}button{color:inherit;min-height:48px}button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}button:disabled{opacity:.55;cursor:default}.hidden{display:none!important}
@@ -119,7 +119,7 @@
  <div class="bottomRight"><div id="status" class="status"></div><div class="dashbar"><i id="dashReady"></i></div></div>
  </div>
  <div id="netRoster" aria-label="멀티플레이 참가자"></div><div id="netLabels" aria-hidden="true"></div>
- <div id="buildTag">v0.18.4 · MEOW TUMBLE</div>
+ <div id="buildTag">v0.18.5 · MEOW TUMBLE</div>
  <div id="touch"><div id="stick" class="joystick"><div id="knob" class="knob"></div></div><div class="actionPad"><button type="button" class="action" data-action="charge" aria-label="짧게 누르면 할퀴기, 0.25초 이상 길게 누르고 떼면 박치기"><strong>🐾</strong><small>홀드 박치기<br>드래그 조준</small><span class="chargeTrack"><i id="touchChargeFill"></i></span></button><button type="button" class="action" data-action="jump" aria-label="점프: 1초까지 누르고 떼서 점프"><strong>↥</strong><small>길게 눌러 점프</small><span class="chargeTrack jumpTrack"><i id="touchJumpFill"></i></span></button><button type="button" class="action" data-action="dodge"><strong>↻</strong><small>구르기</small></button></div></div>
  <section id="intro" class="cover" aria-label="게임 메뉴"><div class="hero">
  <div data-screen="main"><div class="eyebrow">MEOW TUMBLE</div><h1>와르르<em>냥</em></h1><p>작은 고양이로 사냥하고 성장해<br>거대한 젠가탑을 무너뜨리세요.</p><button type="button" class="primary" data-route="modes">시작하기</button><div class="menuLinks"><button data-route="help">게임 방법</button><button data-route="settings">설정</button></div><small>1–4명 · PC / 터치 · 인터넷 연결 필요</small></div>
@@ -605,7 +605,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
  const DEF={
-    build:'20261016-unified-claw-impact-v0184',version:'0.18.4',
+    build:'20261016-builder-label-viewport-v0185',version:'0.18.5',
   // After the success threshold, physics keeps stepping until the debris is quiet.
   // These are PRESENTATION timings only; they never influence Rapier impulses.
   round:{durationMs:0,winBlocks:TOWER.winScattered,
@@ -2951,7 +2951,7 @@ function drawWorld({alpha=0}={}){if(!renderer)return;const frameNow=performance.
  for(const mob of sceneView.mobs){const p=mob,dx=p.x-c.x,dz=p.z-c.z,dist=Math.hypot(dx,dz);
   if(dist<3.9&&(dx*Math.sin(cat.aimYaw)+dz*Math.cos(cat.aimYaw))/Math.max(.01,dist)>.48){mobInAim=true;break;}}
  ui.target.classList.toggle('mobFocus',mobInAim);
- for(const h of human){const node=h.id===0?ui.humanA:ui.humanB,p=g.screen([h.x,h.y+HUMAN_MODEL.labelY,h.z]);if(p&&p.x>-120&&p.x<gameCanvas.clientWidth+100){node.style.left=p.x+'px';node.style.top=p.y+'px';node.style.display='block';node.textContent=h.mode==='warning'?(h.pattern==='throw'?(h.aimLocked?'투척 방향 고정!':'장난감 공 조준 중'):'손바닥 준비!'):h.mode==='build'?('블록 '+(humanBuildPose(h)?.stage??'쌓는 중')):h.mode==='recover'?'잠깐 쉬는 중':h.pattern==='throw'&&projectiles.length>=HUMAN_THROW.maxBalls?'공 24개 · 오래된 공 교체':HUMAN_PROFILES[h.id].label;node.classList.toggle('angry',h.mode==='warning'||h.mode==='strike')}else node.style.display='none';}
+ for(const h of human){const node=h.id===0?ui.humanA:ui.humanB,p=g.screen(vadd(h.mode==='build'&&h.handTarget?h.handTarget:humanBuildShoulder(h),[0,.65,0]));if(p&&p.x>-120&&p.x<gameCanvas.clientWidth+100){node.style.left=p.x+'px';node.style.top=clamp(p.y,170,gameCanvas.clientHeight-80)+'px';node.style.display='block';node.textContent=h.mode==='warning'?(h.pattern==='throw'?(h.aimLocked?'투척 방향 고정!':'장난감 공 조준 중'):'손바닥 준비!'):h.mode==='build'?('블록 '+(humanBuildPose(h)?.stage??'쌓는 중')):h.mode==='recover'?'잠깐 쉬는 중':h.pattern==='throw'&&projectiles.length>=HUMAN_THROW.maxBalls?'공 24개 · 오래된 공 교체':HUMAN_PROFILES[h.id].label;node.classList.toggle('angry',h.mode==='warning'||h.mode==='strike')}else node.style.display='none';}
 }
 // GameKit action input, sampled once per fixed tick.
 const samples=Object.fromEntries(['left','right','up','down','charge','jump','dodge'].map(k=>[k,{held:false,pressed:false,released:false}]));
