@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"/>
 <meta name="theme-color" content="#182438"/>
-<title>와르르냥 / Meow Tumble · 사람이 쌓는 젠가 · v0.18.3</title>
+<title>와르르냥 / Meow Tumble · 사람이 쌓는 젠가 · v0.18.4</title>
 <style>
 :root{color-scheme:dark;--bg:#17283c;--ink:#fffaf0;--sub:#c8d1da;--mint:#93edcb;--pink:#ffaaa6;--yellow:#ffe49e}
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:ui-rounded,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}button,input,summary{font:inherit}button,summary{cursor:pointer;touch-action:manipulation}button{color:inherit;min-height:48px}button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}button:disabled{opacity:.55;cursor:default}.hidden{display:none!important}
@@ -119,7 +119,7 @@
  <div class="bottomRight"><div id="status" class="status"></div><div class="dashbar"><i id="dashReady"></i></div></div>
  </div>
  <div id="netRoster" aria-label="멀티플레이 참가자"></div><div id="netLabels" aria-hidden="true"></div>
- <div id="buildTag">v0.18.3 · MEOW TUMBLE</div>
+ <div id="buildTag">v0.18.4 · MEOW TUMBLE</div>
  <div id="touch"><div id="stick" class="joystick"><div id="knob" class="knob"></div></div><div class="actionPad"><button type="button" class="action" data-action="charge" aria-label="짧게 누르면 할퀴기, 0.25초 이상 길게 누르고 떼면 박치기"><strong>🐾</strong><small>홀드 박치기<br>드래그 조준</small><span class="chargeTrack"><i id="touchChargeFill"></i></span></button><button type="button" class="action" data-action="jump" aria-label="점프: 1초까지 누르고 떼서 점프"><strong>↥</strong><small>길게 눌러 점프</small><span class="chargeTrack jumpTrack"><i id="touchJumpFill"></i></span></button><button type="button" class="action" data-action="dodge"><strong>↻</strong><small>구르기</small></button></div></div>
  <section id="intro" class="cover" aria-label="게임 메뉴"><div class="hero">
  <div data-screen="main"><div class="eyebrow">MEOW TUMBLE</div><h1>와르르<em>냥</em></h1><p>작은 고양이로 사냥하고 성장해<br>거대한 젠가탑을 무너뜨리세요.</p><button type="button" class="primary" data-route="modes">시작하기</button><div class="menuLinks"><button data-route="help">게임 방법</button><button data-route="settings">설정</button></div><small>1–4명 · PC / 터치 · 인터넷 연결 필요</small></div>
@@ -605,7 +605,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
  const DEF={
-    build:'20261016-all-room-walls-v0183',version:'0.18.3',
+    build:'20261016-unified-claw-impact-v0184',version:'0.18.4',
   // After the success threshold, physics keeps stepping until the debris is quiet.
   // These are PRESENTATION timings only; they never influence Rapier impulses.
   round:{durationMs:0,winBlocks:TOWER.winScattered,
@@ -966,7 +966,14 @@ const collisionDamage={
   const ball=projectiles.find(p=>p.collider?.handle===collider.handle);if(ball)return{kind:'ball',id:ball.id,body:ball.body,collider,actor:ball};
   const block=tower.blocks.find(b=>b.body.collider(0).handle===collider.handle);if(block)return{kind:'block',id:block.id,body:block.body,collider,actor:block};
   const appliance=vacuums.find(v=>v.collider.handle===collider.handle);if(appliance)return{kind:'appliance',id:appliance.id,body:appliance.body,collider,actor:appliance};
+  // Dynamic colliders participate by default; fixed geometry stays in Rapier's solver without acquiring HP.
+  const body=collider.parent?.();if(body?.isDynamic?.())return{kind:'object',id:collider.handle,body,collider,actor:null};
   return null;
+ },
+ actorByHandle(handle){
+  let actor=null;tower.world.forEachRigidBody(body=>{
+   for(let i=0;i<body.numColliders();i++){const collider=body.collider(i);if(collider.handle===handle){actor=this.actor(collider);return;}}
+  });return actor;
  },
  capture(){this.substep++;this.before.clear();tower.world.forEachRigidBody(body=>{
   const v=body.linvel(),w=body.angvel(),p=body.worldCom(),q=body.rotation();
@@ -978,7 +985,7 @@ const collisionDamage={
   return[b.v[0]+b.w[1]*r[2]-b.w[2]*r[1],b.v[1]+b.w[2]*r[0]-b.w[0]*r[2],b.v[2]+b.w[0]*r[1]-b.w[1]*r[0]];
  },
  apply(target,source,impulse,normalSpeed,point,attackMeta={}){
-  const mass=target.body.mass(),damage=damageFromImpulse(impulse,mass,normalSpeed);if(!damage)return 0;
+  const mass=target.body.mass(),hasHp=target.kind==='cat'||target.kind==='mob',damage=hasHp?damageFromImpulse(impulse,mass,normalSpeed):0;if(!damage)return 0;
   let actual=0;
   if(target.kind==='cat')withCatActor(target.id,()=>{
    if(cat.motion.state==='dead'||cat.spawnProtectionMs>0||isRollInvulnerable())return;
@@ -990,16 +997,37 @@ const collisionDamage={
   });
   else if(target.kind==='mob'&&!target.actor.dead){
    const owner=source?.kind==='cat'?source.id:net.localId;
-   withCatActor(owner,()=>{actual=damageMob(target.actor,damage,source?.kind==='cat'&&source.dash?'dash':'impact',point,420,{impulse,deltaV:impulse/mass,...attackMeta});});
+   withCatActor(owner,()=>{actual=damageMob(target.actor,damage,source?.kind==='cat'?(source.attack??(source.dash?'dash':'impact')):'impact',point,420,{impulse,deltaV:impulse/mass,...attackMeta});});
   }
   if(actual)this.record({target:target.kind+':'+target.id,source:source?source.kind+':'+source.id:'applied',impulse,normalSpeed,...attackMeta,mass,deltaV:impulse/mass,damage:actual});
   return actual;
  },
- applied(target,source,vector){const before=target.body.linvel();target.body.applyImpulse(vec3(vector),true);const after=target.body.linvel();
-  // Actual momentum accepted by Rapier, including translation locks.
-  const impulse=target.body.mass()*Math.hypot(after.x-before.x,after.y-before.y,after.z-before.z);
-  return this.apply(target,source,impulse,null,target.body.translation(),{attackType:source?.attack??'impulse'});
+ markSpent(source,target){
+  if(!source?.collider||!target?.collider)return;
+  const handles=[source.collider.handle,target.collider.handle].sort((a,b)=>a-b),key=handles.join(':');
+  const episode=this.pairs.get(key);if(episode)episode.spent=true;else this.pairs.set(key,{handles,spent:true});
  },
+ strike(target,source,vector,point,attackMeta={}){
+  const mass=target.body.mass();if(!Number.isFinite(mass)||mass<=0||!point)return{applied:false,damage:0,impulse:0,deltaV:0};
+  const before=target.body.linvel();
+  // Rapier applies the real impulse at a world-space point, so the target mass and angular inertia own the response.
+  target.body.applyImpulseAtPoint({x:vector[0],y:vector[1],z:vector[2]},point,true);
+  const after=target.body.linvel(),deltaV=Math.hypot(after.x-before.x,after.y-before.y,after.z-before.z),impulse=mass*deltaV;
+  if(!Number.isFinite(impulse)||impulse<=.001)return{applied:false,damage:0,impulse:0,deltaV:0};
+  this.markSpent(source,target);
+  const contactPoint=[point.x,point.y,point.z],damage=this.apply(target,source,impulse,null,point,{attackType:source?.attack??'impulse',contactPoint,...attackMeta});
+  if(target.kind==='block'&&source?.kind==='cat')this.reportClawBlockImpact(source,target,point,impulse,deltaV);
+  if(!damage)this.record({target:target.kind+':'+target.id,source:source?source.kind+':'+source.id:'applied',impulse,attackType:source?.attack??'impulse',mass,deltaV,contactPoint,...attackMeta});
+  return{applied:true,damage,impulse,deltaV};
+ },
+ reportClawBlockImpact(source,block,point,impulse,deltaV){
+  const severity=clamp(.18+Math.sqrt(impulse/Math.max(1,block.body.mass()))*.18+deltaV*.08,.18,.55);
+  this.catBlockEvents.push({sequence:++this.catBlockSequence,tick:nowTicks,catId:source.id,blockId:block.id,
+   p:[point.x,point.y,point.z],attackSpeed:impulse/Math.max(.01,source.body.mass()),impulse,severity,kind:'claw'});
+  if(this.catBlockEvents.length>32)this.catBlockEvents.shift();
+ },
+ // Rapier resolves every collider pair. This pass attributes each contact once where HP or projectile outcomes exist;
+ // blocks, appliances, and other dynamic objects remain solver-driven even when they have no HP.
  resolve(){const seen=new Set(),queried=new Set();
   const colliders=[...tower.playerBodies.values()].map(p=>p.collider).concat(mobs.filter(m=>!m.dead).map(m=>m.collider),projectiles.map(p=>p.collider));
   for(const first of colliders)tower.world.contactPairsWith(first,second=>{
@@ -1091,34 +1119,36 @@ function resolveClawHit(){
  const body=tower.catBody,origin=body.translation(),fx=Math.sin(cat.aimYaw),fz=Math.cos(cat.aimYaw);
  const center={x:origin.x+fx*config.queryForward*scale,y:origin.y+.10*scale,z:origin.z+fz*config.queryForward*scale};
  const hitIds=new Set(),candidates=[];let hits=0;
- // Rapier's exact shape-overlap query, not a custom distance-only damage trigger.
  tower.world.intersectionsWithShape(center,{x:0,y:0,z:0,w:1},new RAPIER.Ball(config.queryRadius*scale),collider=>{
   candidates.push(typeof collider==='number'?collider:collider.handle);return true;
  },undefined,undefined,tower.catCollider,tower.catBody);
- // Rapier borrows its body set for the query. Mutate bodies only after it returns.
+ // Finish the borrowed query before mutating any Rapier body.
+ const source=collisionDamage.actor(tower.catCollider);if(!source)return;
+ source.attack='claw';
  for(const handle of candidates){
   if(hitIds.has(handle))continue;
-  const mob=mobs.find(candidate=>candidate.collider.handle===handle&&!candidate.dead);
-  if(!mob)continue;
-  const p=mob.body.translation(),dx=p.x-origin.x,dz=p.z-origin.z,dy=p.y-origin.y;
-  const planar=Math.hypot(dx,dz),radius=MOB_TYPES[mob.type].radius;
+  const target=collisionDamage.actorByHandle(handle);
+  if(!target||target.kind==='cat')continue;
+  const p=target.body.translation(),dx=p.x-origin.x,dz=p.z-origin.z,dy=p.y-origin.y;
+  const planar=Math.hypot(dx,dz),radius=target.kind==='mob'?MOB_TYPES[target.actor.type].radius:target.kind==='block' ? .58 : target.kind==='appliance' ? .48 : .36;
   if(planar>config.reach*scale+radius||Math.abs(dy)>1.25*scale+radius||
      (planar>.05&&(dx*fx+dz*fz)/planar<config.minFacingDot))continue;
-  // A fixed wall/counter must block a swipe; other dynamic mobs remain targetable.
+  // Keep the established fixed-wall occlusion rule for every dynamic target.
   const range=Math.hypot(dx,dy,dz);
   if(range>.01){
    const ray=new RAPIER.Ray({x:origin.x,y:origin.y,z:origin.z},{x:dx/range,y:dy/range,z:dz/range});
    const obstruction=tower.world.castRay(ray,range,true,RAPIER.QueryFilterFlags.ONLY_FIXED);
    if(obstruction&&obstruction.timeOfImpact<range-.10)continue;
   }
+  let contact=target.collider.translation();
+  try{const projection=target.collider.projectPoint(center,false);if(projection?.point&&[projection.point.x,projection.point.y,projection.point.z].every(Number.isFinite))contact=projection.point;}catch{}
   hitIds.add(handle);
-  const impulse=config.knockback*Math.pow(cat.mass,.32);
-  if(collisionDamage.applied({kind:'mob',id:mob.id,body:mob.body,actor:mob},{kind:'cat',id:cat.id,actor:cat,attack:'claw'},[fx*impulse,impulse*.34,fz*impulse]))hits++;
+  const impulse=config.knockback*Math.pow(cat.mass,.32),result=collisionDamage.strike(target,source,[fx*impulse,impulse*.34,fz*impulse],contact,{attackType:'claw'});
+  if(result.applied)hits++;
  }
  claw.lastHits=hits;
- if(hits>1)announce('🐾 연속 할퀴기 '+hits+'마리 적중!',650);
-}
-function collectMobsAfterStep(){
+ if(hits>1)announce('?? ���� ������ '+hits+'���� ����!',650);
+}function collectMobsAfterStep(){
  resolveClawHit();
  for(let i=mobs.length-1;i>=0;i--){let m=mobs[i];if(!m.dead)continue;
   const p=m.body.translation(),def=MOB_TYPES[m.type],killer=roomCats.get(m.killerId)??cat;
@@ -1599,6 +1629,8 @@ function captureHumanBuildAbort(h,reason){
  h.lastBuildAbort={reason,phase,stageMs:h.buildStageMs,alignDurationMs:h.alignDurationMs??null,actorId:h.id,expectedBuilderId:humanBuilderTurnId(),completedBuilds:h.builds,level:plan?.level??null,position:[p.x,p.y,p.z],target,positionError:target?len(vsub([p.x,p.y,p.z],target)):null,placementTarget,placementPositionError:placementTarget?len(vsub([p.x,p.y,p.z],placementTarget)):null,velocity,speed:len(velocity),angularVelocity:spin,spin:len(spin),rotation:[q.x,q.y,q.z,q.w],rotationTarget:grip.lastOrientationTarget??grip.rotationTarget??null,orientationImpulse:grip.lastOrientationImpulse??null,rotationError:plan?quaternionAngleError(plan.q,[q.x,q.y,q.z,q.w]):null,contactError:humanCarryContactError(h),handDistance:h.handTarget?len(vsub(h.handTarget,humanBuildShoulder(h))):null,armReach:HUMAN_BUILD.armUpper+HUMAN_BUILD.armForearm,controllerImpulse:grip.lastCarryImpulse??null,controllerForce:grip.lastCarryForce??null};
 }
 function advanceHumanBuild(h,dt){
+ const gripBlockId=h.grip?.blockId??h.grip?.block?.id;
+ const watchPause=h.buildStage!=='retract'&&h.reaction?.role==='watch'&&h.reaction.severity<.78&&h.reaction.blockId===gripBlockId&&h.reaction.elapsedMs<280;
  const phase=h.buildStage;h.buildStageMs+=dt*1000;
  if(h.grip&&phase!=='retract'){
   const v=h.grip.block.body.linvel(),w=h.grip.block.body.angvel();
@@ -1611,6 +1643,8 @@ function advanceHumanBuild(h,dt){
  if((phase==='lift'||phase==='raise')&&h.buildStageMs>=Math.max(9500,(h.buildStageDurationMs||HUMAN_BUILD.liftMs)+5200)&&humanCarryContactError(h)>.24){
   captureHumanBuildAbort(h,'carryContactTimeout');h.unreachableBuildKey=humanBuildPlanKey(h.buildPlan);releaseHumanCarry(h,true);return;
  }
+ // Keep this short watch gesture from extending nominal build-stage timers.
+ if(watchPause)return;
  if(phase==='approach'){
   if(!walkHumanRoute(h,dt,HUMAN_BUILD.walkSpeed))return;
   if(!humanTurnToward(h,h.buildPlan.workYaw,dt))return;
@@ -1681,20 +1715,21 @@ function advanceHumanBuild(h,dt){
 }
 function updateHumanReactions(dt){
  for(const h of human){const r=h.reaction;if(!r)continue;r.elapsedMs+=dt*1000;
-  r.stage=r.elapsedMs<260?'flinch':r.elapsedMs<820?'brace':r.elapsedMs<2100?'anger':'done';
-  if(r.role==='brace'&&r.elapsedMs>=1320&&!r.queued){h.pendingReactionTargetId=r.catId;r.queued=true;}
-  if(r.elapsedMs>=2300)h.reaction=null;
+  if((r.severity??1)>=.78){r.stage=r.elapsedMs<260?'flinch':r.elapsedMs<820?'brace':r.elapsedMs<2100?'anger':'done';
+   if(r.role==='brace'&&r.elapsedMs>=1320&&!r.queued){h.pendingReactionTargetId=r.catId;r.queued=true;}
+   if(r.elapsedMs>=2300)h.reaction=null;
+  }else{r.stage=r.elapsedMs<140?'flinch':r.elapsedMs<430?'watch':'done';if(r.elapsedMs>=560)h.reaction=null;}
  }
  const fresh=collisionDamage.catBlockEvents.filter(event=>event.sequence>humanReactionCursor);
  if(!fresh.length)return;humanReactionCursor=fresh[fresh.length-1].sequence;
- const event=[...fresh].reverse().find(item=>item.severity>=.78),owner=event&&roomCats.get(event.catId),block=event&&tower.blocks.find(item=>item.id===event.blockId);
- if(!event||!owner||owner.hp<=0||owner.motion.state==='dead'||!block)return;
- if(human.some(h=>h.reaction?.catId===event.catId&&h.reaction.elapsedMs<1600))return;
+ const eligible=fresh.filter(item=>item.severity>=.18&&roomCats.get(item.catId)?.hp>0&&roomCats.get(item.catId)?.motion.state!=='dead'&&tower.blocks.some(block=>block.id===item.blockId));
+ const event=[...eligible].reverse().find(item=>item.severity>=.78)??[...eligible].reverse()[0];
+ if(!event)return;const owner=roomCats.get(event.catId),block=tower.blocks.find(item=>item.id===event.blockId),strong=event.severity>=.78;
+ if(human.some(h=>h.reaction?.catId===event.catId&&h.reaction.severity>=event.severity&&h.reaction.elapsedMs<(strong?1600:420)))return;
  const target=block.body.translation(),point=[target.x,target.y,target.z];
  const responder=human.reduce((best,h)=>!best||Math.hypot(h.x-point[0],h.z-point[2])<Math.hypot(best.x-point[0],best.z-point[2])?h:best,null);
- for(const h of human)h.reaction={catId:event.catId,blockId:event.blockId,blockPoint:point.slice(),severity:event.severity,elapsedMs:0,stage:'flinch',role:h===responder?'brace':'watch',sequence:event.sequence,queued:false};
-}
-function updateHumans(dt){updateHumanReactions(dt);for(const h of human){h.anim+=dt;h.noticeMs=Math.max(0,h.noticeMs-dt*1000);h.buildSatisfactionMs=Math.max(0,(h.buildSatisfactionMs??0)-dt*1000);h.timer-=dt*1000;
+ for(const h of human)h.reaction={catId:event.catId,blockId:event.blockId,blockPoint:point.slice(),severity:event.severity,elapsedMs:0,stage:'flinch',role:strong?(h===responder?'brace':'watch'):'watch',sequence:event.sequence,queued:false};
+}function updateHumans(dt){updateHumanReactions(dt);for(const h of human){h.anim+=dt;h.noticeMs=Math.max(0,h.noticeMs-dt*1000);h.buildSatisfactionMs=Math.max(0,(h.buildSatisfactionMs??0)-dt*1000);h.timer-=dt*1000;
   const profile=HUMAN_PROFILES[h.id];
   if(h.mode==='idle'&&h.pendingReactionTargetId!==null&&h.id!==humanBuilderTurnId()){const target=roomCats.get(h.pendingReactionTargetId);h.pendingReactionTargetId=null;
    if(target?.hp>0&&target.motion.state!=='dead'){h.pattern=profile.patterns[h.attacks%profile.patterns.length];beginHumanAttack(h,target,true);continue;}}
@@ -2692,7 +2727,7 @@ function blendHumanWristRotation(h,side,target){
 }
 function humanReactionLookAngle(h){
  const r=h.reaction;if(!r)return 0;
- const cat=r.stage==='anger'?roomCats.get(r.catId):null,target=cat&&cat.hp>0?[cat.x,cat.y,cat.z]:r.blockPoint;
+ const cat=(r.stage==='anger'||r.stage==='watch')?roomCats.get(r.catId):null,target=cat&&cat.hp>0?[cat.x,cat.y,cat.z]:r.blockPoint;
  if(!target)return 0;const desired=Math.atan2(target[0]-h.x,target[2]-h.z),delta=((desired-h.yaw+Math.PI*3)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;
  return clamp(delta,-1.12,1.12);
 }
@@ -2963,9 +2998,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewpo
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
-  namespace:'meow-tumble-0.18.3',inputBytes:5,snapshotLimit:15000,
+  namespace:'meow-tumble-0.18.4',inputBytes:5,snapshotLimit:15000,
   inputType:91,snapshotType:92,resetType:93,startType:94,protocol:18});
-const LOBBY_VERSION='meow-tumble-0.18.3';
+const LOBBY_VERSION='meow-tumble-0.18.4';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};
