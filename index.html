@@ -1007,6 +1007,10 @@ const collisionDamage={
   const handles=[source.collider.handle,target.collider.handle].sort((a,b)=>a-b),key=handles.join(':');
   const episode=this.pairs.get(key);if(episode)episode.spent=true;else this.pairs.set(key,{handles,spent:true});
  },
+ applied(target,source,vector){
+  const result=this.strike(target,source,vector,target.body.translation(),{attackType:source?.attack??'impulse'});
+  return result.damage;
+ },
  strike(target,source,vector,point,attackMeta={}){
   const mass=target.body.mass();if(!Number.isFinite(mass)||mass<=0||!point)return{applied:false,damage:0,impulse:0,deltaV:0};
   const before=target.body.linvel();
