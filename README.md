@@ -2,7 +2,7 @@
 
 집 안을 누비는 작은 고양이가 쥐·곤충을 사냥하며 성장하고, 사람의 공격을 피하며 거대한 젠가탑을 무너뜨리는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.18.1** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.18.2** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -203,3 +203,10 @@ The full carry path is checked before a block is spawned, and an unreachable slo
 The builders now use scale 6.20—exactly twice the canonical 3.10 human size—with the same upper-arm and forearm proportions and a fixed 10.23-unit reach. They walk to a farther work stance and bend the elbow toward the work. Their waist, hips, and knees stay deeply crouched for low placements, then gradually straighten as the target rises. The pickup, carry, placement, and reach checks use the same height-based poses.
 
 The game keeps an 8-layer starting tower, restores the historical 26-layer cap, and preserves mass-20 Jenga blocks. One real dynamic Rapier body moves through the handoff by capped impulses and torque, without kinematic anchoring or body-position teleporting. Building continues to suppress human attacks. Combat hit radii and toy-ball mass, speed, and radius remain unchanged; only the throw release anchor scales with the enlarged body. No ladder, platform, or camera snap is introduced. The multiplayer namespace/protocol advances to 0.18.1/16; packet fields and message types stay the same.
+
+
+## v0.18.2: downward elbow pole and tall sealed room shell
+
+The two-segment arm now keeps a stable down-and-out elbow pole during stacking, throwing, and slamming so the elbow does not flip upward as the wrist target changes. A render-only wrist cuff and smoothly constrained palm rotation follow the carried block orientation during the grip, then articulate for throw and floor-slam poses. Wrist rendering does not add physics joints or move the Rapier contact point; the one mass-20 dynamic block still stays at its physical hand contact. The production camera, builder scale (6.20), stand-off, crouch profile, 8-layer starting tower, 26-layer cap, and mass-20 Jenga blocks are unchanged.
+
+The ceiling clears the 24.335-unit builders by 5 units; perimeter walls, ceiling mesh, and Rapier colliders derive from one shared shell geometry. The wall/roof overlap seals the former top seam, and a fixed ceiling collider closes the physical boundary. Intentional door openings between rooms remain open. Ceiling fixtures follow the raised roof. Multiplayer namespace/protocol advances to 0.18.2/17; packet layouts are unchanged.
