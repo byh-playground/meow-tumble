@@ -221,3 +221,5 @@ The interior wall mesh, colliders, wall caps, door posts, and headers now derive
 Rapier now resolves every collider pair, while the gameplay attribution pass assigns HP damage only to cats and mobs. Attack direction comes from the bodies' actual pre-solver contact-point velocities and solver impulses; blocks, appliances, toy balls, and other dynamic objects keep their mass-and-inertia response without receiving HP.
 
 Cat claw attacks use Rapier shape queries and apply a point impulse to the same dynamic collider they hit. The target's existing mass and rotational inertia determine its response; mob HP uses the shared damage calculation, and a block hit records the physical contact point for the existing human reaction. No collider-backed object is moved by a gameplay teleport or given an extra damage-only knockback.
+
+A light claw hit on a mass-20 block a builder is carrying prompts a brief look and flinch while the point controller preserves hand contact. Stronger impacts keep the existing brace and anger response.
