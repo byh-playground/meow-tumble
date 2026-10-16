@@ -2,7 +2,7 @@
 
 집 안을 누비는 작은 고양이가 쥐·곤충을 사냥하며 성장하고, 사람의 공격을 피하며 거대한 젠가탑을 무너뜨리는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.18.3** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.18.4** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -215,3 +215,11 @@ The ceiling clears the 24.335-unit builders by 5 units; perimeter walls, ceiling
 The v0.18.2 update raised the perimeter walls and ceiling but left the fourteen visible interior partition segments at their old 9-unit height. Their Rapier colliders were still 9 units high, the wall caps remained at y=6.20, and door casing trim remained about 9.35 units tall. This left low barriers inside the room around 6.20-scale builders.
 
 The interior wall mesh, colliders, wall caps, door posts, and headers now derive from the same `HOUSE_SHELL` as the perimeter. The wall segments reach the ceiling overlap while their existing doorway gaps stay open. The tabletop/floor coordinate remains y=0; a standing builder is 24.335 units tall, the ceiling collision/mesh underside is y=28.725, and the perimeter and interior walls overlap it by 0.22 units. No camera framing, human scale, 10.23-unit arm reach, 8-layer start, 26-layer cap, or mass-20 block change was made. Multiplayer namespace/protocol advances to 0.18.3/18 for the changed static collision world.
+
+## v0.18.4: unified dynamic impacts and claw strikes
+
+Rapier now resolves every collider pair, while the gameplay attribution pass assigns HP damage only to cats and mobs. Attack direction comes from the bodies' actual pre-solver contact-point velocities and solver impulses; blocks, appliances, toy balls, and other dynamic objects keep their mass-and-inertia response without receiving HP.
+
+Cat claw attacks use Rapier shape queries and apply a point impulse to the same dynamic collider they hit. The target's existing mass and rotational inertia determine its response; mob HP uses the shared damage calculation, and a block hit records the physical contact point for the existing human reaction. No collider-backed object is moved by a gameplay teleport or given an extra damage-only knockback.
+
+A light claw hit on a mass-20 block a builder is carrying prompts a brief look and flinch while the point controller preserves hand contact. Stronger impacts keep the existing brace and anger response.
