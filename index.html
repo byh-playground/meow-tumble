@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"/>
 <meta name="theme-color" content="#182438"/>
-<title>와르르냥 / Meow Tumble · 사람이 쌓는 젠가 · v0.18.6</title>
+<title>와르르냥 / Meow Tumble · 사람이 쌓는 젠가 · v0.19.0</title>
 <style>
 :root{color-scheme:dark;--bg:#17283c;--ink:#fffaf0;--sub:#c8d1da;--mint:#93edcb;--pink:#ffaaa6;--yellow:#ffe49e}
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:ui-rounded,system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}button,input,summary{font:inherit}button,summary{cursor:pointer;touch-action:manipulation}button{color:inherit;min-height:48px}button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}button:disabled{opacity:.55;cursor:default}.hidden{display:none!important}
@@ -119,7 +119,7 @@
  <div class="bottomRight"><div id="status" class="status"></div><div class="dashbar"><i id="dashReady"></i></div></div>
  </div>
  <div id="netRoster" aria-label="멀티플레이 참가자"></div><div id="netLabels" aria-hidden="true"></div>
- <div id="buildTag">v0.18.6 · MEOW TUMBLE</div>
+ <div id="buildTag">v0.19.0 · MEOW TUMBLE</div>
  <div id="touch"><div id="stick" class="joystick"><div id="knob" class="knob"></div></div><div class="actionPad"><button type="button" class="action" data-action="charge" aria-label="짧게 누르면 할퀴기, 0.25초 이상 길게 누르고 떼면 박치기"><strong>🐾</strong><small>홀드 박치기<br>드래그 조준</small><span class="chargeTrack"><i id="touchChargeFill"></i></span></button><button type="button" class="action" data-action="jump" aria-label="점프: 1초까지 누르고 떼서 점프"><strong>↥</strong><small>길게 눌러 점프</small><span class="chargeTrack jumpTrack"><i id="touchJumpFill"></i></span></button><button type="button" class="action" data-action="dodge"><strong>↻</strong><small>구르기</small></button></div></div>
  <section id="intro" class="cover" aria-label="게임 메뉴"><div class="hero">
  <div data-screen="main"><div class="eyebrow">MEOW TUMBLE</div><h1>와르르<em>냥</em></h1><p>작은 고양이로 사냥하고 성장해<br>거대한 젠가탑을 무너뜨리세요.</p><button type="button" class="primary" data-route="modes">시작하기</button><div class="menuLinks"><button data-route="help">게임 방법</button><button data-route="settings">설정</button></div><small>1–4명 · PC / 터치 · 인터넷 연결 필요</small></div>
@@ -131,10 +131,13 @@
  <section id="ending" class="cover hidden"><div class="hero"><div class="eyebrow">오늘의 대참사</div><h1 id="endingTitle" class="endTitle">대참사 성공! 🐾</h1><p id="endingSub">거대한 탑이 무너졌어요!</p><div class="statsEnd" id="endingStats"></div><button id="retryBtn" type="button" class="primary">한 판 더</button><p id="replayStatus" class="note hidden">방장이 다음 판을 시작하면 함께 시작해요.</p><button id="titleBtn" class="secondary wide" type="button">타이틀로 돌아가기</button></div></section>
 </div>
 <script type="module">
-/* Bloom GameKit · v0.3.2 pinned published dist commit (2026-10-14). No duplicate input/loop/PRNG engine.
+/* Bloom GameKit · v0.14.3, pinned published dist and matching source commit. No duplicate input/loop/PRNG engine.
  * The 3D renderer, Rapier physics, gameplay and presentation remain owned by Meow Tumble.
  * Browser WebRTC uses the official group-room transport, never a second signaling stack. */
-const GAMEKIT_PIN='280e86650abec73cb9333379999a6bcadbb9234d';
+const GAMEKIT_VERSION='0.14.3';
+const GAMEKIT_SOURCE_COMMIT='dd59a57fcf66409cef16632ffb433c0b760324fa';
+const GAMEKIT_PIN='418e17c455db56d6ed073d82d115191d9dd8bf04';
+const GAMEKIT_MANIFEST_SHA256='20244c2beeee33719f407a9baa92c55a4bd55a0e4eb9f094590bb0eed652296e';
 const GAMEKIT_CDN=`https://cdn.jsdelivr.net/gh/byh-playground/bloom-gamekit@${GAMEKIT_PIN}/`;
 let ActionState,SeededPRNG,createLoop,createNostrDynamicRoom,createRoomSession,profiles,PresentationRuntime,RenderObject,PresentationEventQueue,createNavigation,CollisionBoom;
 try{
@@ -145,7 +148,9 @@ try{
  ({PresentationRuntime,RenderObject}=interpolationModule);({PresentationEventQueue}=eventModule);
  ({ActionState}=inputModule);({SeededPRNG}=deterministicModule);
  ({createLoop}=loopModule);({createNostrDynamicRoom}=transportModule);({createRoomSession,profiles}=sessionModule);
- if(!CollisionBoom||!createNavigation||!PresentationRuntime||!RenderObject||!PresentationEventQueue||!ActionState||!SeededPRNG||!createLoop||!createNostrDynamicRoom||!createRoomSession||!profiles)throw new Error('Bloom GameKit 공개 API가 누락됨');
+ const requiredFunctions=[['input.js','ActionState',ActionState],['deterministic.js','SeededPRNG',SeededPRNG],['simloop.js','createLoop',createLoop],['transport.js','createNostrDynamicRoom',createNostrDynamicRoom],['rollback.js','createRoomSession',createRoomSession],['interpolation.js','PresentationRuntime',PresentationRuntime],['interpolation.js','RenderObject',RenderObject],['presentation-events.js','PresentationEventQueue',PresentationEventQueue],['navigation.js','createNavigation',createNavigation],['camera.js','CollisionBoom',CollisionBoom]];
+ const invalidExports=requiredFunctions.filter(([, ,value])=>typeof value!=='function').map(([file,name])=>`${file}:${name}`);
+ if(invalidExports.length||!profiles||typeof profiles!=='object'||!profiles.lockstep||profiles.lockstep.mode!=='lockstep')throw new TypeError(`Bloom GameKit v${GAMEKIT_VERSION} ESM API 불일치: ${[...invalidExports,...(!profiles||typeof profiles!=='object'||!profiles.lockstep||profiles.lockstep.mode!=='lockstep'?['rollback.js:profiles.lockstep']:[])].join(', ')}`);
 }catch(error){
  document.querySelector('#boot').textContent='Bloom GameKit 로드 실패 · 인터넷/CORS 확인';
  const panel=document.querySelector('#error');panel.textContent=String(error.stack||error);panel.classList.add('show');throw error;
@@ -605,7 +610,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
  const DEF={
-    build:'20261016-claw-strength-stage-labels-v0186',version:'0.18.6',
+    build:'20261019-gamekit-0-14-3-v0190',version:'0.19.0',
   // After the success threshold, physics keeps stepping until the debris is quiet.
   // These are PRESENTATION timings only; they never influence Rapier impulses.
   round:{durationMs:0,winBlocks:TOWER.winScattered,
@@ -1270,12 +1275,15 @@ function updateCollapse(dt){
  state.quietMs=busy?0:state.quietMs+ms;
  state.lastFallen=tower.scattered;
  if(nowTicks%4===0)updateHUD();
- if(net.room&&net.isHost&&nowTicks%3===0)net.publishState();
  if(state.elapsedMs>=DEF.round.collapseMinMs &&
     (state.quietMs>=DEF.round.collapseQuietMs||state.elapsedMs>=DEF.round.collapseMaxMs)){
    endRound(true);
    if(net.room&&net.isHost)net.publishState(true);
+   return;
  }
+ // Do not send a periodic collapse snapshot at the same tick as the terminal
+ // result; guests reject duplicate ticks, which would hide the result screen.
+ if(net.room&&net.isHost&&nowTicks%3===0)net.publishState();
 }
 function endRound(success){if(phase!=='play'&&phase!=='collapse')return;if(document.pointerLockElement===gameCanvas)document.exitPointerLock?.();phase=success?'win':'lose';winClock=0;navigation.replace({screen:'result'});ui.retryBtn.disabled=!!net.room&&!net.isHost;ui.retryBtn.textContent=ui.retryBtn.disabled?'방장 시작 대기':'한 판 더';document.querySelector('#replayStatus').classList.toggle('hidden',!ui.retryBtn.disabled);ui.end.classList.remove('hidden');ui.endingTitle.textContent=success?'대참사 성공! 🐾':'고양이 작전 실패…';ui.endingSub.textContent=success?'젠가가 끝까지 와르르 무너진 뒤 최종 결과를 집계했어요!':'성장과 회피 타이밍을 활용해 다시 도전하세요!';ui.endingStats.innerHTML=`<span>무너뜨린 블록 <b>${tower.scattered}개</b></span><span>걸린 시간 <b>${Math.round(seconds)}초</b></span><span>최종 성장 <b>LV ${levelLabel(cat.level)}</b></span>`;ui.warning.classList.remove('show');sfx(success?'win':'lose');announce(success?'고양이가 이겼다!':'아직 포기하지 마!');}
 function announce(msg,ms=2000){ui.message.textContent=msg;ui.message.classList.add('show');messageUntil=seconds*1000+ms;}
@@ -3002,9 +3010,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewpo
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
-  namespace:'meow-tumble-0.18.6',inputBytes:5,snapshotLimit:15000,
+  namespace:'meow-tumble-0.19.0',inputBytes:5,snapshotLimit:15000,
   inputType:91,snapshotType:92,resetType:93,startType:94,protocol:18});
-const LOBBY_VERSION='meow-tumble-0.18.6';
+const LOBBY_VERSION='meow-tumble-0.19.0';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};
@@ -3097,7 +3105,7 @@ const sceneView={
 };
 
 const net={
- room:null,memberSession:null,isHost:false,localId:'local',joining:false,controller:null,removed:[],
+ room:null,memberSession:null,isHost:false,localId:'local',joining:false,controller:null,removed:[],leavePromise:null,leaveNavigationPending:false,
  accepting:false,active:false,pendingStart:false,remote:new Map(),lastInput:null,lastSentMs:0,lastReceiveMs:0,snapshotVersion:-1,
  code:document.querySelector('#roomCode'),startButton:document.querySelector('#beginRoom'),
  statusNode:document.querySelector('#lobbyStatus'),rosterNode:document.querySelector('#netRoster'),
@@ -3183,7 +3191,7 @@ const net={
   document.querySelector('#createRoom').addEventListener('click',()=>void this.open('host'));
   document.querySelector('#joinRoom').addEventListener('click',()=>void this.open('join'));
   this.startButton.addEventListener('click',()=>this.begin());
-  document.querySelector('#cancelLobby').addEventListener('click',()=>{this.close();navigation.replace({screen:'multi'});});
+  document.querySelector('#cancelLobby').addEventListener('click',()=>this.leaveTo(()=>navigation.replace({screen:'multi'})));
  },
  showRoster(){
   this.rosterNode.style.display=this.room?'block':'none';
@@ -3206,14 +3214,36 @@ const net={
   document.querySelector('#cancelLobby').style.display='none';
   this.status('싱글플레이 또는 최대 4인 멀티 방을 만들어 주세요.');
  },
+ leaveRoom(){
+  if(this.leavePromise)return this.leavePromise;
+  const session=this.memberSession;
+  const leaving=Promise.resolve().then(async()=>{
+   try{if(session&&!session.closed&&!this.joining)await session.leave();}
+   catch(error){this.close();throw error;}
+   this.close();
+  });
+  this.leavePromise=leaving;
+  const clear=()=>{if(this.leavePromise===leaving)this.leavePromise=null;};
+  leaving.then(clear,clear);
+  return leaving;
+ },
+ leaveTo(next){
+  if(this.leaveNavigationPending)return;
+  this.leaveNavigationPending=true;
+  void this.leaveRoom().then(()=>{this.leaveNavigationPending=false;try{next()}catch(error){this.showLeaveFailure(error,false);}},error=>{this.leaveNavigationPending=false;this.showLeaveFailure(error,true);});
+ },
+ showLeaveFailure(error,departureFailed=true){
+  const panel=document.querySelector('#error');
+  panel.textContent=`${departureFailed?'방 나가기 합의 실패 · 연결을 정리했습니다.':'화면 이동 실패'}\n${error?.message||error}`;
+  panel.classList.add('show');console.error('방 나가기 처리 실패',error);
+ },
  transportSend(id,data){
   const remote=this.remote.get(id);if(!remote||data.length>16384)return false;
   return remote.transport.send(data);
  },
  pollMembership(){
-  const member=this.memberSession;if(!member||member.closed)return;
-  member.poll();
-  if(member.status!=='membership')member.advance(new Uint8Array([0]));
+  const member=this.memberSession;if(!member||member.closed||member.failure)return;
+  member.advance(new Uint8Array([0]));
   if(phase==='intro'&&this.isHost&&(member.tick??0)%15===0)this.refreshLobby();
  },
  submitInput(frame){
@@ -3398,8 +3428,8 @@ navigation.subscribe(renderMenu);
 function bindMenu(){
  document.querySelectorAll('[data-route]').forEach(button=>button.addEventListener('click',()=>navigation.navigate({screen:button.dataset.route})));
  document.querySelectorAll('[data-menu-close]').forEach(button=>button.addEventListener('click',()=>navigation.navigate({screen:phase==='play'||phase==='collapse'?'play':net.room||net.joining?'multi':'main'})));
- document.querySelector('#lobbyBack').addEventListener('click',()=>{net.close();navigation.navigate({screen:'modes'});});
- document.querySelector('#titleBtn').addEventListener('click',()=>{net.close();phase='intro';navigation.replace({screen:'main'});});
+ document.querySelector('#lobbyBack').addEventListener('click',()=>net.leaveTo(()=>navigation.navigate({screen:'modes'})));
+ document.querySelector('#titleBtn').addEventListener('click',()=>net.leaveTo(()=>{phase='intro';navigation.replace({screen:'main'});}));
  document.querySelector('#detailsBtn').addEventListener('click',event=>{const expanded=ui.hud.classList.toggle('showDetails');event.currentTarget.setAttribute('aria-expanded',String(expanded));});
  navigation.replace(navigation.snapshot(),{force:true});
 }
@@ -3479,7 +3509,7 @@ function bindControls(){const keyboard={KeyW:'up',ArrowUp:'up',KeyS:'down',Arrow
  for(const type of ['keydown','keyup','pointerdown','pointerup','pointermove','pointercancel','mousemove']){
   window.addEventListener(type,()=>{if(phase==='play')simLoop.observeInput(performance.now());});
  }
- ui.startBtn.addEventListener('click',()=>{net.close();start();});ui.retryBtn.addEventListener('click',()=>{if(net.room&&!net.isHost){net.status('방장이 다음 판을 시작하면 함께 시작해요.');return;}if(net.room)net.sendReset();start();});net.bindLobby();ui.help.addEventListener('click',()=>navigation.navigate({screen:'help'}));ui.sound.addEventListener('click',()=>{soundEnabled=!soundEnabled;ui.sound.textContent=soundEnabled?'효과음 켜짐':'효과음 꺼짐';ui.sound.setAttribute('aria-pressed',String(soundEnabled));if(soundEnabled)wakeAudio()});
+ ui.startBtn.addEventListener('click',()=>net.leaveTo(start));ui.retryBtn.addEventListener('click',()=>{if(net.room&&!net.isHost){net.status('방장이 다음 판을 시작하면 함께 시작해요.');return;}if(net.room)net.sendReset();start();});net.bindLobby();ui.help.addEventListener('click',()=>navigation.navigate({screen:'help'}));ui.sound.addEventListener('click',()=>{soundEnabled=!soundEnabled;ui.sound.textContent=soundEnabled?'효과음 켜짐':'효과음 꺼짐';ui.sound.setAttribute('aria-pressed',String(soundEnabled));if(soundEnabled)wakeAudio()});
 }
 async function main(){try{
  document.querySelector('#boot').textContent='Rapier 3D 물리 엔진 불러오는 중…';
@@ -3495,7 +3525,7 @@ async function main(){try{
  }catch(error){document.querySelector('#boot').textContent='게임 실행 실패: '+(error.message||error);
  document.querySelector('#error').textContent=String(error.stack||error);
  document.querySelector('#error').classList.add('show');console.error(error);}}
-if(new URLSearchParams(location.search).get('debug')==='1'){window.__meowTumble={get state(){return{product:"와르르냥 / Meow Tumble",phase,seconds,fallen:tower.scattered,total:tower.blocks.length,movingBlocks:tower.movingBlocks,collapse:collapseState?{...collapseState}:null,
+if(new URLSearchParams(location.search).get('debug')==='1'){window.__meowTumble={get state(){return{product:"와르르냥 / Meow Tumble",version:DEF.version,build:DEF.build,phase,seconds,fallen:tower.scattered,total:tower.blocks.length,movingBlocks:tower.movingBlocks,collapse:collapseState?{...collapseState}:null,
  level:cat?.level,xp:cat?.xp,mass:cat?.mass,hp:cat?.hp,animation:cat?.motion?.state,animationMs:cat?.motion?.elapsedMs,maxHp:DEF.cat.maxHp,kills:{...kills},vacuums:vacuums.map(v=>({id:v.id,state:v.attack.state,leftMs:v.attack.leftMs,cooldownMs:v.attack.cooldownMs,p:v.body.translation()})),mobs:mobs.length,zone:cat?zoneAt(cat.x,cat.z):null,respawning:cat?.motion?.state==='dead',cat:cat?{x:cat.x,z:cat.z,y:cat.y,yaw:cat.yaw,
  knockX:cat.knockX,knockZ:cat.knockZ,vy:cat.vy}:null,camera:camera?{yaw:camera.yaw,pitch:camera.pitch,eye:camera.eye.slice()}:null,
  impactGraceMs:cat?.impactGraceMs,unwedge:cat?.unwedge?{blockedMs:cat.unwedge.blockedMs,cooldownMs:cat.unwedge.cooldownMs,recoveries:cat.unwedge.recoveries,lastDirection:cat.unwedge.lastDirection?.slice()??null}:null,controls:{lookPointer:look.id,chargeLookPointer:look.chargeId,joyPointer:joy.id},layers:tower.layers,maxLayers:TOWER.maxLayers,nextBuilder:humanBuilderTurnId(),activeBodies:tower.blocks.length-tower.sleeperCount,
@@ -3504,7 +3534,7 @@ if(new URLSearchParams(location.search).get('debug')==='1'){window.__meowTumble=
  catBodyMass:tower.catBody?.mass(),contacts:tower.contacts,loopRunning:simLoop.running,drawCalls:renderer?.drawCalls,
  mobVitals:[...combatUI.plates].filter(([,p])=>p.mob).map(([id,p])=>({id,type:p.type,hp:p.mob.hp,maxHp:MOB_TYPES[p.type].maxHp,display:p.node.style.display})),
  combatFeedback:{pending:combatUI.pending.length,activeNumbers:combatUI.floats.filter(f=>f.endMs>performance.now()).length,activeBursts:combatUI.bursts.length,dropped:combatUI.dropped}}},
- start,reset:()=>start(),get actors(){return [...roomCats].map(([id,c])=>({id,x:c.x,z:c.z,y:c.y,level:c.level,hp:c.hp,charge:c.charge.ratio}));},get gl(){return renderer?.gl},get network(){return {connected:!!net.room,isHost:net.isHost,players:net.room?.players.length??1,room:net.room?.room??null,receivedTick:net.snapshotVersion,pin:GAMEKIT_PIN}}};}
+ start,reset:()=>start(),get actors(){return [...roomCats].map(([id,c])=>({id,x:c.x,z:c.z,y:c.y,level:c.level,hp:c.hp,charge:c.charge.ratio}));},get gl(){return renderer?.gl},get network(){return {connected:!!net.room,isHost:net.isHost,players:net.room?.players.length??1,room:net.room?.room??null,receivedTick:net.snapshotVersion,pin:GAMEKIT_PIN,sdkVersion:GAMEKIT_VERSION,sourceCommit:GAMEKIT_SOURCE_COMMIT,distCommit:GAMEKIT_PIN,manifestSha256:GAMEKIT_MANIFEST_SHA256}}};}
 main();
 
 </script>

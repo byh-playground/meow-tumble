@@ -11,11 +11,51 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Prepare unchanged single HTML
+      - name: Package single HTML and build provenance
         run: |
           test -s index.html
           mkdir _site
           cp index.html _site/index.html
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          html_bytes = Path("index.html").read_bytes()
+          html = html_bytes.decode("utf-8")
+          dependencies = json.loads(Path("docs/dependencies.json").read_text(encoding="utf-8"))
+          gamekit = dependencies["gamekit"]
+          version = re.search(r"<title>.*?v(\d+\.\d+\.\d+)</title>", html, re.S)
+          build_id = re.search(r"build:'([^']+)'", html)
+          sdk_version = re.search(r"const GAMEKIT_VERSION='([^']+)'", html)
+          source_commit = re.search(r"const GAMEKIT_SOURCE_COMMIT='([0-9a-f]{40})'", html)
+          dist_commit = re.search(r"const GAMEKIT_PIN='([0-9a-f]{40})'", html)
+          manifest_sha256 = re.search(r"const GAMEKIT_MANIFEST_SHA256='([0-9a-f]{64})'", html)
+
+          assert version and build_id and sdk_version and source_commit and dist_commit and manifest_sha256
+          assert gamekit["version"] == sdk_version.group(1)
+          assert gamekit["sourceCommit"] == source_commit.group(1)
+          assert gamekit["distCommit"] == dist_commit.group(1)
+          assert gamekit["manifestSha256"] == manifest_sha256.group(1)
+          assert len(gamekit["modules"]) == 9
+          assert all(re.fullmatch(r"[0-9a-f]{64}", module["sha256"]) for module in gamekit["modules"])
+
+          provenance = {
+              "version": version.group(1),
+              "build": os.environ["GITHUB_SHA"],
+              "buildId": build_id.group(1),
+              "htmlSha256": hashlib.sha256(html_bytes).hexdigest(),
+              "gamekit": {
+                  "version": gamekit["version"],
+                  "sourceCommit": gamekit["sourceCommit"],
+                  "distCommit": gamekit["distCommit"],
+                  "manifestSha256": gamekit["manifestSha256"],
+              },
+          }
+          Path("_site/build.json").write_text(json.dumps(provenance, indent=2) + "\n", encoding="utf-8")
+          PY
           touch _site/.nojekyll
       - uses: actions/upload-pages-artifact@v4
         with:
