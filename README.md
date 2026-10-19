@@ -2,7 +2,7 @@
 
 집 안을 누비는 작은 고양이가 쥐·곤충을 사냥하며 성장하고, 사람의 공격을 피하며 거대한 젠가탑을 무너뜨리는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.18.6** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.19.0** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -22,13 +22,15 @@ A small cat hunts around a house, grows heavier, dodges people, and topples a to
 
 `index.html` 하나가 현행 소스이자 배포 파일입니다. 빌드가 없습니다. 저장소에서 `python -m http.server 8080`을 실행한 뒤 http://localhost:8080 에 접속합니다. WebGL 및 외부 GameKit·Rapier CDN 접속이 필요합니다. 멀티플레이에는 공개 Nostr relay와 WebRTC 연결이 필요합니다.
 
-GameKit **v0.3.2**, dist `280e86650abec73cb9333379999a6bcadbb9234d`에 고정합니다. 입력·루프·PRNG·방/세션·보간·확정 표시 이벤트를 SDK가 맡고, 호스트의 Rapier 월드가 싱글/멀티의 같은 게임 규칙을 실행합니다. 게스트 보간은 표시 전용이며 별도 이동 시뮬레이션을 만들지 않습니다. 의존성 해시는 [dependencies.json](docs/dependencies.json)에 있습니다.
+GameKit **v0.14.3**의 source `dd59a57fcf66409cef16632ffb433c0b760324fa`, dist `418e17c455db56d6ed073d82d115191d9dd8bf04`, manifest SHA-256 `20244c2beeee33719f407a9baa92c55a4bd55a0e4eb9f094590bb0eed652296e`에 고정합니다. `RoomSession`의 `profiles.lockstep`, 멤버십 어댑터, 방 capability가 SDK의 현재 공개 API와 맞는지 확인하고, 부팅 때 9개 모듈의 필수 named export를 검사합니다. 연결 중 취소는 즉시 정리하고, 승인된 참가자의 퇴장은 `RoomSession.leave()` 합의를 기다린 뒤 정리합니다. 입력·루프·PRNG·방/세션·보간·확정 표시 이벤트를 SDK가 맡고, 호스트의 Rapier 월드가 싱글/멀티의 같은 게임 규칙을 실행합니다. 게스트 보간은 표시 전용이며 별도 이동 시뮬레이션을 만들지 않습니다. 전체 모듈 해시는 [dependencies.json](docs/dependencies.json)에 있습니다.
+
+GameKit RoomSession의 wire protocol 3과 Room 계약 2는 v0.3.2에서도 같지만 세션 HELLO는 SDK library version을 검사합니다. 서로 다른 SDK 버전의 클라이언트는 함께 시작할 수 없으므로 게임 버전과 방 namespace를 **0.19.0**으로 올렸습니다. 게임 패킷 protocol 18과 Rapier 0.21.0은 유지합니다.
 
 ## 검증과 배포
 
 Windows Edge와 실제 Rapier·GameKit, 서로 분리된 두 브라우저의 실제 Nostr/WebRTC 연결로 대표 흐름을 확인합니다. 이동·양쪽 경사로·구르기·방 참가·멀티 이동·재시작이 검증 대상입니다. HP 0와 붕괴는 실제 엔진을 사용하는 통제된 상태 경계 시나리오도 별도로 확인합니다. 상세 결과와 한계는 [이관 PR #1](https://github.com/byh-playground/meow-tumble/pull/1)에 기록했습니다. 외부 NAT 간 연결, 4인, 모바일 실기기, 장시간 밸런스는 미검증입니다.
 
-Actions는 PR에서 배포 파일을 준비하고, main 병합 후 Pages에 같은 HTML을 배포합니다. 회귀 스크립트는 임시 검증 환경에서 실행하고 저장소에 남기지 않습니다.
+Actions는 원본 `index.html`을 변경 없이 Pages에 넣고, 같은 HTML의 SHA-256과 커밋·버전·SDK pin을 담은 `build.json`을 함께 게시합니다. 게임 실행에는 추가 빌드 산출물이나 런타임 의존성이 없습니다. 회귀 스크립트는 임시 검증 환경에서 실행하고 저장소에 남기지 않습니다.
 
 ## 출처와 관리
 
