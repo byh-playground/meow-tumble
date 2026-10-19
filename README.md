@@ -28,7 +28,7 @@ GameKit RoomSession의 wire protocol 3과 Room 계약 2는 v0.3.2에서도 같�
 
 ## 검증과 배포
 
-Windows Edge와 실제 Rapier·GameKit, 서로 분리된 두 브라우저의 실제 Nostr/WebRTC 연결로 대표 흐름을 확인합니다. 이동·양쪽 경사로·구르기·방 참가·멀티 이동·재시작이 검증 대상입니다. HP 0와 붕괴는 실제 엔진을 사용하는 통제된 상태 경계 시나리오도 별도로 확인합니다. 상세 결과와 한계는 [이관 PR #1](https://github.com/byh-playground/meow-tumble/pull/1)에 기록했습니다. 외부 NAT 간 연결, 4인, 모바일 실기기, 장시간 밸런스는 미검증입니다.
+Windows Edge와 실제 Rapier·GameKit, 서로 분리된 두 브라우저의 실제 Nostr/WebRTC 연결로 대표 흐름을 확인합니다. 이동·양쪽 경사로·구르기·방 참가·멀티 이동·재시작이 검증 대상입니다. HP 0와 붕괴는 실제 엔진을 사용하는 통제된 상태 경계 시나리오도 별도로 확인합니다. 초기 이관 기록은 [이관 PR #1](https://github.com/byh-playground/meow-tumble/pull/1), 현재 v0.19.0 / GameKit 0.14.3의 검증 결과와 한계는 [GameKit 업데이트 PR #28](https://github.com/byh-playground/meow-tumble/pull/28)에 기록합니다. 외부 NAT 간 연결, 4인, 모바일 실기기, 장시간 밸런스는 미검증입니다.
 
 Actions는 원본 `index.html`을 변경 없이 Pages에 넣고, 같은 HTML의 SHA-256과 커밋·버전·SDK pin을 담은 `build.json`을 함께 게시합니다. 게임 실행에는 추가 빌드 산출물이나 런타임 의존성이 없습니다. 회귀 스크립트는 임시 검증 환경에서 실행하고 저장소에 남기지 않습니다.
 
