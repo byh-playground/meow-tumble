@@ -1,5 +1,13 @@
 # 와르르냥 / Meow Tumble
 
+## 소스 모듈과 프리뷰 배포
+
+- `index.html`은 HTML 진입점이며 기존 인라인 코드 대신 `src/main.js`와 `src/styles/main.css`를 직접 읽습니다.
+- 시각 공통 기능은 `src/visual/{math3d,geometry,house,renderer3d}.js`의 네이티브 ESM으로 분리했습니다. 초기화 순서·게임 규칙·저장·네트워크·GameKit/Rapier 고정 버전은 유지합니다.
+- 게임 실행에는 Node/번들러 빌드가 필요하지 않으며, 정적 HTTPS 서버에서 루트 `index.html`을 엽니다. 특정 Git 태그를 프리뷰할 때에는 같은 태그의 `src/`도 함께 제공해야 합니다.
+- Pages 워크플로는 정적 소스를 복사하고 문법/메타데이터를 확인할 뿐 게임 번들을 생성하지 않습니다. 최종 Pages 배포 소스를 브랜치 방식으로 전환하기 전까지 기존 Actions 업로드 계약은 유지합니다.
+- 리팩터링 후 실기기·실제 WebRTC 2인·Rapier 장면 E2E는 별도 검증 범위입니다. 소스 분리를 검증 통과나 Stable 승격으로 취급하지 않습니다.
+
 집 안을 누비는 작은 고양이가 쥐·곤충을 사냥하며 성장하고, 사람의 공격을 피하며 거대한 젠가탑을 무너뜨리는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
 **[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.19.0** · PC / 터치 · 1–4명

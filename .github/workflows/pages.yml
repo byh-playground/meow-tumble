@@ -1,4 +1,4 @@
-name: Deploy single HTML to Pages
+name: Verify and publish source to Pages
 on:
   pull_request:
   push:
@@ -11,11 +11,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Package single HTML and build provenance
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check original module syntax
+        run: |
+          for file in src/main.js src/visual/*.js; do node --check "$file"; done
+          test -s src/styles/main.css
+          git diff --check
+      - name: Copy unmodified source and record provenance
         run: |
           test -s index.html
           mkdir _site
           cp index.html _site/index.html
+          cp -R src _site/src
           python3 - <<'PY'
           import hashlib
           import json
@@ -25,14 +34,15 @@ jobs:
 
           html_bytes = Path("index.html").read_bytes()
           html = html_bytes.decode("utf-8")
+          game_source = Path("src/main.js").read_text(encoding="utf-8")
           dependencies = json.loads(Path("docs/dependencies.json").read_text(encoding="utf-8"))
           gamekit = dependencies["gamekit"]
           version = re.search(r"<title>.*?v(\d+\.\d+\.\d+)</title>", html, re.S)
-          build_id = re.search(r"build:'([^']+)'", html)
-          sdk_version = re.search(r"const GAMEKIT_VERSION='([^']+)'", html)
-          source_commit = re.search(r"const GAMEKIT_SOURCE_COMMIT='([0-9a-f]{40})'", html)
-          dist_commit = re.search(r"const GAMEKIT_PIN='([0-9a-f]{40})'", html)
-          manifest_sha256 = re.search(r"const GAMEKIT_MANIFEST_SHA256='([0-9a-f]{64})'", html)
+          build_id = re.search(r"build:'([^']+)'", game_source)
+          sdk_version = re.search(r"const GAMEKIT_VERSION='([^']+)'", game_source)
+          source_commit = re.search(r"const GAMEKIT_SOURCE_COMMIT='([0-9a-f]{40})'", game_source)
+          dist_commit = re.search(r"const GAMEKIT_PIN='([0-9a-f]{40})'", game_source)
+          manifest_sha256 = re.search(r"const GAMEKIT_MANIFEST_SHA256='([0-9a-f]{64})'", game_source)
 
           assert version and build_id and sdk_version and source_commit and dist_commit and manifest_sha256
           assert gamekit["version"] == sdk_version.group(1)
