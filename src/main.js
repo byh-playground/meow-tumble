@@ -3066,15 +3066,15 @@ const session={profile:{tickRate:30,maxCatchupSteps:4},inputSize:5,closed:false,
 const simLoop=createLoop({session,getInput:sampleControls,render:drawWorld,onBacklogDrop:()=>{if(!net.room||net.isHost)for(const actor of roomCats.values())clearBufferedInputs(actor);sceneView.resetLocalClock();},onError:e=>{console.error(e);document.querySelector('#error').textContent='게임 실행 오류: '+e.message;document.querySelector('#error').classList.add('show');},onInputRelease:()=>{joy.x=joy.y=0;look.id=null;cancelCharge();clearBufferedInputs(localCat);pendingInputEdges=0;actions.consume();ui.chargeButton.classList.remove('pressed');ui.jumpButton.classList.remove('pressed');}});
 // Match createLoop's visibility reset; ordinary blur only releases input.
 document.addEventListener('visibilitychange',()=>{if(document.hidden)sceneView.resetLocalClock();});
-const navigation=createNavigation({normalize:route=>({screen:['main','modes','multi','help','settings','play','result'].includes(route.screen)?route.screen:'main'})});
+const navigation=createNavigation({normalize:route=>({screen:['main','modes','multi','help','settings','play','result','showcase'].includes(route.screen)?route.screen:'main'})});
 function renderMenu(route){
  const active=phase==='play'||phase==='collapse',ended=phase==='win'||phase==='lose';
- let screen=route.screen;
+ let screen=route.screen==='showcase'?'main':route.screen;
  if(active&&!['play','help','settings'].includes(screen))screen='play';
  else if(ended)screen='result';
  else if(!active&&['play','result'].includes(screen))screen='main';
  if(phase==='intro'&&(net.room||net.joining)&&!['multi','help','settings'].includes(screen))screen='multi';
- if(screen!==route.screen){navigation.replace({screen});return;}
+ if(screen!==route.screen&&route.screen!=='showcase'){navigation.replace({screen});return;}
  const playing=screen==='play',result=screen==='result';
  (screen==='multi'?document.querySelector('[data-screen="multi"]'):document.querySelector('#app')).append(document.querySelector('#netRoster'));
  document.querySelector('#app').dataset.view=playing?'play':'menu';mobileViewport.sync();
