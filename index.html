@@ -6,6 +6,20 @@
 <meta name="theme-color" content="#182438"/>
 <title>와르르냥 / Meow Tumble · 사람이 쌓는 젠가 · v0.19.0</title>
 <link rel="stylesheet" href="./src/styles/main.css">
+<script>
+// An intro iframe is a disposable real game run, never a saved player session.
+if (new URLSearchParams(location.search).get('showcaseDemo') === '1') {
+  const stores = new WeakMap();
+  const getStore = storage => {
+    if (!stores.has(storage)) stores.set(storage, new Map());
+    return stores.get(storage);
+  };
+  Storage.prototype.getItem = function (key) { return getStore(this).get(String(key)) ?? null; };
+  Storage.prototype.setItem = function (key, value) { getStore(this).set(String(key), String(value)); };
+  Storage.prototype.removeItem = function (key) { getStore(this).delete(String(key)); };
+  Storage.prototype.clear = function () { getStore(this).clear(); };
+}
+</script>
 </head>
 <body>
 <div id="app" data-view="menu">
@@ -45,6 +59,7 @@
  <section id="ending" class="cover hidden"><div class="hero"><div class="eyebrow">오늘의 대참사</div><h1 id="endingTitle" class="endTitle">대참사 성공! 🐾</h1><p id="endingSub">거대한 탑이 무너졌어요!</p><div class="statsEnd" id="endingStats"></div><button id="retryBtn" type="button" class="primary">한 판 더</button><p id="replayStatus" class="note hidden">방장이 다음 판을 시작하면 함께 시작해요.</p><button id="titleBtn" class="secondary wide" type="button">타이틀로 돌아가기</button></div></section>
 </div>
 <script type="module" src="./src/main.js"></script>
+<script type="module" src="./src/showcase.js"></script>
 </body>
 </html>
 
