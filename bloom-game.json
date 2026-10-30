@@ -1,0 +1,15 @@
+{
+  "$schema": "https://byh-playground.github.io/bloom-world/playground/bloom-game.schema.json",
+  "schemaVersion": 1,
+  "title": "와르르냥",
+  "en": "MEOW TUMBLE",
+  "genre": "simulation",
+  "tags": ["3D 물리", "고양이", "1–4인"],
+  "desc": "고양이를 성장시켜 젠가 탑을 무너뜨리는 3D 물리 게임입니다.",
+  "points": [
+    "물리 기반 젠가 탑 붕괴",
+    "고양이 사냥·성장",
+    "최대 4인 플레이"
+  ],
+  "showcase": "https://byh-playground.github.io/meow-tumble/#/showcase"
+}
