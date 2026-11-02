@@ -8,13 +8,13 @@
 - Pages 워크플로는 정적 소스를 복사하고 문법/메타데이터를 확인할 뿐 게임 번들을 생성하지 않습니다. 최종 Pages 배포 소스를 브랜치 방식으로 전환하기 전까지 기존 Actions 업로드 계약은 유지합니다.
 - 리팩터링 후 실기기·실제 WebRTC 2인·Rapier 장면 E2E는 별도 검증 범위입니다. 소스 분리를 검증 통과나 Stable 승격으로 취급하지 않습니다.
 
-집 안을 누비는 작은 고양이가 쥐·곤충을 사냥하며 성장하고, 사람의 공격을 피하며 거대한 젠가탑을 무너뜨리는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
+작은 고양이가 식탁 위 거대한 젠가탑을 연속으로 들이받아 **콤보로 성장**하고, 화가 난 사람이 집에 있는 물건(공·전동 쥐·로봇청소기)으로 방해하면 외곽 방의 거점을 부숴 끊는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.19.0** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.20.0** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
-A small cat hunts around a house, grows heavier, dodges people, and topples a tower through real rigid-body physics. Watch the collapse unfold before the result screen.
+A small cat chains headbutts into the Jenga tower for combo XP, dodges the increasingly angry people and their household gadgets, and topples the tower through real rigid-body physics. Watch the collapse unfold before the result screen.
 
 ## 조작
 
@@ -32,7 +32,7 @@ A small cat hunts around a house, grows heavier, dodges people, and topples a to
 
 GameKit **v0.14.3**의 source `dd59a57fcf66409cef16632ffb433c0b760324fa`, dist `418e17c455db56d6ed073d82d115191d9dd8bf04`, manifest SHA-256 `20244c2beeee33719f407a9baa92c55a4bd55a0e4eb9f094590bb0eed652296e`에 고정합니다. `RoomSession`의 `profiles.lockstep`, 멤버십 어댑터, 방 capability가 SDK의 현재 공개 API와 맞는지 확인하고, 부팅 때 9개 모듈의 필수 named export를 검사합니다. 연결 중 취소는 즉시 정리하고, 승인된 참가자의 퇴장은 `RoomSession.leave()` 합의를 기다린 뒤 정리합니다. 입력·루프·PRNG·방/세션·보간·확정 표시 이벤트를 SDK가 맡고, 호스트의 Rapier 월드가 싱글/멀티의 같은 게임 규칙을 실행합니다. 게스트 보간은 표시 전용이며 별도 이동 시뮬레이션을 만들지 않습니다. 전체 모듈 해시는 [dependencies.json](docs/dependencies.json)에 있습니다.
 
-GameKit RoomSession의 wire protocol 3과 Room 계약 2는 v0.3.2에서도 같지만 세션 HELLO는 SDK library version을 검사합니다. 서로 다른 SDK 버전의 클라이언트는 함께 시작할 수 없으므로 게임 버전과 방 namespace를 **0.19.0**으로 올렸습니다. 게임 패킷 protocol 18과 Rapier 0.21.0은 유지합니다.
+GameKit RoomSession의 wire protocol 3과 Room 계약 2는 v0.3.2에서도 같지만 세션 HELLO는 SDK library version을 검사합니다. 서로 다른 SDK 버전의 클라이언트는 함께 시작할 수 없으므로 게임 버전과 방 namespace를 올립니다. 현재 namespace는 **0.20.0**, 게임 패킷 protocol 19이며 Rapier 0.21.0은 유지합니다.
 
 ## 검증과 배포
 
@@ -233,3 +233,15 @@ Rapier now resolves every collider pair, while the gameplay attribution pass ass
 Cat claw attacks use Rapier shape queries and apply a point impulse to the same dynamic collider they hit. The target's existing mass and rotational inertia determine its response; mob HP uses the shared damage calculation, and a block hit records the physical contact point for the existing human reaction. No collider-backed object is moved by a gameplay teleport or given an extra damage-only knockback.
 
 A light claw hit on a mass-20 block a builder is carrying prompts a brief look and flinch while the point controller preserves hand contact. Stronger impacts keep the existing brace and anger response.
+
+## 콤보 성장·사람의 가전 방해·외곽 거점 0.20.0
+
+**메인 규칙**: 고양이는 젠가를 들이받아 성장하고, 사람은 집에 있는 물건으로 고양이를 쫓아낸다. 외곽 방의 거점을 부수면 그 방해가 멈춘다.
+
+- **콤보 성장**: 호스트의 방향성 고양이→블록 유효 타격(`catBlockEvents`) 하나가 콤보 1타입니다. 창 2.5초 안에 이어지면 콤보 수가 배수(최대 ×8)가 되고, 타격마다 `ceil(충격 예산/20) × 같은 블록 반복 감가(1, .75, .5, .25, .1) × 배수` XP를 받습니다. 같은 블록을 400ms 안에 다시 밀어도 추가 타격이 아닙니다. 실제 HP 피해를 받으면 콤보가 끊깁니다. 레벨 문턱(0…83)·질량·박치기 속도 곡선은 그대로입니다.
+- **먹이 제거**: 외곽 24곳의 쥐·딱정벌레·거미와 자동 재생성을 없앴습니다. 성장 원천은 탑 타격 콤보, 전동 쥐 처치(4), 거점 파괴(15), 청소기 정지(12)입니다.
+- **분노 단계**: 두 사람의 분노(0~100)는 유효 타격의 severity × 12만큼 오르고 초당 1.5 내려갑니다. 손바닥(0) → 장난감 공(25) → 전동 쥐(50) → 로봇청소기(75) 순서로 집 물건이 해금됩니다. 라운드 초반은 손짓뿐이며, 콤보가 길수록 집이 시끄러워집니다.
+- **거점 3곳**: 침실 장난감 상자(HP 3, 전동 쥐 9마리·호출당 3마리), 거실 청소기 도킹(HP 4), 현관 공 바구니(HP 3). 할퀴기로 부수면 15 XP이며 상자는 남은 쥐를 한 번에 쏟고, 도킹이 뽑히면 작동 중인 청소기는 40초 뒤 배터리가 바닥나 멈추고, 바구니가 엎어지면 사람 B의 보충 시간이 공 하나당 0.9초로 늘어납니다. 거점은 고정 Rapier 충돌체이며 HP는 게임플레이 귀속 패스가 소유합니다.
+- **사람 동작**: 전동 쥐·청소기는 폰 앱으로 원격 호출하고(손에 든 폰 표시), 공은 바구니 6개를 다 던지면 B가 현관까지 달려가(2.4) 채워 옵니다. 자리를 비운 사람의 쌓기 차례는 식탁에 남은 사람에게 넘어갑니다. 전동 쥐는 침실에서 문·경사로를 거치는 고정 경로로 식탁까지 달려와 같은 높이의 고양이를 들이받습니다. 로봇청소기는 식탁에 올라오지 못하므로 도킹에서 거실 문을 지나 식탁과 두 경사로를 둘러싼 바닥(±19, ±22)을 순찰하며, 바닥에 내려온 고양이(거점 원정·낙하)를 돌진 대상으로 삼습니다.
+- **HUD**: 화면 중앙 상단 콤보 배수·연속 타격·남은 창, 상세 HUD의 전동 쥐 처치·최고 콤보, 안내 화살표는 사람이 쓰기 시작한 거점을 가리킵니다. 결과 화면에 최고 콤보를 표시합니다.
+- **멀티**: 콤보·분노·탄약·거점·청소기 생존 여부가 스냅샷에 추가되어 방 namespace 0.20.0 / protocol 19로 분리합니다. SDK·Rapier pin과 Pages 배포는 유지합니다.
