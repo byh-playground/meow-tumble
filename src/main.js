@@ -274,13 +274,17 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
  const DEF={
-    build:'20261019-gamekit-0-14-3-v0190',version:'0.19.0',
+    build:'20261103-gamekit-0-14-3-v0200',version:'0.20.0',
   // After the success threshold, physics keeps stepping until the debris is quiet.
   // These are PRESENTATION timings only; they never influence Rapier impulses.
   round:{durationMs:0,winBlocks:TOWER.winScattered,
     collapseMinMs:2800,collapseQuietMs:1350,collapseMaxMs:11800,collapseMovingTolerance:2},
   cat:{size:{min:.6,max:1.2,baseRadius:.5},moveSpeed:6.3,mass:{base:1,growthFactor:1.5},jump:{baseVelocity:10,maxMultiplier:2,durationMs:1000},charge:{durationMs:1500,baseSpeed:{base:5,perLevel:5/7},maxMultiplier:2,minDashMs:250,maxDashMs:560,cooldownMs:1550},claw:{tapMaxMs:250,cooldownMs:320,animationMs:260,hitAtMs:65,reach:2.55,queryRadius:1.46,queryForward:1.16,minFacingDot:.18,knockback:1.25},dodgeCooldownMs:1350,dodgeDurationMs:650,rollRecoveryMs:180,rollSpeed:12.5,rollIFrameStartMs:70,rollIFrameEndMs:495,launchAirControl:1.05,stunDurationMs:820,recoverDurationMs:550,maxHp:100,hitInvulnMs:1250},
-   humans:{buildDurationMs:45000,waveSpeed:15.2,impulse:11.8,slamUpSpeed:21.0,slamOutSpeed:14.5,otherUpSpeed:6.4,otherOutSpeed:10.2,launchMassExponent:.32},
+   humans:{buildDurationMs:45000,waveSpeed:15.2,impulse:11.8,slamUpSpeed:21.0,slamOutSpeed:14.5,otherUpSpeed:6.4,otherOutSpeed:10.2,launchMassExponent:.32,
+    // People escalate from hand swats to household gadgets as directional cat→block hits add anger.
+    anger:{perSeverity:12,decayPerSecond:1.5,max:100},refill:{runSpeed:2.4,pickMs:1200,spilledPickMs:900}},
+  // Tower hits chain into a combo; every hit pays XP scaled by the current multiplier (host-owned, from catBlockEvents).
+  combo:{windowMs:2500,maxMult:8,repeatDecay:[1,.75,.5,.25,.1],xpPerImpulse:1/20,rehitMs:400},
   input:{chargeLookDeadzonePx:6,jumpBufferMs:150,coyoteMs:100,rollBufferMs:150,clawBufferMs:120},
   farming:{levelXp:[0,2,5,9,14,20,28,37,47,58,70,83],get maxLevel(){return this.levelXp.length},deathLossRatio:.10},
   graphics:{maxParticles:180,maxCombatBursts:16,maxDamageNumbers:26,mobHudDistance:25}
@@ -296,21 +300,27 @@ const ui={start:document.querySelector('#intro'),end:document.querySelector('#en
  warning:document.querySelector('#warning'),message:document.querySelector('#toast'),status:document.querySelector('#status'),target:document.querySelector('#targetIndicator'),targetText:document.querySelector('#targetText'),
  humanA:document.querySelector('#humanA'),humanB:document.querySelector('#humanB'),endingTitle:document.querySelector('#endingTitle'),endingSub:document.querySelector('#endingSub'),endingStats:document.querySelector('#endingStats'),hud:document.querySelector('#hud'),touch:document.querySelector('#touch'),
  level:document.querySelector('#level'),power:document.querySelector('#power'),xpFill:document.querySelector('#xpFill'),growthHelp:document.querySelector('#growthHelp'),farmArrow:document.querySelector('#farmArrow'),
- respawn:document.querySelector('#respawnBanner'),area:document.querySelector('#areaTag'),kills:document.querySelector('#huntCounter'),minimap:document.querySelector('#miniMap'),joy:document.querySelector('#stick'),knob:document.querySelector('#knob'),chargeButton:document.querySelector('[data-action="charge"]'),chargeFill:document.querySelector('#touchChargeFill'),jumpButton:document.querySelector('[data-action="jump"]'),jumpFill:document.querySelector('#touchJumpFill'),help:document.querySelector('#helpBtn'),sound:document.querySelector('#soundBtn')};
+ respawn:document.querySelector('#respawnBanner'),area:document.querySelector('#areaTag'),kills:document.querySelector('#huntCounter'),combo:document.querySelector('#comboHud'),comboMult:document.querySelector('#comboMult'),comboHits:document.querySelector('#comboHits'),comboFill:document.querySelector('#comboFill'),minimap:document.querySelector('#miniMap'),joy:document.querySelector('#stick'),knob:document.querySelector('#knob'),chargeButton:document.querySelector('[data-action="charge"]'),chargeFill:document.querySelector('#touchChargeFill'),jumpButton:document.querySelector('[data-action="jump"]'),jumpFill:document.querySelector('#touchJumpFill'),help:document.querySelector('#helpBtn'),sound:document.querySelector('#soundBtn')};
 let RAPIER=null;
 const RAPIER_URL='https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.21.0/+esm';
 const tower=new PhysicsTower();
-// Authoritative scene definitions: no obsolete collectable food path remains.
+// Authoritative scene definitions. The only mob is the people's smart toy mouse; no wild prey roams the house.
 const MOB_TYPES=Object.freeze({
- mouse:Object.freeze({label:'쥐',maxHp:2,mass:.80,radius:.36,speed:5.1,vision:8.5,xp:4,color:'wood3',mode:'flee'}),
- beetle:Object.freeze({label:'딱정벌레',maxHp:1,mass:.24,radius:.23,speed:3.9,vision:6.1,xp:2,color:'mint',mode:'flee'}),
- spider:Object.freeze({label:'거미',maxHp:3,mass:1.2,radius:.42,speed:4.5,vision:9.0,xp:6,color:'purple',mode:'hunt'})
+ toyMouse:Object.freeze({label:'전동 쥐',icon:'🐭',maxHp:2,mass:.80,radius:.36,speed:5.1,vision:12,xp:4,color:'wood3'})
 });
-const MOB_SPAWNS=[
- [-37,-27,'mouse'],[-29,-26,'beetle'],[-40,-14,'spider'],[-27,-8,'beetle'],[-35,1,'mouse'],[-29,13,'beetle'],[-39,25,'spider'],[-27,28,'mouse'],
- [37,-27,'beetle'],[28,-26,'mouse'],[42,-12,'spider'],[30,-8,'beetle'],[35,4,'mouse'],[28,12,'beetle'],[39,26,'spider'],[28,28,'mouse'],
- [-15,-29,'mouse'],[-6,-28,'beetle'],[12,-29,'spider'],[17,-25,'beetle'],[-18,27,'beetle'],[-10,25,'mouse'],[10,27,'beetle'],[19,26,'mouse']
-];
+// Household bases the people rely on. Each sits in an outer room and a cat can wreck it with claws.
+// A base with `stock` spills its remaining contents when broken; the dock base powers the vacuum.
+const SPAWNER_DEFS=Object.freeze([
+ Object.freeze({id:'dock',label:'청소기 도킹',icon:'🔌',room:'거실',at:[26,-22],hp:4,xp:15,radius:1.1,visual:'dock'}),
+ Object.freeze({id:'toybox',label:'장난감 상자',icon:'📦',room:'침실',at:[-24,27],hp:3,xp:15,radius:1.2,visual:'box',stock:9,batch:3}),
+ Object.freeze({id:'basket',label:'공 바구니',icon:'🧺',room:'현관',at:[6.5,28.5],hp:3,xp:15,radius:.9,visual:'basket'})
+]);
+// Fixed waypoint routes from the bases to the dining table (doorways, ramp, tabletop).
+// Both routes line up with the ramp foot from straight ahead so nothing slips under the ramp slab.
+const TOY_MOUSE_ROUTE=Object.freeze([[-26,16.5],[-43.5,16.5],[-43.5,11],[-30,9.5],[-20.7,10.8],[-14,11],[-8,18],[-5,24],[0,24],[0,9],[0,3]]);
+// A robot vacuum cannot climb onto the table: it patrols the dining-room floor around the table and ramps,
+// which makes every trip to a household base a floor-level risk.
+const VACUUM_CALL_ROUTE=Object.freeze({points:Object.freeze([[26,-22],[25,-10.8],[19,-10.8],[19,22],[-19,22],[-19,-22],[19,-22]]),loopFrom:3});
 
 /* Presentation-only combat feedback. All world coordinates come from actual
    Rapier contacts and HP events; no HUD/VFX code can change the outcome of a hit.
@@ -328,7 +338,7 @@ class CombatPresentation {
  register(mob){
   const node=document.createElement('div');node.className='mobPlate '+mob.type;
   const line=document.createElement('div');line.className='mobPlateLine';
-  const name=document.createElement('span');name.className='mobName';name.textContent={mouse:'🐁 쥐',beetle:'🪲 딱정벌레',spider:'🕷 거미'}[mob.type];
+  const name=document.createElement('span');name.className='mobName';name.textContent=MOB_TYPES[mob.type].icon+' '+MOB_TYPES[mob.type].label;
   const value=document.createElement('span');value.className='mobValue';
   const meter=document.createElement('div');meter.className='mobMeter';
   const lag=document.createElement('i');lag.className='mobHpLag';
@@ -351,7 +361,7 @@ class CombatPresentation {
  }
  reset(){this.events?.dispose();
   const adapter={start:e=>{if(this.pending.length<64)this.pending.push(e);else this.dropped++;}};
-  this.events=new PresentationEventQueue({adapters:{hit:adapter,level:adapter,appliance:adapter},retentionTicks:120,maxPending:512});this.recent=[];
+  this.events=new PresentationEventQueue({adapters:{hit:adapter,level:adapter,appliance:adapter,combo:adapter,spawner:adapter},retentionTicks:120,maxPending:512});this.recent=[];
   for(const plate of this.plates.values())plate.node.remove();this.plates.clear();
   this.pending.length=0;this.bursts.length=0;this.dropped=0;this.frame=0;this.reticleUntil=0;
   for(const f of this.floats){f.node.style.display='none';f.endMs=0;}
@@ -373,6 +383,20 @@ class CombatPresentation {
     this.popup('LEVEL '+levelLabel(e.level)+' ↑',e.p,'level',now,0);
     particle(e.p,'mint',22,3.1);sfx('win',.62);
     if(this.bursts.length<DEF.graphics.maxCombatBursts)this.bursts.push({p:e.p,at:now,ms:580,kind:'level',seq:e.sequence});
+    continue;
+   }
+   if(e.kind==='combo'){
+    // Chain feedback reads the confirmed tower hit: count and multiplier rise with the pitch.
+    this.popup((e.xp>0?'+'+e.xp+' XP':'MAX')+(e.mult>1?' ×'+e.mult:''),e.p,e.mult>=4?'heavy':'damage',now,e.count%2?10:-10);
+    particle(e.p,e.mult>=4?'yellow':'cream',6+Math.min(12,e.count*2),2.2+Math.min(2,e.count*.25));
+    if(e.entityId===localCat?.id){camera.shake=Math.max(camera.shake,.05+Math.min(.12,e.count*.012));sfx('crack',.5+Math.min(.5,e.count*.06));}
+    if(this.bursts.length<DEF.graphics.maxCombatBursts)this.bursts.push({p:e.p,at:now,ms:260,kind:'heavy',seq:e.sequence});
+    continue;
+   }
+   if(e.kind==='spawner'){
+    this.popup(e.broken?'✦ '+e.label+' 파괴!'+(e.xp>0?' +'+e.xp+' XP':''):e.label+' '+e.hp+' / '+e.maxHp,[e.p[0],e.p[1]+.6,e.p[2]],e.broken?'ko':'damage',now,0);
+    particle(e.p,e.broken?'yellow':'white',e.broken?26:9,e.broken?3.4:1.8);sfx(e.broken?'crash':'crack',e.broken?.9:.5);
+    if(e.broken)camera.shake=Math.max(camera.shake,.16);
     continue;
    }
    const plate=this.plates.get(e.entityId);
@@ -445,7 +469,7 @@ class CombatPresentation {
 }
 const combatUI=new CombatPresentation();
 
-let mobs=[],nextMobId=1,mobRespawnMs=0,kills={mouse:0,beetle:0,spider:0};
+let mobs=[],nextMobId=1,kills={toyMouse:0},spawners=[],comboCursor=0;
 const wallPart=(x,z,hx,hz)=>Object.freeze([x,HOUSE_SHELL.wallCenter,z,hx,HOUSE_SHELL.wallHeight*.5,hz,'wall']);
 const HOUSE_SOLIDS=[
  // Tall shared interior partitions; the gaps between segments remain the existing open doorways.
@@ -487,13 +511,14 @@ function zoneAt(x,z){
 // A household appliance HAS-A Rapier body; patrol and committed attacks are reusable capabilities.
 const VACUUM_CONFIG=Object.freeze({radius:.85,height:.34,mass:2.4,patrolSpeed:1.5,vision:6.5,
  windupMs:1000,chargeSpeed:8,chargeMs:650,recoveryMs:1600,wallRecoveryMs:2400,cooldownMs:4000,
- spawnGraceMs:5000,spawnSafeRadius:9});
-const VACUUM_ROUTES=[[[25,-26],[25,-6],[27,-6],[27,-26]],[[-25,-6],[-25,-26],[-27,-26],[-27,-6]]];
+ spawnGraceMs:5000,spawnSafeRadius:9,batteryMs:40000,stopXp:12});
 let vacuums=[];
 class PhysicsAppliance {
- constructor(id,config,route){
-  this.id=id;this.config={...config};this.route=route;this.yaw=0;this.sequence=0;
-  const [x,z]=route[0],r=RAPIER;
+ constructor(id,config,route,base){
+  // HAS-A: the appliance keeps its charging base; an unplugged base drains the battery.
+  this.id=id;this.config={...config};this.route=route;this.base=base;this.yaw=0;this.sequence=0;this.batteryMs=config.batteryMs;this.dead=false;
+  // Roll off the front of the base toward the first waypoint; the base's own collider must not pin the body.
+  const [bx,bz]=route.points[0],[nx,nz]=route.points[1],d=Math.max(.01,Math.hypot(nx-bx,nz-bz)),gap=(base?.def.radius??0)+config.radius+.3,x=bx+(nx-bx)/d*gap,z=bz+(nz-bz)/d*gap,r=RAPIER;
   this.body=tower.world.createRigidBody(r.RigidBodyDesc.dynamic().setTranslation(x,ARENA.floorY+config.height/2+.02,z).lockRotations().setLinearDamping(2).setCcdEnabled(true));
   this.collider=tower.world.createCollider(r.ColliderDesc.cylinder(config.height/2,config.radius).setMass(config.mass).setFriction(.65).setRestitution(.02),this.body);
  }
@@ -514,9 +539,10 @@ class PhysicsAppliance {
 const Patrolling=Base=>class extends Base {
  constructor(...args){super(...args);this.patrol={waypoint:1,stuckMs:0,last:null};}
  patrolStep(dt){
-  const p=this.body.translation(),a=this.patrol,[x,z]=this.route[a.waypoint],dx=x-p.x,dz=z-p.z,d=Math.hypot(dx,dz);
+  const p=this.body.translation(),a=this.patrol,points=this.route.points,[x,z]=points[a.waypoint],dx=x-p.x,dz=z-p.z,d=Math.hypot(dx,dz);
   a.stuckMs=a.last&&Math.hypot(p.x-a.last.x,p.z-a.last.z)<.003?a.stuckMs+dt*1000:0;a.last={x:p.x,z:p.z};
-  if(d<.65||a.stuckMs>900){a.waypoint=(a.waypoint+1)%this.route.length;a.stuckMs=0;}
+  // The approach leg runs once; the tail of the route loops around the work area.
+  if(d<.65||a.stuckMs>900){a.waypoint=a.waypoint+1>=points.length?(this.route.loopFrom??0):a.waypoint+1;a.stuckMs=0;}
   this.drive(dx/Math.max(.01,d),dz/Math.max(.01,d),this.config.patrolSpeed,dt);
  }
 };
@@ -527,10 +553,17 @@ const TelegraphCharging=Base=>class extends Base {
   const v=this.body.linvel();this.body.applyImpulse({x:-v.x*this.body.mass(),y:0,z:-v.z*this.body.mass()},true);
   if(wall)this.emitCue('wall');
  }
- eligibleTarget(c,p){return c.motion.state!=='dead'&&c.invuln<=0&&c.y<ARENA.floorY+1.2&&
+ eligibleTarget(c,p){return c.motion.state!=='dead'&&c.invuln<=0&&Math.abs(c.y-(p.y-this.config.height/2))<1.2&&
   Math.hypot(c.x-ARENA.spawnX,c.z-ARENA.spawnZ)>this.config.spawnSafeRadius&&
   Math.hypot(c.x-p.x,c.z-p.z)<this.config.vision&&this.clearSight(c);}
+ drainBattery(ms){
+  if(this.dead||!this.base.broken)return;
+  this.batteryMs=Math.max(0,this.batteryMs-ms);if(this.batteryMs>0)return;
+  this.dead=true;this.attack.state='dead';const v=this.body.linvel();this.body.applyImpulse({x:-v.x*this.body.mass(),y:0,z:-v.z*this.body.mass()},true);
+  this.emitCue('dead');const breaker=roomCats.get(this.base.brokenBy);if(breaker)grantXp(breaker,this.config.stopXp);
+ }
  update(dt){const a=this.attack,ms=dt*1000,p=this.body.translation();
+  this.drainBattery(ms);if(this.dead)return;
   if(a.state==='patrol')a.cooldownMs=Math.max(0,a.cooldownMs-ms);
   if(a.state==='patrol'){
    const target=a.cooldownMs<=0?[...roomCats.values()].filter(c=>this.eligibleTarget(c,p)).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0]:null;
@@ -567,12 +600,17 @@ function mixin(first,...rest){
 }
 const PatrolCharger=mixin(Patrolling,TelegraphCharging);
 class RobotVacuum extends mixin(PhysicsAppliance,PatrolCharger) {}
-function prepareVacuums(){vacuums=VACUUM_ROUTES.map((route,i)=>new RobotVacuum('vacuum-'+i,VACUUM_CONFIG,route));}
+// A person summons the vacuum from its dock by app; one live vacuum at a time.
+function callVacuum(h){const base=spawnerById(HUMAN_ATTACKS[h.pattern].base);
+ if(base.broken||vacuums.some(v=>!v.dead))return;
+ vacuums.push(new RobotVacuum('vacuum-'+vacuums.length,VACUUM_CONFIG,VACUUM_CALL_ROUTE,base));base.used++;sfx('warn',.7);
+}
+function ensureVacuum(id){let v=vacuums.find(v=>v.id===id);if(!v){v=new RobotVacuum(id,VACUUM_CONFIG,VACUUM_CALL_ROUTE,spawnerById('dock'));vacuums.push(v);}return v;}
 function drawVacuums(g){for(const vacuum of sceneView.vacuums){
  const p=vacuum;
  if((p.x-camera.eye[0])**2+(p.z-camera.eye[2])**2>39**2)continue;
  const yaw=vacuum.yaw,base=[p.x,p.y,p.z],state=vacuum.attack.state,r=vacuum.radius;
- const lamp=state==='windup'?(Math.sin(sceneView.displaySeconds*24)>0?COLOR.red:COLOR.yellow):state==='charge'?COLOR.red:state==='recover'?COLOR.yellow:COLOR.mint;
+ const lamp=state==='dead'?COLOR.dark:state==='windup'?(Math.sin(sceneView.displaySeconds*24)>0?COLOR.red:COLOR.yellow):state==='charge'?COLOR.red:state==='recover'?COLOR.yellow:COLOR.mint;
  g.disc([p.x,ARENA.floorY+.035,p.z],r*1.16,COLOR.shadow,.22);
  g.tube(base,[r*2,.26,r*2],COLOR.navy); // rubber bumper, full circular silhouette
  g.tube([p.x,p.y+.075,p.z],[r*1.88,.23,r*1.88],COLOR.cream);
@@ -584,7 +622,7 @@ function drawVacuums(g){for(const vacuum of sceneView.vacuums){
   g.draw('sphere',yawPart(base,yaw,side*.36,.02,.70),[.14,.065,.055],COLOR.dark,qyaw(yaw));
   for(let i=0;i<3;i++)g.cube(yawPart(base,yaw,side*(.48+i*.055),.215,-.30),[.025,.014,.16],COLOR.navy,qyaw(yaw));
  }
- const brush=yawPart(base,yaw,r*.77,-.12,.38),spin=sceneView.displaySeconds*(state==='recover'?1:12);
+ const brush=yawPart(base,yaw,r*.77,-.12,.38),spin=state==='dead'?0:sceneView.displaySeconds*(state==='recover'?1:12);
  for(let i=0;i<3;i++)g.cube(brush,[.65,.035,.055],COLOR.dark,qyaw(spin+i*Math.PI/3));
  if(state==='windup'){
   g.ring([p.x,ARENA.floorY+.055,p.z],r+(.2+.15*Math.sin(sceneView.displaySeconds*18)),COLOR.yellow,.9);
@@ -593,23 +631,63 @@ function drawVacuums(g){for(const vacuum of sceneView.vacuums){
  }
 }}
 
-function prepareMobs(){for(const [x,z,type] of MOB_SPAWNS)spawnMob(type,x,z);mobRespawnMs=8500;}
-function spawnMob(type,x,z){if(mobs.length>=26)return false;
+function spawnMob(type,x,z,route=null){if(mobs.length>=26)return false;
  const def=MOB_TYPES[type],r=RAPIER,body=tower.world.createRigidBody(r.RigidBodyDesc.dynamic().setTranslation(x,ARENA.floorY+def.radius+.22,z).lockRotations().setLinearDamping(1.8).setCcdEnabled(true));
  const collider=tower.world.createCollider(r.ColliderDesc.ball(def.radius).setMass(def.mass).setFriction(.82).setRestitution(.12).setActiveEvents(r.ActiveEvents.COLLISION_EVENTS),body);
- const mob={id:nextMobId++,type,body,collider,hp:def.maxHp,hitSequence:0,ai:{state:'wander',thinkMs:0,dirX:0,dirZ:1},hitMs:0,wobble:0,visualVelocity:{x:0,z:0}};
+ const mob={id:nextMobId++,type,body,collider,hp:def.maxHp,hitSequence:0,ai:{state:route?'route':'wander',thinkMs:0,dirX:0,dirZ:1,route,waypoint:0,ageMs:0,stuckMs:0,detourMs:0,detour:[0,0]},hitMs:0,wobble:0,visualVelocity:{x:0,z:0}};
  mobs.push(mob);combatUI.register(mob);return true;
 }
+/* Household bases (host-owned gameplay objects with fixed Rapier colliders). */
+function spawnerById(id){return spawners.find(s=>s.id===id);}
+function prepareSpawners(){spawners=SPAWNER_DEFS.map(def=>{const r=RAPIER,body=tower.world.createRigidBody(r.RigidBodyDesc.fixed().setTranslation(def.at[0],ARENA.floorY+.35,def.at[1]));
+ const collider=tower.world.createCollider(r.ColliderDesc.cylinder(.35,def.radius).setFriction(.9),body);
+ return{id:def.id,def,body,collider,hp:def.hp,broken:false,stock:def.stock??0,used:0,brokenBy:null,hitMs:0,sequence:0};});}
+function damageSpawner(s,attacker,point){if(s.broken)return;
+ s.hp--;s.hitMs=420;const p=[point.x,point.y,point.z];
+ if(s.hp>0){combatUI.queue({kind:'spawner',tick:nowTicks,entityId:s.id,sequence:++s.sequence,label:s.def.label,hp:s.hp,maxHp:s.def.hp,p});return;}
+ s.broken=true;s.brokenBy=attacker.id;
+ const gained=grantXp(attacker,s.def.xp,p);
+ combatUI.queue({kind:'spawner',tick:nowTicks,entityId:s.id,sequence:++s.sequence,label:s.def.label,hp:0,maxHp:s.def.hp,broken:true,xp:gained,p});
+ if(s.stock>0)spillToyMice(s);
+ for(const h of human)blinkHuman(h,'어? '+s.def.label+'이…!',1800);
+}
+function releaseToyMice(s,count){
+ // Mice appear just outside the box on the route side so the box collider never pins them.
+ const [bx,bz]=s.def.at,[rx,rz]=TOY_MOUSE_ROUTE[0],dx=rx-bx,dz=rz-bz,d=Math.max(.01,Math.hypot(dx,dz)),fx=dx/d,fz=dz/d,gap=s.def.radius+.7;
+ for(let i=0;i<count&&s.stock>0;i++){const lateral=(i-(count-1)/2)*.6;if(spawnMob('toyMouse',bx+fx*gap-fz*lateral,bz+fz*gap+fx*lateral,TOY_MOUSE_ROUTE))s.stock--;}}
+function spillToyMice(s){releaseToyMice(s,s.stock);}
+function summonToyMice(h){const base=spawnerById(HUMAN_ATTACKS[h.pattern].base);if(base.broken||base.stock<=0)return;releaseToyMice(base,base.def.batch);base.used++;sfx('warn',.7);}
+/* One XP owner: every award (tower combo, toy mouse, base) runs the same growth transition. */
+function grantXp(actor,amount,at=null){const previousLevel=actor.level,gained=setCatXp(actor,actor.xp+amount);
+ if(actor.level>previousLevel){
+  if(actor===localCat)announce('✨ LV '+levelLabel(actor.level)+'! 질량 '+actor.mass.toFixed(2)+' · 박치기 운동량 증가!',1900);
+  combatUI.queue({kind:'level',tick:nowTicks,entityId:actor.id,sequence:++actor.growthSequence,level:actor.level,p:at?[at[0],at[1]+.9,at[2]]:[actor.x,actor.y+.9,actor.z]});
+ }
+ return gained;
+}
 function updateMobs(dt){const ms=dt*1000;
- mobRespawnMs-=ms;if(mobRespawnMs<=0&&mobs.length<23){mobRespawnMs=3800;let options=MOB_SPAWNS.filter(s=>Math.hypot(s[0]-cat.x,s[1]-cat.z)>8);if(options.length){const [x,z,type]=options[rng.nextInt(options.length)];spawnMob(type,x+(rng.nextUint32()%100)/100-.5,z+(rng.nextUint32()%100)/100-.5);}}
  for(const mob of mobs){const d=MOB_TYPES[mob.type],p=mob.body.translation(),v=mob.body.linvel(),a=mob.ai;
-  mob.hitMs=Math.max(0,mob.hitMs-ms);mob.wobble+=dt*(mob.type==='beetle'?12:8);a.thinkMs-=ms;
+  mob.hitMs=Math.max(0,mob.hitMs-ms);mob.wobble+=dt*8;a.thinkMs-=ms;
   const target=net.room&&net.isHost?[...roomCats.values()].filter(c=>c.motion.state!=='dead').sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0]??cat:cat;
-  const dx=target.x-p.x,dz=target.z-p.z,dist=Math.hypot(dx,dz),reachable=target.y<ARENA.floorY+2.5&&target.motion.state!=='dead';
-  if(reachable&&dist<d.vision){a.state=d.mode==='hunt'?'hunt':'flee';const sign=a.state==='hunt'?1:-1;
-   a.dirX=sign*dx/Math.max(.1,dist);a.dirZ=sign*dz/Math.max(.1,dist);
-   if(mob.type==='beetle'){const flip=Math.sin(nowTicks*.2+mob.id*2.7)*.38;const tx=a.dirX;a.dirX+=flip*a.dirZ;a.dirZ-=flip*tx;}
-  }else if(a.thinkMs<=0){a.state='wander';const angle=(rng.nextUint32()/4294967296)*Math.PI*2;a.dirX=Math.sin(angle);a.dirZ=Math.cos(angle);a.thinkMs=700+rng.nextInt(1800);}
+  const feetY=p.y-d.radius-.22,onTable=feetY>ARENA.floorY+1.5,dx=target.x-p.x,dz=target.z-p.z,dist=Math.hypot(dx,dz),reachable=Math.abs(target.y-feetY)<2.5&&target.motion.state!=='dead';
+  // A mouse that ended up under the table or the ramp slab rejoins the route in front of the ramp foot.
+  const underRamp=Math.abs(p.x)<2.8&&p.z>RAMP.upperZ-.5&&p.z<RAMP.lowerZ+.5;
+  if(!onTable&&a.route&&(isTableArea(p.x,p.z)||underRamp)&&a.route[a.waypoint]?.[1]<RAMP.lowerZ){a.waypoint=a.route.findIndex(([wx,wz])=>Math.abs(wx)<1&&wz>RAMP.lowerZ+2);}
+  if(reachable&&dist<d.vision){a.state='hunt';a.dirX=dx/Math.max(.1,dist);a.dirZ=dz/Math.max(.1,dist);}
+  else if(a.route&&a.waypoint<a.route.length){
+   // Released toy mice follow the fixed house route to the table before hunting on their own.
+   a.state='route';const [wx,wz]=a.route[a.waypoint],rx=wx-p.x,rz=wz-p.z,rd=Math.max(.1,Math.hypot(rx,rz));
+   a.ageMs+=ms;a.stuckMs=a.ageMs>1500&&Math.hypot(v.x,v.z)<.15?a.stuckMs+ms:0;
+   if(rd<.8){a.waypoint++;a.stuckMs=0;a.stuckCount=0;}
+   // Pinned against a jamb, furniture or another mouse: sidestep briefly, and after repeated pins back up
+   // to the previous waypoint. The route is never skipped forward.
+   if(a.detourMs>0){a.detourMs-=ms;a.dirX=a.detour[0];a.dirZ=a.detour[1];}
+   else{if(a.stuckMs>900){a.stuckMs=0;a.detourMs=600;const side=(mob.id+(a.stuckCount??0))%2?1:-1;a.detour=[-rz/rd*side,rx/rd*side];
+     if(++a.stuckCount>=3){a.stuckCount=0;a.waypoint=Math.max(0,a.waypoint-1);}}
+    a.dirX=rx/rd;a.dirZ=rz/rd;}
+  }
+  else if(onTable&&(Math.abs(p.x)>ARENA.halfX-1.2||Math.abs(p.z)>ARENA.halfZ-1.2)){a.state='wander';const angle=Math.atan2(-p.x,-p.z);a.dirX=Math.sin(angle);a.dirZ=Math.cos(angle);a.thinkMs=500;}
+  else if(a.thinkMs<=0){a.state='wander';const angle=(rng.nextUint32()/4294967296)*Math.PI*2;a.dirX=Math.sin(angle);a.dirZ=Math.cos(angle);a.thinkMs=700+rng.nextInt(1800);}
   const speed=d.speed*(a.state==='wander'?.56:1),vx=a.dirX*speed,vz=a.dirZ*speed;
   const steer=clamp(13*dt,0,1),mass=mob.body.mass();mob.body.applyImpulse({x:(vx-v.x)*mass*steer,y:0,z:(vz-v.z)*mass*steer},true);
   // Physics contacts stop animals at walls; navigational turn prevents permanent wall pinning.
@@ -635,6 +713,7 @@ const collisionDamage={
   const ball=projectiles.find(p=>p.collider?.handle===collider.handle);if(ball)return{kind:'ball',id:ball.id,body:ball.body,collider,actor:ball};
   const block=tower.blocks.find(b=>b.body.collider(0).handle===collider.handle);if(block)return{kind:'block',id:block.id,body:block.body,collider,actor:block};
   const appliance=vacuums.find(v=>v.collider.handle===collider.handle);if(appliance)return{kind:'appliance',id:appliance.id,body:appliance.body,collider,actor:appliance};
+  const spawner=spawners.find(s=>s.collider.handle===collider.handle);if(spawner)return{kind:'spawner',id:spawner.id,body:spawner.body,collider,actor:spawner};
   // Dynamic colliders participate by default; fixed geometry stays in Rapier's solver without acquiring HP.
   const body=collider.parent?.();if(body?.isDynamic?.())return{kind:'object',id:collider.handle,body,collider,actor:null};
   return null;
@@ -664,9 +743,9 @@ const collisionDamage={
     if(impulse/mass>=IMPACT_DAMAGE.launchDeltaV){const v=target.body.linvel(),d=Math.max(.001,Math.hypot(v.x,v.z));launchCat(v.x/d,v.z/d,impulse);}
    }
   });
-  else if(target.kind==='mob'&&!target.actor.dead){
-   const owner=source?.kind==='cat'?source.id:net.localId;
-   withCatActor(owner,()=>{actual=damageMob(target.actor,damage,source?.kind==='cat'?(source.attack??(source.dash?'dash':'impact')):'impact',point,420,{impulse,deltaV:impulse/mass,...attackMeta});});
+  else if(target.kind==='mob'&&!target.actor.dead&&source?.kind==='cat'){
+   // Only a cat earns the kill: toy mice bumping each other or the people's gadgets never pay XP.
+   withCatActor(source.id,()=>{actual=damageMob(target.actor,damage,source.attack??(source.dash?'dash':'impact'),point,420,{impulse,deltaV:impulse/mass,...attackMeta});});
   }
   if(actual)this.record({target:target.kind+':'+target.id,source:source?source.kind+':'+source.id:'applied',impulse,normalSpeed,...attackMeta,mass,deltaV:impulse/mass,damage:actual});
   return actual;
@@ -803,7 +882,7 @@ function resolveClawHit(){
   const target=collisionDamage.actorByHandle(handle);
   if(!target||target.kind==='cat')continue;
   const p=target.body.translation(),dx=p.x-origin.x,dz=p.z-origin.z,dy=p.y-origin.y;
-  const planar=Math.hypot(dx,dz),radius=target.kind==='mob'?MOB_TYPES[target.actor.type].radius:target.kind==='block' ? .58 : target.kind==='appliance' ? .48 : .36;
+  const planar=Math.hypot(dx,dz),radius=target.kind==='mob'?MOB_TYPES[target.actor.type].radius:target.kind==='spawner'?target.actor.def.radius:target.kind==='block' ? .58 : target.kind==='appliance' ? .48 : .36;
   if(planar>config.reach*scale+radius||Math.abs(dy)>1.25*scale+radius||
      (planar>.05&&(dx*fx+dz*fz)/planar<config.minFacingDot))continue;
   // Keep the established fixed-wall occlusion rule for every dynamic target.
@@ -816,27 +895,46 @@ function resolveClawHit(){
   let contact=target.collider.translation();
   try{const projection=target.collider.projectPoint(center,false);if(projection?.point&&[projection.point.x,projection.point.y,projection.point.z].every(Number.isFinite))contact=projection.point;}catch{}
   hitIds.add(handle);
+  // A fixed household base has no solver response; claws wear it down directly.
+  if(target.kind==='spawner'){damageSpawner(target.actor,cat,contact);hits++;continue;}
   const impulse=config.knockback*Math.pow(cat.mass,.32),result=collisionDamage.strike(target,source,[fx*impulse,impulse*.34,fz*impulse],contact,{attackType:'claw'});
   if(result.applied)hits++;
  }
  claw.lastHits=hits;
- if(hits>1)announce('🐾 연속 할퀴기 '+hits+'마리 적중!',650);
+ if(hits>1)announce('🐾 연속 할퀴기 '+hits+'회 적중!',650);
 }function collectMobsAfterStep(){
  resolveClawHit();
  for(let i=mobs.length-1;i>=0;i--){let m=mobs[i];if(!m.dead)continue;
   const p=m.body.translation(),def=MOB_TYPES[m.type],killer=roomCats.get(m.killerId)??cat;
   combatUI.markDefeated(m,p);
   tower.world.removeRigidBody(m.body);mobs.splice(i,1);
-  const previousLevel=killer.level,gained=setCatXp(killer,killer.xp+def.xp);kills[m.type]++;
+  const gained=grantXp(killer,def.xp);kills[m.type]++;
   combatUI.queue({...m.defeatEvent,xp:gained});
-  if(killer.level>previousLevel){
-   if(killer===localCat)announce('✨ LV '+levelLabel(killer.level)+'! 질량 '+killer.mass.toFixed(2)+' · 박치기 운동량 증가!',1900);
-   combatUI.queue({kind:'level',tick:nowTicks,entityId:killer.id,sequence:++killer.growthSequence,level:killer.level,p:[killer.x,killer.y+.9,killer.z]});
-  }else if(killer===localCat&&(kills.mouse+kills.beetle+kills.spider)%3===0)announce(def.label+' 사냥 성공! '+(gained>0?'경험치 +'+gained:'최고 레벨 MAX'),1000);
  }
 }
+/* Tower combo: consecutive directional cat→block hits inside the window raise the multiplier;
+   XP is paid per hit, and any confirmed damage to the cat ends the chain. */
+function updateCombos(dt){const ms=dt*1000;
+ const fresh=collisionDamage.catBlockEvents.filter(event=>event.sequence>comboCursor);
+ if(fresh.length)comboCursor=fresh[fresh.length-1].sequence;
+ for(const event of fresh){const actor=roomCats.get(event.catId);if(!actor||actor.motion.state==='dead')continue;registerComboHit(actor,event);}
+ for(const actor of roomCats.values()){const c=actor.combo;if(c.count===0)continue;c.leftMs-=ms;if(c.leftMs<=0)endCombo(actor,'timeout');}
+}
+function registerComboHit(actor,event){const cfg=DEF.combo,c=actor.combo,rehitTicks=Math.round(cfg.rehitMs/1000*NET_DEF.stepHz);
+ const previous=c.hits.get(event.blockId);
+ if(previous&&nowTicks-previous.tick<rehitTicks){previous.tick=nowTicks;return;}
+ const repeats=previous?.count??0;c.hits.set(event.blockId,{count:repeats+1,tick:nowTicks});
+ c.count++;c.mult=Math.min(cfg.maxMult,c.count);c.leftMs=cfg.windowMs;c.best=Math.max(c.best,c.count);
+ const base=Math.max(1,Math.ceil(event.impulse*cfg.xpPerImpulse*cfg.repeatDecay[Math.min(repeats,cfg.repeatDecay.length-1)]));
+ const gained=grantXp(actor,base*c.mult,event.p);
+ combatUI.queue({kind:'combo',tick:nowTicks,entityId:actor.id,sequence:++c.sequence,count:c.count,mult:c.mult,xp:gained,p:event.p.slice()});
+}
+function endCombo(actor,reason){const c=actor.combo;if(c.count===0)return;
+ c.count=0;c.mult=1;c.leftMs=0;c.hits.clear();
+ if(actor===localCat&&reason==='hit')announce('💢 피격! 콤보가 끊겼다',900);
+}
 function damageCat(amount,reason,physical=false){if((physical?cat.spawnProtectionMs>0:cat.invuln>0)||cat.motion.state==='dead'||phase!=='play')return;
- cat.hp=Math.max(0,cat.hp-amount);cat.invuln=DEF.cat.hitInvulnMs;if(cat===localCat){announce(reason+' −'+amount+' HP',1100);sfx('hit',.65);}
+ cat.hp=Math.max(0,cat.hp-amount);cat.invuln=DEF.cat.hitInvulnMs;endCombo(cat,'hit');if(cat===localCat){announce(reason+' −'+amount+' HP',1100);sfx('hit',.65);}
  if(cat.hp<=0){cat.holdBlocked=true;cat.charge.inputMs=0;cat.charge.tapPending=false;if(cat===localCat)mobileViewport.resetInput?.();const loss=-setCatXp(cat,cat.xp-deathXpLoss(cat));cat.respawn.leftMs=1050;setCatMotion('dead');cancelCharge();clearBufferedInputs();cat.dash.leftMs=0;cat.claw.pendingHit=false;if(cat===localCat){ui.respawn.classList.remove('hidden');announce(deathNotice(loss,cat.level),2200);}}
 }
 function respawnCat(){const body=tower.catBody;
@@ -855,17 +953,34 @@ let hapticEnabled=true;
 const rand=(a,b)=>a+(b-a)*rng.nextUint32()/4294967296;
 function makeCat(){return {id:"local",x:ARENA.spawnX,z:ARENA.spawnZ,y:ARENA.floorY,surfaceY:ARENA.floorY,vy:0,vx:0,vz:0,knockX:0,knockZ:0,aimYaw:Math.PI,get mass(){return catMassForLevel(this.level)},yaw:Math.PI,targetYaw:Math.PI,speed:0,hp:DEF.cat.maxHp,xp:0,level:1,growthSequence:0,openingMs:0,invuln:0,spawnProtectionMs:0,respawn:{leftMs:0},
  impactGraceMs:0,unwedge:{anchor:null,blockedMs:0,cooldownMs:0,recoveries:0,lastDirection:null},holdBlocked:false,charge:{held:false,elapsedMs:0,ratio:0,inputMs:0,tapPending:false},claw:{cooldown:{leftMs:0},animation:{leftMs:0},pendingHit:false,bufferMs:0,side:-1,attacks:0,lastHits:0},jump:{held:false,elapsedMs:0,ratio:0,lastVelocity:0,requestMs:0,releaseQueued:false,bufferRatio:0,coyoteMs:0,canJump:false},dash:{cooldown:{leftMs:0},leftMs:0,velocity:0,direction:{x:0,z:1}},dodgeCd:0,dodgeMs:0,dodgeBuffer:{leftMs:0,dx:0,dz:1},ticks:0,
- motion:{state:'idle',elapsedMs:0,rollAxis:[1,0,0],rollDirX:0,rollDirZ:1,spinAxis:[1,0,0],spinRad:0,spinRate:0,wasAirborne:false,airborneRoll:false,fromRoll:false,rollRecoveryMs:0},trail:[],landings:0,humanHits:0,successfulRolls:0};}
+ motion:{state:'idle',elapsedMs:0,rollAxis:[1,0,0],rollDirX:0,rollDirZ:1,spinAxis:[1,0,0],spinRad:0,spinRate:0,wasAirborne:false,airborneRoll:false,fromRoll:false,rollRecoveryMs:0},trail:[],landings:0,humanHits:0,successfulRolls:0,
+ combo:{count:0,mult:1,leftMs:0,best:0,sequence:0,hits:new Map()}};}
+// Two family members defending their Jenga record with what the house already has.
+// `anger` is the unlock threshold; `base` names the household base a gadget comes from.
 const HUMAN_PROFILES=Object.freeze([
- {label:'사람 A · 근접',patterns:['slam','sweep']},
- {label:'사람 B · 공 던지기',patterns:['throw']}
+ {label:'사람 A · 근접',patterns:['slam','sweep','toyMouse']},
+ {label:'사람 B · 공 던지기',patterns:['throw','vacuum'],supply:'basket',ammo:6}
 ]);
 const HUMAN_ATTACKS=Object.freeze({
- slam:{battleArea:true,minY:-2.4,radius:5.2,warningMs:1180,lockMs:1180,strikeMs:780,recoveryMs:1900,release:releaseHumanGroundSlam},
- sweep:{battleArea:true,minY:-2.4,radius:4.5,warningMs:1180,lockMs:1180,strikeMs:870,recoveryMs:1900,release:releaseHumanGroundSlam},
- throw:{range:24,minY:ARENA.floorY-1,radius:.65,warningMs:1500,lockMs:450,strikeMs:420,recoveryMs:2400,release:launchHumanToyBall}
+ slam:{anger:0,battleArea:true,minY:-2.4,radius:5.2,warningMs:1180,lockMs:1180,strikeMs:780,recoveryMs:1900,release:releaseHumanGroundSlam,speech:'가까이 오면 손바닥 공격!',warningLabel:'손바닥 준비!'},
+ sweep:{anger:0,battleArea:true,minY:-2.4,radius:4.5,warningMs:1180,lockMs:1180,strikeMs:870,recoveryMs:1900,release:releaseHumanGroundSlam,speech:'가까이 오면 손바닥 공격!',warningLabel:'손바닥 준비!'},
+ throw:{anger:25,ammo:true,range:24,minY:ARENA.floorY-1,radius:.65,warningMs:1500,lockMs:450,strikeMs:420,recoveryMs:2400,release:launchHumanToyBall,speech:'여길 봐! 장난감 공 던진다!',warningLabel:'장난감 공 조준 중'},
+ toyMouse:{anger:50,anyTarget:true,base:'toybox',gadget:true,warningMs:900,lockMs:300,strikeMs:500,recoveryMs:3600,release:summonToyMice,speech:'앱으로 전동 쥐 출동!',warningLabel:'📱 전동 쥐 호출 중'},
+ vacuum:{anger:75,anyTarget:true,base:'dock',gadget:true,blockedWhile:()=>vacuums.some(v=>!v.dead),warningMs:900,lockMs:300,strikeMs:500,recoveryMs:3600,release:callVacuum,speech:'앱으로 청소기 호출!',warningLabel:'📱 청소기 호출 중'}
 });
-function makeHuman(id){const side=id===0?-1:1,x=side*HUMAN_BUILD.towerSideX,z=HUMAN_BUILD.workZ;return{id,x,y:humanGroundY(x,z),z,yaw:side<0?Math.PI/2:-Math.PI/2,pattern:HUMAN_PROFILES[id].patterns[0],mode:'idle',timer:id===0?1600:3100,anim:0,target:[0,0,0],targetId:null,aimLocked:false,attackApplied:false,buildDone:false,buildStage:null,buildStageMs:0,buildRoute:null,buildRouteIndex:0,handTarget:null,retractFrom:null,grip:null,reaction:null,pendingReactionTargetId:null,anger:0,noticeMs:0,buildSatisfactionMs:0,speech:HUMAN_PROFILES[id].label,attacks:0,builds:0};}
+function humanPatternAvailable(h,pattern){const config=HUMAN_ATTACKS[pattern];
+ if(h.anger<config.anger)return false;
+ if(config.base){const base=spawnerById(config.base);if(!base||base.broken||(base.def.stock!==undefined&&base.stock<=0))return false;}
+ return !config.blockedWhile?.();
+}
+function humanTargetFor(h,pattern){const config=HUMAN_ATTACKS[pattern];
+ return [...roomCats.values()].filter(c=>c.hp>0&&c.motion.state!=='dead'&&(config.anyTarget||(config.battleArea?Math.abs(c.x)<ARENA.halfX+6&&Math.abs(c.z)<ARENA.halfZ+6&&c.y>config.minY:c.y>=config.minY&&c.z>h.z+1.2&&Math.hypot(c.x-h.x,c.z-h.z)<=config.range))).sort((a,b)=>Math.hypot(a.x-h.x,a.z-h.z)-Math.hypot(b.x-h.x,b.z-h.z))[0]??null;}
+// Rotate through the unlocked patterns, skipping any that has no valid target right now (a far cat still triggers gadgets).
+function chooseHumanAction(h,preferredTarget=null){const available=HUMAN_PROFILES[h.id].patterns.filter(pattern=>humanPatternAvailable(h,pattern));
+ for(let k=0;k<available.length;k++){const pattern=available[(h.attacks+k)%available.length],target=preferredTarget&&humanTargetFor(h,pattern)===preferredTarget?preferredTarget:humanTargetFor(h,pattern);
+  if(target){h.pattern=pattern;return{pattern,config:HUMAN_ATTACKS[pattern],target};}}
+ return null;}
+function makeHuman(id){const side=id===0?-1:1,x=side*HUMAN_BUILD.towerSideX,z=HUMAN_BUILD.workZ,profile=HUMAN_PROFILES[id];return{id,x,y:humanGroundY(x,z),z,yaw:side<0?Math.PI/2:-Math.PI/2,homeYaw:side<0?Math.PI/2:-Math.PI/2,pattern:profile.patterns[0],mode:'idle',timer:id===0?1600:3100,anim:0,target:[0,0,0],targetId:null,aimLocked:false,attackApplied:false,buildDone:false,buildStage:null,buildStageMs:0,buildRoute:null,buildRouteIndex:0,handTarget:null,retractFrom:null,grip:null,reaction:null,pendingReactionTargetId:null,anger:0,ammo:profile.ammo??0,refill:null,noticeMs:0,buildSatisfactionMs:0,speech:profile.label,attacks:0,builds:0};}
 // Keep the low underhand release proportional to the canonical 3.10 human; preserve throw mass, speed, and momentum.
 function humanThrowOrigin(h){const scale=HUMAN_MODEL.scale;return[h.x+.1*(scale/3.10),h.y+HUMAN_THROW.releaseHeight,h.z+HUMAN_THROW.releaseForward];}
 function throwReference(){const level=HUMAN_THROW.referenceLevel,mass=catMassForLevel(level),speed=headbuttBaseSpeed(level)*DEF.cat.charge.maxMultiplier;return{level,mass,speed,momentum:mass*speed};}
@@ -875,7 +990,16 @@ function humanAim(h,c){
 }
 function releaseHumanGroundSlam(h){const point=humanGroundSlamPoint(h);createShockwave(h,point[0],point[2]);if(h.pattern==='sweep')createShockwave(h,point[0]-1.9,point[2],.72);}
 function beginHumanAttack(h,c,silent=false){if(h.mode==='build')return false;const config=HUMAN_ATTACKS[h.pattern];h.targetId=c.id;h.target=humanAim(h,c);h.aimLocked=false;h.mode='warning';h.timer=h.warningMs=config.warningMs;h.attackApplied=false;h.waveHitCats=new Set();h.attacks++;
- if(!silent)blinkHuman(h,h.pattern==='throw'?'여길 봐! 장난감 공 던진다!':'가까이 오면 손바닥 공격!',1550);sfx('warn');return true;}
+ if(!silent)blinkHuman(h,config.speech,1550);sfx('warn');return true;}
+// Ball supply: the thrower carries a small basket and must walk to the foyer basket to refill it.
+function startHumanRefill(h){const base=spawnerById(HUMAN_PROFILES[h.id].supply),[bx,bz]=base.def.at;
+ h.mode='refill';h.refill={stage:'go',home:[h.x,h.z]};h.buildRoute=[[h.x,6.0],[0,9.0],[0,22.0],[bx,bz-2.2]];h.buildRouteIndex=0;h.buildVelocity=[0,0];
+ blinkHuman(h,'공 가지러 다녀올게!',1500);}
+function advanceHumanRefill(h,dt){const r=h.refill,cfg=DEF.humans.refill,profile=HUMAN_PROFILES[h.id],base=spawnerById(profile.supply);
+ if(r.stage==='go'){if(walkHumanRoute(h,dt,cfg.runSpeed)){r.stage='pick';r.waitMs=base.broken?cfg.spilledPickMs*profile.ammo:cfg.pickMs;blinkHuman(h,base.broken?'공이 다 쏟아졌네… 하나씩 줍자':'공 채우는 중',r.waitMs);}}
+ else if(r.stage==='pick'){r.waitMs-=dt*1000;if(r.waitMs<=0){h.ammo=profile.ammo;r.stage='back';h.buildRoute=[[0,22.0],[0,9.0],[r.home[0],6.0],r.home];h.buildRouteIndex=0;}}
+ else if(walkHumanRoute(h,dt,cfg.runSpeed)){h.mode='idle';h.timer=600;h.refill=null;h.yaw=h.homeYaw;h.buildRoute=null;}
+}
 function removeOldestToyBall(){
  // Host simulation owns FIFO; equal creation ticks use the monotonically increasing entity ID.
  const oldest=projectiles.reduce((a,b)=>!a||b.createdTick<a.createdTick||(b.createdTick===a.createdTick&&b.id<a.id)?b:a,null);
@@ -896,11 +1020,11 @@ function launchHumanToyBall(h){
  const body=tower.world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(...p).setRotation(quat(qyaw(yaw))).setLinvel(...v).setLinearDamping(HUMAN_THROW.linearDamping).setAngularDamping(HUMAN_THROW.angularDamping).setCcdEnabled(true));
  const collider=tower.world.createCollider(RAPIER.ColliderDesc.ball(HUMAN_THROW.radius).setMass(HUMAN_THROW.mass).setFriction(HUMAN_THROW.friction).setRestitution(HUMAN_THROW.restitution).setRestitutionCombineRule(RAPIER.CoefficientCombineRule.Max),body);
  projectiles.push({id:nextProjectileId++,createdTick:nowTicks,owner:h.id,p,q:qyaw(yaw),yaw,body,collider,touching:new Map(),firstImpact:false,sleeping:false,launchVelocity:v,launchMomentum:HUMAN_THROW.mass*len(v),hitBlocks:[],contactImpulse:0,netImpulse:0});
- throwStats.spawned++;sfx('dash',.65);
+ h.ammo=Math.max(0,h.ammo-1);throwStats.spawned++;sfx('dash',.65);
 }
 function updateProjectiles(){for(const shot of projectiles){if(!shot.body)continue;const p=shot.body.translation(),q=shot.body.rotation();shot.p=[p.x,p.y,p.z];
  let next=[q.x,q.y,q.z,q.w];if(shot.q&&next.reduce((n,v,i)=>n+v*shot.q[i],0)<0)next=next.map(v=>-v);shot.q=next;shot.sleeping=shot.body.isSleeping();}}
-function resetWorld(){collisionDamage.reset();projectiles=[];nextProjectileId=1;throwStats={spawned:0,recycled:0,lastRemovedId:null,impacts:0,contacts:0,maxContactImpulse:0,last:null,lastCatHit:null,lastTowerHit:null};combatUI.reset();net.resetView();cat=null;roomCats.clear();mobs=[];vacuums=[];nextMobId=1;kills={mouse:0,beetle:0,spider:0};rng.state=702104;vfxRng.state=91011;tower.init();cat=makeCat();localCat=cat;
+function resetWorld(){collisionDamage.reset();projectiles=[];nextProjectileId=1;throwStats={spawned:0,recycled:0,lastRemovedId:null,impacts:0,contacts:0,maxContactImpulse:0,last:null,lastCatHit:null,lastTowerHit:null};combatUI.reset();net.resetView();cat=null;roomCats.clear();mobs=[];vacuums=[];nextMobId=1;kills={toyMouse:0};comboCursor=0;rng.state=702104;vfxRng.state=91011;tower.init();prepareSpawners();cat=makeCat();localCat=cat;
  if(net.room){
    cat.id=net.localId;
    const members=net.room.players;
@@ -915,7 +1039,7 @@ function resetWorld(){collisionDamage.reset();projectiles=[];nextProjectileId=1;
     if(net.isHost) tower.addPlayer(other.id,{x:other.x,z:ARENA.spawnZ});
    }
  }else{roomCats.set('local',cat);tower.playerBodies.clear();tower.playerBodies.set('local',{body:tower.catBody,collider:tower.catCollider});}
- tower.syncCat();prepareMobs();prepareVacuums();human=[makeHuman(0),makeHuman(1)];humanReactionCursor=0;particles=[];shockwaves=[];camera={yaw:Math.PI,pitch:.09,eye:[0,ARENA.floorY+LOOK.eyeHeight,ARENA.spawnZ+LOOK.followDistance],shake:0,armLength:LOOK.followDistance};seconds=0;nowTicks=0;cat.respawn.leftMs=0;ui.respawn.classList.add('hidden');toastKey='';messageUntil=0;winClock=0;collapseState=null;ui.end.classList.add('hidden');ui.warning.classList.remove('show');ui.humanA.textContent='';ui.humanB.textContent='';sceneView.reset();sceneView.capture(net.room&&!net.isHost?performance.now():0,true);updateHUD();}
+ tower.syncCat();human=[makeHuman(0),makeHuman(1)];humanReactionCursor=0;particles=[];shockwaves=[];camera={yaw:Math.PI,pitch:.09,eye:[0,ARENA.floorY+LOOK.eyeHeight,ARENA.spawnZ+LOOK.followDistance],shake:0,armLength:LOOK.followDistance};seconds=0;nowTicks=0;cat.respawn.leftMs=0;ui.respawn.classList.add('hidden');toastKey='';messageUntil=0;winClock=0;collapseState=null;ui.end.classList.add('hidden');ui.warning.classList.remove('show');ui.humanA.textContent='';ui.humanB.textContent='';sceneView.reset();sceneView.capture(net.room&&!net.isHost?performance.now():0,true);updateHUD();}
 function beginCollapse(remote=false){
  if(phase!=='play')return;
  phase='collapse';
@@ -949,7 +1073,7 @@ function updateCollapse(dt){
  // result; guests reject duplicate ticks, which would hide the result screen.
  if(net.room&&net.isHost&&nowTicks%3===0)net.publishState();
 }
-function endRound(success){if(phase!=='play'&&phase!=='collapse')return;if(document.pointerLockElement===gameCanvas)document.exitPointerLock?.();phase=success?'win':'lose';winClock=0;navigation.replace({screen:'result'});ui.retryBtn.disabled=!!net.room&&!net.isHost;ui.retryBtn.textContent=ui.retryBtn.disabled?'방장 시작 대기':'한 판 더';document.querySelector('#replayStatus').classList.toggle('hidden',!ui.retryBtn.disabled);ui.end.classList.remove('hidden');ui.endingTitle.textContent=success?'대참사 성공! 🐾':'고양이 작전 실패…';ui.endingSub.textContent=success?'젠가가 끝까지 와르르 무너진 뒤 최종 결과를 집계했어요!':'성장과 회피 타이밍을 활용해 다시 도전하세요!';ui.endingStats.innerHTML=`<span>무너뜨린 블록 <b>${tower.scattered}개</b></span><span>걸린 시간 <b>${Math.round(seconds)}초</b></span><span>최종 성장 <b>LV ${levelLabel(cat.level)}</b></span>`;ui.warning.classList.remove('show');sfx(success?'win':'lose');announce(success?'고양이가 이겼다!':'아직 포기하지 마!');}
+function endRound(success){if(phase!=='play'&&phase!=='collapse')return;if(document.pointerLockElement===gameCanvas)document.exitPointerLock?.();phase=success?'win':'lose';winClock=0;navigation.replace({screen:'result'});ui.retryBtn.disabled=!!net.room&&!net.isHost;ui.retryBtn.textContent=ui.retryBtn.disabled?'방장 시작 대기':'한 판 더';document.querySelector('#replayStatus').classList.toggle('hidden',!ui.retryBtn.disabled);ui.end.classList.remove('hidden');ui.endingTitle.textContent=success?'대참사 성공! 🐾':'고양이 작전 실패…';ui.endingSub.textContent=success?'젠가가 끝까지 와르르 무너진 뒤 최종 결과를 집계했어요!':'성장과 회피 타이밍을 활용해 다시 도전하세요!';ui.endingStats.innerHTML=`<span>무너뜨린 블록 <b>${tower.scattered}개</b></span><span>걸린 시간 <b>${Math.round(seconds)}초</b></span><span>최종 성장 <b>LV ${levelLabel(cat.level)}</b></span><span>최고 콤보 <b>×${cat.combo.best}</b></span>`;ui.warning.classList.remove('show');sfx(success?'win':'lose');announce(success?'고양이가 이겼다!':'아직 포기하지 마!');}
 function announce(msg,ms=2000){ui.message.textContent=msg;ui.message.classList.add('show');messageUntil=seconds*1000+ms;}
 function updateHUD(){
  const min=Math.floor(seconds/60),sec=Math.floor(seconds%60);ui.clock.textContent=min+':'+String(sec).padStart(2,'0');
@@ -967,14 +1091,15 @@ function updateHUD(){
  ui.xpFill.parentElement.setAttribute('aria-valuenow',String(progress));
  ui.xpFill.parentElement.setAttribute('aria-valuetext',maxed?'MAX · 최고 레벨':(Math.round((cat.xp-prev)*10)/10)+' / '+(next-prev)+' XP');
  ui.area.textContent=zoneAt(cat.x,cat.z)+(cat.y>ARENA.floorY+2.0?' · 높은 곳':'');
- ui.kills.textContent='🐁 '+kills.mouse+'   🪲 '+kills.beetle+'   🕷 '+kills.spider+' · ⚽ '+projectiles.length+'/'+HUMAN_THROW.maxBalls;
- ui.growthHelp.textContent=cat.level>=DEF.farming.maxLevel?'🏆 최고 레벨 MAX · 젠가를 무너뜨리세요!':cat.level<4?'🐁 외곽 파밍: 짧게 눌러 할퀴기!':cat.level<6?'💪 충분히 강해지고 있다. 식탁을 공략해 보자!':'🏰 중앙 식탁의 젠가에 풀차지 박치기!';
- let aim=null,dist=Infinity;if(cat.level<6){for(const mob of mobs){const p=mob.body.translation(),d=Math.hypot(p.x-cat.x,p.z-cat.z);if(d<dist){dist=d;aim=[p.x,p.z];}}}
- if(!aim){aim=[0,0];dist=Math.hypot(cat.x,cat.z);}
+ ui.kills.textContent='🐭 전동 쥐 '+kills.toyMouse+' · ⚽ '+projectiles.length+'/'+HUMAN_THROW.maxBalls+' · 🔥 최고 ×'+cat.combo.best;
+ ui.growthHelp.textContent=cat.level>=DEF.farming.maxLevel?'🏆 최고 레벨 MAX · 젠가를 무너뜨리세요!':'🧱 젠가를 연속으로 들이받으면 콤보 XP · 피격되면 끊겨요';
+ // Guide arrow: a household base the people have started using is the next strategic target; otherwise the table.
+ let aim=[0,0],dist=Math.hypot(cat.x,cat.z),label='🏰 식탁';
+ for(const s of spawners){if(s.broken||s.used===0)continue;const d=Math.hypot(s.def.at[0]-cat.x,s.def.at[1]-cat.z);if(d<dist||label==='🏰 식탁'){aim=s.def.at;dist=d;label=s.def.icon+' '+s.def.label;}}
  const dx=aim[0]-cat.x,dz=aim[1]-cat.z;
  const side=-Math.cos(camera.yaw)*dx+Math.sin(camera.yaw)*dz,forward=Math.sin(camera.yaw)*dx+Math.cos(camera.yaw)*dz;
  const angle=Math.atan2(side,forward),arrows=['↑','↗','→','↘','↓','↙','←','↖'];const direction=arrows[(Math.round(angle/(Math.PI/4))+8)%8];
- ui.farmArrow.textContent=direction+(cat.level<6?' 🐁 사냥 '+dist.toFixed(0)+'m':' 🏰 식탁 '+dist.toFixed(0)+'m');ui.farmArrow.style.display='block';
+ ui.farmArrow.textContent=direction+' '+label+' '+dist.toFixed(0)+'m';ui.farmArrow.style.display='block';
  // Guests refresh the roster on snapshots; the host must refresh from its own simulation.
  if(net.room&&net.isHost)net.showRoster();
  drawMinimap();
@@ -986,8 +1111,9 @@ function drawMinimap(){const canvas=ui.minimap,ctx=canvas.getContext('2d');if(!c
  ctx.fillStyle='#c18b61';ctx.fillRect(X(-ARENA.halfX),Y(-ARENA.halfZ),X(ARENA.halfX)-X(-ARENA.halfX),Y(ARENA.halfZ)-Y(-ARENA.halfZ));
  ctx.fillStyle='#ffe3a3';ctx.beginPath();ctx.arc(X(0),Y(0),5,0,Math.PI*2);ctx.fill();
  for(const [id,actor] of roomCats)if(actor!==cat){ctx.fillStyle='#90ebef';ctx.beginPath();ctx.arc(X(actor.x),Y(actor.z),3,0,Math.PI*2);ctx.fill();}
- for(const m of mobs){const p=m.body.translation();ctx.fillStyle=m.type==='spider'?'#d7a9f6':m.type==='mouse'?'#ffc39b':'#9ef8c5';ctx.fillRect(X(p.x)-2,Y(p.z)-2,4,4);}
- for(const v of vacuums){const p=v.body.translation();ctx.fillStyle=v.attack.state==='windup'||v.attack.state==='charge'?'#ff6a63':'#fff0bb';ctx.beginPath();ctx.arc(X(p.x),Y(p.z),3,0,Math.PI*2);ctx.fill();}
+ for(const s of spawners){ctx.fillStyle=s.broken?'#5d6d78':'#ffd37a';ctx.fillRect(X(s.def.at[0])-3,Y(s.def.at[1])-3,6,6);}
+ for(const m of mobs){const p=m.body.translation();ctx.fillStyle='#ffc39b';ctx.fillRect(X(p.x)-2,Y(p.z)-2,4,4);}
+ for(const v of vacuums){const p=v.body.translation();ctx.fillStyle=v.dead?'#5d6d78':v.attack.state==='windup'||v.attack.state==='charge'?'#ff6a63':'#fff0bb';ctx.beginPath();ctx.arc(X(p.x),Y(p.z),3,0,Math.PI*2);ctx.fill();}
  ctx.fillStyle='#fffaf2';ctx.beginPath();ctx.arc(X(ARENA.spawnX),Y(ARENA.spawnZ),3.2,0,Math.PI*2);ctx.fill();
  ctx.fillStyle='#ff858c';ctx.beginPath();ctx.arc(X(cat.x),Y(cat.z),4.6,0,Math.PI*2);ctx.fill();
  ctx.strokeStyle='#ff858c';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(X(cat.x),Y(cat.z));ctx.lineTo(X(cat.x)+Math.sin(cat.yaw)*10,Y(cat.z)+Math.cos(cat.yaw)*10);ctx.stroke();
@@ -999,7 +1125,7 @@ function wakeAudio(){if(!soundEnabled)return;try{audioContext ||= new (window.Au
 function sfx(name,amount=1){if(!audioContext||audioContext.state!=='running'||!soundEnabled)return;const t=audioContext.currentTime;let base=220,len=.14,type='triangle',gain=.05;
  switch(name){case'charge':base=490;len=.12;type='triangle';gain=.045;break;case'dash':base=135;len=.25;type='sawtooth';gain=.055;break;case'claw':base=780;len=.105;type='triangle';gain=.035;break;case'crash':base=90;len=.33;type='sawtooth';gain=.065;break;case'block':base=350;len=.13;type='sine';gain=.037;break;case'warn':base=540;len=.18;type='square';gain=.023;break;case'hit':base=180;len=.3;type='sawtooth';gain=.09;break;case'win':base=650;len=.46;gain=.11;break;case'lose':base=155;len=.5;gain=.04;break;case'jump':base=360;len=.11;gain=.045;break;case'collect':base=800;len=.16;gain=.055;break;case'dull':base=110;len=.14;gain=.045;break;case'crack':base=180;len=.16;gain=.075;break;case'roll':base=300;len=.14;gain=.045;break;case'land':base=108;len=.23;gain=.07;break;case'impact':base=82;len=.55;type='sawtooth';gain=.10;break;case'bounce':base=260;len=.17;type='square';gain=.065;break;}
  const osc=audioContext.createOscillator(),g=audioContext.createGain();osc.type=type;osc.frequency.setValueAtTime(base*(.96+Math.random()*.08),t);osc.frequency.exponentialRampToValueAtTime(Math.max(40,base*(name==='win'?1.65:.55)),t+len);g.gain.setValueAtTime(gain*Math.max(.2,Math.min(1.5,amount)),t);g.gain.exponentialRampToValueAtTime(.0001,t+len);osc.connect(g);g.connect(audioContext.destination);osc.start(t);osc.stop(t+len+.01);}
-function start(){wakeAudio();resetWorld();phase='play';navigation.replace({screen:'play'});net.startButton.style.display='none';ui.start.classList.add('hidden');ui.end.classList.add('hidden');ui.hud.classList.remove('inactive');roundStart=performance.now();announce('🐁 사냥으로 무거워져라! 사람 손의 충격파를 피해 모든 블록을 물리적으로 무너뜨려!',4300);gameCanvas.focus();}
+function start(){wakeAudio();resetWorld();phase='play';navigation.replace({screen:'play'});net.startButton.style.display='none';ui.start.classList.add('hidden');ui.end.classList.add('hidden');ui.hud.classList.remove('inactive');roundStart=performance.now();announce('🧱 젠가를 연속으로 들이받아 콤보로 성장! 화난 사람의 방해는 외곽 거점을 부숴 끊어라!',4300);gameCanvas.focus();}
 function blinkHuman(h,msg,ms=1200){h.speech=msg;h.noticeMs=ms;}
 function patternRadius(h){return HUMAN_ATTACKS[h.pattern].radius;}
 function createShockwave(h,x,z,scale=1){shockwaves.push({id:nowTicks*10+h.id+shockwaves.length*.01,x,z,r:0,previous:0,
@@ -1398,6 +1524,9 @@ function updateHumanReactions(dt){
  }
  const fresh=collisionDamage.catBlockEvents.filter(event=>event.sequence>humanReactionCursor);
  if(!fresh.length)return;humanReactionCursor=fresh[fresh.length-1].sequence;
+ // Every confirmed cat→block hit makes both people angrier; anger gates which household gadget they reach for.
+ const heat=fresh.reduce((sum,event)=>sum+event.severity,0)*DEF.humans.anger.perSeverity;
+ for(const h of human)h.anger=Math.min(DEF.humans.anger.max,h.anger+heat);
  const eligible=fresh.filter(item=>item.severity>=.18&&roomCats.get(item.catId)?.hp>0&&roomCats.get(item.catId)?.motion.state!=='dead'&&tower.blocks.some(block=>block.id===item.blockId));
  const event=[...eligible].reverse().find(item=>item.severity>=.78)??[...eligible].reverse()[0];
  if(!event)return;const owner=roomCats.get(event.catId),block=tower.blocks.find(item=>item.id===event.blockId),strong=event.severity>=.78;
@@ -1406,18 +1535,20 @@ function updateHumanReactions(dt){
  const responder=human.reduce((best,h)=>!best||Math.hypot(h.x-point[0],h.z-point[2])<Math.hypot(best.x-point[0],best.z-point[2])?h:best,null);
  for(const h of human)h.reaction={catId:event.catId,blockId:event.blockId,blockPoint:point.slice(),severity:event.severity,elapsedMs:0,stage:'flinch',role:strong?(h===responder?'brace':'watch'):'watch',sequence:event.sequence,queued:false};
 }function updateHumans(dt){updateHumanReactions(dt);for(const h of human){h.anim+=dt;h.noticeMs=Math.max(0,h.noticeMs-dt*1000);h.buildSatisfactionMs=Math.max(0,(h.buildSatisfactionMs??0)-dt*1000);h.timer-=dt*1000;
-  const profile=HUMAN_PROFILES[h.id];
-  if(h.mode==='idle'&&h.pendingReactionTargetId!==null&&h.id!==humanBuilderTurnId()){const target=roomCats.get(h.pendingReactionTargetId);h.pendingReactionTargetId=null;
-   if(target?.hp>0&&target.motion.state!=='dead'){h.pattern=profile.patterns[h.attacks%profile.patterns.length];beginHumanAttack(h,target,true);continue;}}
-  if(h.mode==='idle'&&h.id===humanBuilderTurnId())h.pendingReactionTargetId=null;
-  if(h.mode==='idle'&&h.timer<=0){h.pattern=profile.patterns[h.attacks%profile.patterns.length];const config=HUMAN_ATTACKS[h.pattern];
-   const target=[...roomCats.values()].filter(c=>c.hp>0&&(config.battleArea?Math.abs(c.x)<ARENA.halfX+6&&Math.abs(c.z)<ARENA.halfZ+6&&c.y>config.minY:c.y>=config.minY&&c.z>h.z+1.2&&Math.hypot(c.x-h.x,c.z-h.z)<=config.range)).sort((a,b)=>Math.hypot(a.x-h.x,a.z-h.z)-Math.hypot(b.x-h.x,b.z-h.z))[0];
+  h.anger=Math.max(0,h.anger-DEF.humans.anger.decayPerSecond*dt);
+  const builderTurn=humanBuilderTurnId(),myBuildTurn=h.id===builderTurn||human[builderTurn].mode==='refill';
+  if(h.mode==='idle'&&h.pendingReactionTargetId!==null&&!myBuildTurn){const target=roomCats.get(h.pendingReactionTargetId);h.pendingReactionTargetId=null;
+   const action=target?chooseHumanAction(h,target):null;if(action){beginHumanAttack(h,action.target,true);continue;}}
+  if(h.mode==='idle'&&myBuildTurn)h.pendingReactionTargetId=null;
+  if(h.mode==='idle'&&h.timer<=0){const action=chooseHumanAction(h);
    const nextPlan=tower.layers<TOWER.maxLayers?tower.getNextBlockSpec():null,blockedPlan=h.unreachableBuildKey===humanBuildPlanKey(nextPlan);
-   const canBuild=h.id===humanBuilderTurnId()&&tower.layers<TOWER.maxLayers&&tower.scattered<5&&!blockedPlan&&!human.some(other=>other!==h&&other.mode==='build');
+   // The absent (refilling) builder's turn passes to whoever is still at the table.
+   const canBuild=myBuildTurn&&tower.layers<TOWER.maxLayers&&tower.scattered<5&&!blockedPlan&&!human.some(other=>other!==h&&other.mode==='build');
    if(canBuild){startHumanBuild(h);continue;}
-   else if(target)beginHumanAttack(h,target);else h.timer=800;
+   else if(action){if(action.config.ammo&&h.ammo<=0)startHumanRefill(h);else beginHumanAttack(h,action.target);}else h.timer=800;
   }
   if(h.mode==='build')advanceHumanBuild(h,dt);
+  if(h.mode==='refill')advanceHumanRefill(h,dt);
   if(h.mode==='warning'){const config=HUMAN_ATTACKS[h.pattern];
    if(!h.aimLocked){const target=roomCats.get(h.targetId);if(target?.hp>0)h.target=humanAim(h,target);if(h.timer<=config.lockMs)h.aimLocked=true;}
    if(h.timer<=0){h.mode='strike';h.timer=h.strikeMs=config.strikeMs;h.attackApplied=false;}
@@ -1710,7 +1841,7 @@ function updateGame(dt,frame){if(phase!=='play'&&phase!=='collapse')return;
   if(cat.motion.state==='dead'){cat.respawn.leftMs-=dt*1000;if(cat.respawn.leftMs<=0)respawnCat();}
   else updateCat(dt,input);
  });
- updateMobs(dt);for(const appliance of vacuums)appliance.update(dt);updateHumans(dt);updateShockwaves(dt);updateProjectiles(dt);tower.step(dt);syncHumanCarryHands();collectMobsAfterStep();
+ updateMobs(dt);for(const appliance of vacuums)appliance.update(dt);updateHumans(dt);updateShockwaves(dt);updateProjectiles(dt);tower.step(dt);syncHumanCarryHands();collectMobsAfterStep();updateCombos(dt);for(const s of spawners)s.hitMs=Math.max(0,s.hitMs-dt*1000);
  for(const id of roomCats.keys())withCatActor(id,()=>{
   tower.syncCat();if(id!==localCat.id)collectMobsAfterStep();if(cat.motion.state!=='dead')updateCatMotion(dt);
  });
@@ -2036,9 +2167,7 @@ function buildHouse(g){
 
 let cachedHouse=null;function renderHouse(g){if(!cachedHouse){cachedHouse=new HouseScene();buildHouse(cachedHouse);cachedHouse.bake(g)}cachedHouse.render(g);}
 const MOB_STYLE=Object.freeze({
- mouse:{body:rgb('#bd8a64'),belly:rgb('#efdbc0'),ear:rgb('#dfa1a5'),nose:rgb('#c97d8e'),dark:rgb('#664e49')},
- beetle:{body:rgb('#498e80'),shell:rgb('#7ac3a4'),edge:rgb('#254d50'),eye:rgb('#f2ddac')},
- spider:{body:rgb('#80719c'),head:rgb('#514563'),leg:rgb('#484359'),eye:rgb('#f1c38e')}
+ toyMouse:{body:rgb('#9a9fb0'),belly:rgb('#e4e6ee'),ear:rgb('#f0a9b4'),nose:rgb('#c97d8e'),dark:rgb('#4a4f5c'),key:rgb('#f2c24a')}
 });
 function drawMobs(g){for(const mob of sceneView.mobs){
   // Camera-relative distance culling affects only render work: all mob AI,
@@ -2047,13 +2176,13 @@ function drawMobs(g){for(const mob of sceneView.mobs){
   if((pos.x-camera.eye[0])**2+(pos.z-camera.eye[2])**2>39**2)continue;
   const type=mob.type,d=MOB_TYPES[type],p=mob,style=MOB_STYLE[type],rotation=qyaw(mob.yaw);
   const detail=(p.x-camera.eye[0])**2+(p.z-camera.eye[2])**2<18**2;
-  const pace=clamp(mob.speed/d.speed,0,1),cycle=sceneView.displaySeconds*(type==='beetle'?18:12)+mob.id*1.7;
+  const pace=clamp(mob.speed/d.speed,0,1),cycle=sceneView.displaySeconds*12+mob.id*1.7;
   const bounce=Math.sin(cycle)*.025*pace,hit=mob.hitMs>90;
   const part=(x,y,z)=>yawPart([p.x,p.y+bounce,p.z],mob.yaw,x,y,z);
   const orb=(x,y,z,size,color)=>g.draw('sphere',part(x,y,z),size,color,rotation);
-  g.disc([p.x,ARENA.floorY+.06,p.z],d.radius*1.5,COLOR.shadow,.17);
-  if(type==='mouse'){
-   // Pear-shaped fur, round ears and a tapered snout read differently from the cat.
+  g.disc([p.x,p.y-d.radius-.16,p.z],d.radius*1.5,COLOR.shadow,.17);
+  {
+   // A plush wind-up mouse: grey felt body, pink ears, and a brass key spinning on its back.
    orb(0,-.015,-.10,[.40,.29,.54],hit?COLOR.cream:style.body);
    orb(0,-.12,.12,[.31,.15,.38],style.belly);
    orb(0,.08,.38,[.27,.27,.29],hit?COLOR.cream:style.body);
@@ -2072,39 +2201,37 @@ function drawMobs(g){for(const mob of sceneView.mobs){
    const sway=Math.sin(sceneView.displaySeconds*5+mob.id)*(.04+.10*pace);
    const a=part(0,-.04,-.55),b=part(sway,-.07,-.83),c=part(sway*1.7,-.095,-1.03);
    limb(g,a,b,.045,style.ear);limb(g,b,c,.025,style.ear);
-  }else if(type==='beetle'){
-   // Paired wing cases, six feet and bent antennae instead of a featureless bead.
-   orb(0,-.04,-.05,[.33,.15,.40],style.edge);
-   for(const side of [-1,1])orb(side*.15,.055,-.08,[.18,.22,.34],hit?COLOR.cream:style.shell);
-   orb(0,.015,.31,[.24,.16,.20],style.body);
-   for(const side of [-1,1]){
-    if(detail){orb(side*.13,.075,.456,[.061,.073,.052],style.eye);orb(side*.14,.08,.494,[.024,.037,.018],style.edge);
-     const root=part(side*.12,.11,.39),bend=part(side*.20,.25,.54),tip=part(side*.32,.28,.64);
-     limb(g,root,bend,.025,style.edge);limb(g,bend,tip,.02,style.edge);orb(side*.32,.28,.64,[.035,.035,.035],style.eye);}
-    for(let i=0;i<3;i++){const step=Math.sin(cycle+side*Math.PI/2+i*2.1)*.055*pace;
-     const root=part(side*.24,-.06,(i-1)*.20),foot=part(side*.47,-.19+Math.max(0,step),(i-1)*.26+step);
-     if(detail){const knee=part(side*.38,-.02,(i-1)*.24);limb(g,root,knee,.035,style.edge);limb(g,knee,foot,.027,style.edge);}
-     else limb(g,root,foot,.03,style.edge);
-    }
-   }
-  }else{
-   // Raised abdomen and articulated eight-leg stance communicate the hunter role.
-   orb(0,.025,-.18,[.40,.30,.42],hit?COLOR.cream:style.body);
-   orb(0,.00,.30,[.26,.215,.26],style.head);
-   if(detail){orb(0,.21,-.24,[.20,.075,.24],style.head);
-    for(const side of [-1,1]){orb(side*.105,.08,.529,[.075,.087,.055],style.eye);orb(side*.105,.08,.568,[.029,.045,.018],COLOR.dark);
-     orb(side*.22,.10,.426,[.036,.04,.025],style.eye);
-     limb(g,part(side*.085,-.08,.51),part(side*.13,-.16,.61),.035,style.eye);}
-   }
-   for(const side of [-1,1])for(let i=0;i<4;i++){
-    const step=Math.sin(cycle+side*Math.PI/2+i*1.7)*.07*pace;
-    const root=part(side*.23,-.015,(i-1.5)*.13),foot=part(side*.73,-.23+Math.max(0,step),(i-1.5)*.33+step);
-    if(detail){const knee=part(side*.52,.16,(i-1.5)*.26);limb(g,root,knee,.049,style.leg);limb(g,knee,foot,.033,style.leg);}
-    else limb(g,root,foot,.04,style.leg);
-   }
+   // Wind-up key turns with the drive speed; it is the toy's tell.
+   const keySpin=sceneView.displaySeconds*(2+pace*9)+mob.id,keyBase=part(0,.22,-.18),keyTop=part(0,.42,-.20);
+   limb(g,keyBase,keyTop,.028,style.key);
+   g.cube(keyTop,[.19,.035,.05],style.key,qmul(rotation,[0,0,Math.sin(keySpin*.5),Math.cos(keySpin*.5)]));
   }
-  if(mob.hitMs>0)g.ring([p.x,ARENA.floorY+.12,p.z],.65,COLOR.yellow,.7);
+  if(mob.hitMs>0)g.ring([p.x,p.y-d.radius-.10,p.z],.65,COLOR.yellow,.7);
  }}
+// Household bases: display-only props on fixed Rapier colliders; broken state reads at a glance.
+function drawSpawners(g){for(const s of spawners){const [x,z]=s.def.at,y=ARENA.floorY,hit=s.hitMs>0,broken=s.broken,r=s.def.radius;
+ if((x-camera.eye[0])**2+(z-camera.eye[2])**2>48**2)continue;
+ g.disc([x,y+.04,z],r*1.3,COLOR.shadow,.2);
+ const flash=hit?COLOR.cream:null;
+ if(s.def.visual==='dock'){
+  const tilt=broken?qmul(qyaw(.5),[Math.sin(.18),0,0,Math.cos(.18)]):Q();
+  g.cube([x,y+.12,z],[1.9,.24,1.3],flash??COLOR.cream,tilt);g.cube([x,y+.30,z-.3],[1.4,.14,.5],flash??COLOR.navy,tilt);
+  g.orb([x,y+.40,z-.3],[.12,.08,.12],broken?COLOR.dark:(Math.sin(sceneView.displaySeconds*3)>0?COLOR.mint:COLOR.cream));
+  // Power cord: plugged into the wall when intact, yanked loose when broken.
+  const plug=broken?[x+1.6,y+.06,z+1.1]:[x+.95,y+.08,z+1.8];limb(g,[x+.9,y+.16,z+.6],plug,.04,COLOR.dark);g.cube(plug,[.18,.12,.22],COLOR.dark);
+ }else if(s.def.visual==='box'){
+  const q=broken?qmul(qyaw(.35),[0,0,Math.sin(.62),Math.cos(.62)]):Q(),cy=broken?y+.55:y+.55;
+  g.cube([x,cy,z],[2.0,1.1,1.5],flash??COLOR.pink,q);g.cube([x,cy+.02,z],[2.06,.9,1.56],flash??COLOR.cream,q);
+  if(!broken){g.cube([x,y+1.16,z],[2.1,.12,1.6],COLOR.pink);for(let i=0;i<Math.min(3,Math.ceil(s.stock/3));i++)g.orb([x-.6+i*.6,y+1.3,z],[.18,.12,.24],COLOR.cream);}
+  else g.cube([x-1.3,y+.08,z+.9],[2.1,.12,1.6],COLOR.pink,qmul(qyaw(1.1),[Math.sin(.75),0,0,Math.cos(.75)]));
+ }else{
+  const q=broken?[0,0,Math.sin(.7),Math.cos(.7)]:Q(),cy=broken?y+.45:y+.45;
+  g.tube([x,cy,z],[r*2,.9,r*2],flash??COLOR.wood2,q);g.tube([x,cy+.02,z],[r*1.7,.92,r*1.7],flash??COLOR.cream,q);
+  // Toy balls sit in the basket when intact and lie scattered on the floor when it is tipped over.
+  for(let i=0;i<6;i++){const a=i*1.05;const p=broken?[x+1.2+Math.cos(a)*1.4,y+HUMAN_THROW.radius,z+.4+Math.sin(a)*1.1]:[x+Math.cos(a)*.42,y+.75+(i%2)*.3,z+Math.sin(a)*.42];drawToyBall(g,p,1,qyaw(a));}
+ }
+ if(hit)g.ring([x,y+.08,z],r+.3,COLOR.yellow,.7);
+}}
 function axisAngle(axis,angle){const half=angle*.5,sc=Math.sin(half);return [axis[0]*sc,axis[1]*sc,axis[2]*sc,Math.cos(half)];}
 function drawCatTrail(g,c){for(const t of c.trail){const opacity=clamp(t.life/.20,0,1)*t.strength;
  g.draw('sphere',t.p,[.42,.30,.52].map(value=>value*t.scale),c.motion.state==='roll'?COLOR.mint:COLOR.pink,Q(),opacity,1);
@@ -2417,7 +2544,7 @@ function drawHuman(g,h){
  const warning=h.mode==='warning'?clamp(1-h.timer/Math.max(1,h.warningMs),0,1):acting?1:0;
   const strike=h.mode==='strike'?clamp(1-h.timer/Math.max(1,h.strikeMs),0,1):0;
   const groundSlam=(h.pattern==='slam'||h.pattern==='sweep')&&['warning','strike','recover'].includes(h.mode);
-  const breathing=Math.sin(sceneView.displaySeconds*1.7+h.id)*.02,walking=building&&buildPose?.stage==='approach';
+  const breathing=Math.sin(sceneView.displaySeconds*1.7+h.id)*.02,walking=(building&&buildPose?.stage==='approach')||h.mode==='refill';
   const gait=walking?Math.sin(h.anim*8+h.id*Math.PI):0,lightStep=walking?Math.max(0,gait)*.20:Math.sin(sceneView.displaySeconds*1.1+h.id)*.025;
   const reactionLean=reactionLive&&!building?(reaction.stage==='flinch'?-.34:reaction.stage==='brace'?.20:angryFace?-.08:0):0;
   const crouch=humanBuildCrouch(h),lean=humanBuildLean(h)+reactionLean;
@@ -2456,6 +2583,8 @@ function drawHuman(g,h){
    }
   }
   if(h.pattern==='throw'&&side===1&&(acting||recover)){const windup=p(.90,1.60,.29),out=humanThrowOrigin(h);wrist=h.mode==='strike'?windup.map((v,i)=>lerp(v,out[i],Math.min(1,strike*3))):windup;if(!h.attackApplied)drawToyBall(g,wrist);}
+  // Gadget calls are made on a phone held up in the active hand, so the summon reads as an app tap.
+  if(HUMAN_ATTACKS[h.pattern].gadget&&side===activeSide&&(acting||recover)){wrist=torso(side*.55,2.35,.55);g.cube(wrist,[.28*scale*.5,.5*scale*.5,.05*scale*.5],COLOR.dark,qyaw(h.yaw));g.cube(vadd(wrist,yawPart([0,0,0],h.yaw,0,0,-.03*scale)),[.24*scale*.5,.44*scale*.5,.02*scale*.5],acting?COLOR.mint:COLOR.navy,qyaw(h.yaw));}
   const flinchGesture=reactionLive&&reaction.stage==='flinch'&&!building;
   if(flinchGesture)wrist=torso(side*.92,2.88,.28);
   const braceGesture=reactionLive&&reaction.role==='brace'&&reaction.stage==='brace'&&side===freeSide;
@@ -2597,7 +2726,7 @@ function drawWorld({alpha=0}={}){if(!renderer)return;const frameNow=performance.
  }
  // no global reliance on 2D Renderer2D — gamekit's 2D renderer is not used for 3D meshes
  renderHouse(g);
- drawMobs(g);drawVacuums(g);for(const h of human)drawHuman(g,h);
+ drawSpawners(g);drawMobs(g);drawVacuums(g);for(const h of human)drawHuman(g,h);
  drawHumanWarning(g);drawTower(g,c);drawProjectiles(g);
  // When a wall pushes the camera toward the avatar, progressively fade only
  // the local rendered rig so the room remains readable. Rapier body remains.
@@ -2618,12 +2747,13 @@ function drawWorld({alpha=0}={}){if(!renderer)return;const frameNow=performance.
  net.updateLabels(g);
  if(phase==='win'){for(let i=0;i<10;i++){let a=i/10*Math.PI*2;g.orb([Math.cos(a)*2,1.5+Math.sin(seconds*5+i)*.5,Math.sin(a)*2],[.12,.12,.12],i%2?COLOR.yellow:COLOR.pink)}}
  ui.chargeFill.style.width=(cat.charge.held&&cat.charge.elapsedMs<DEF.cat.claw.tapMaxMs?12:Math.round(cat.charge.ratio*100))+'%';ui.chargeButton.classList.toggle('charging',cat.charge.held&&cat.charge.elapsedMs>=DEF.cat.claw.tapMaxMs);ui.jumpFill.style.width=Math.round(cat.jump.ratio*100)+'%';ui.jumpButton.classList.toggle('charging',cat.jump.held);
- const danger=human.some(h=>h.mode==='warning');ui.warning.classList.toggle('show',danger&&phase==='play');const target=tower.nearest(c,1.38);ui.targetText.textContent=cat.charge.held?(cat.charge.elapsedMs<DEF.cat.claw.tapMaxMs?'🐾 지금 놓으면 할퀴기':'💥 '+Math.round(cat.charge.ratio*100)+'% · 놓으면 박치기!'):target?'💥 물리 충돌로 젠가 공략':cat.level<6?'🐁 짧게 눌러 할퀴기':'🏰 식탁으로 올라가 젠가 공략';ui.target.classList.toggle('active',!!target);
+ const danger=human.some(h=>h.mode==='warning');ui.warning.classList.toggle('show',danger&&phase==='play');const target=tower.nearest(c,1.38);ui.targetText.textContent=cat.charge.held?(cat.charge.elapsedMs<DEF.cat.claw.tapMaxMs?'🐾 지금 놓으면 할퀴기':'💥 '+Math.round(cat.charge.ratio*100)+'% · 놓으면 박치기!'):target?'💥 물리 충돌로 젠가 공략':'🏰 식탁으로 올라가 젠가 공략';ui.target.classList.toggle('active',!!target);
+ const combo=cat.combo;ui.combo.classList.toggle('show',combo.count>0&&phase==='play');if(combo.count>0){ui.comboMult.textContent='×'+combo.mult;ui.comboHits.textContent=combo.count+' 연속 타격';ui.comboFill.style.width=clamp(combo.leftMs/DEF.combo.windowMs*100,0,100)+'%';}
  let mobInAim=false;
  for(const mob of sceneView.mobs){const p=mob,dx=p.x-c.x,dz=p.z-c.z,dist=Math.hypot(dx,dz);
   if(dist<3.9&&(dx*Math.sin(cat.aimYaw)+dz*Math.cos(cat.aimYaw))/Math.max(.01,dist)>.48){mobInAim=true;break;}}
  ui.target.classList.toggle('mobFocus',mobInAim);
- for(const h of human){const node=h.id===0?ui.humanA:ui.humanB;if(h.mode==='build'){node.style.display='none';continue;}const p=g.screen(vadd(humanBuildShoulder(h),[0,.65,0]));if(p&&p.x>-120&&p.x<gameCanvas.clientWidth+100){node.style.left=p.x+'px';node.style.top=clamp(p.y,170,gameCanvas.clientHeight-80)+'px';node.style.display='block';node.textContent=h.mode==='warning'?(h.pattern==='throw'?(h.aimLocked?'투척 방향 고정!':'장난감 공 조준 중'):'손바닥 준비!'):h.mode==='recover'?'잠깐 쉬는 중':h.pattern==='throw'&&projectiles.length>=HUMAN_THROW.maxBalls?'공 24개 · 오래된 공 교체':HUMAN_PROFILES[h.id].label;node.classList.toggle('angry',h.mode==='warning'||h.mode==='strike')}else node.style.display='none';}
+ for(const h of human){const node=h.id===0?ui.humanA:ui.humanB;if(h.mode==='build'){node.style.display='none';continue;}const p=g.screen(vadd(humanBuildShoulder(h),[0,.65,0]));if(p&&p.x>-120&&p.x<gameCanvas.clientWidth+100){node.style.left=p.x+'px';node.style.top=clamp(p.y,170,gameCanvas.clientHeight-80)+'px';node.style.display='block';node.textContent=h.mode==='warning'?(h.pattern==='throw'&&h.aimLocked?'투척 방향 고정!':HUMAN_ATTACKS[h.pattern].warningLabel):h.mode==='recover'?'잠깐 쉬는 중':h.mode==='refill'?'🧺 공 가지러 가는 중':h.noticeMs>0?h.speech:HUMAN_PROFILES[h.id].label;node.classList.toggle('angry',h.mode==='warning'||h.mode==='strike')}else node.style.display='none';}
 }
 // GameKit action input, sampled once per fixed tick.
 const samples=Object.fromEntries(['left','right','up','down','charge','jump','dodge'].map(k=>[k,{held:false,pressed:false,released:false}]));
@@ -2674,9 +2804,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewpo
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
-  namespace:'meow-tumble-0.19.0',inputBytes:5,snapshotLimit:15000,
-  inputType:91,snapshotType:92,resetType:93,startType:94,protocol:18});
-const LOBBY_VERSION='meow-tumble-0.19.0';
+  namespace:'meow-tumble-0.20.0',inputBytes:5,snapshotLimit:15000,
+  inputType:91,snapshotType:92,resetType:93,startType:94,protocol:19});
+const LOBBY_VERSION='meow-tumble-0.20.0';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};
@@ -2964,13 +3094,14 @@ const net={
   const actors=[...roomCats].map(([id,c])=>[id,round(c.x),round(c.y),round(c.z),round(c.yaw),Math.round(c.hp),c.level,c.xp,
     round(c.vy),Math.round(c.dash.leftMs),{
       motion:c.motion,speed:round(c.speed),surfaceY:round(c.surfaceY),charge:{...c.charge},jump:{...c.jump},
-      claw:{animation:{...c.claw.animation},side:c.claw.side},invuln:round(c.invuln)}]);
+      claw:{animation:{...c.claw.animation},side:c.claw.side},invuln:round(c.invuln),combo:{count:c.combo.count,mult:c.combo.mult,leftMs:round(c.combo.leftMs),best:c.combo.best}}]);
   const state={t:nowTicks,s:round(seconds),phase,collapse:collapseState,events:combatUI.recent,b:tower.blocks.map(b=>[
      b.id,round(b.p[0]),round(b.p[1]),round(b.p[2]),...b.q.map(round),b.fallen?1:0,b.building?1:0]),
-    v:vacuums.map(v=>{const p=v.body.translation(),a=v.attack;return[v.id,round(p.x),round(p.y),round(p.z),round(v.yaw),a.state,round(a.leftMs),round(a.dx),round(a.dz)]}),
+    v:vacuums.map(v=>{const p=v.body.translation(),a=v.attack;return[v.id,round(p.x),round(p.y),round(p.z),round(v.yaw),a.state,round(a.leftMs),round(a.dx),round(a.dz),v.dead?1:0]}),
     cats:actors,m:mobs.map(m=>{const p=m.body.translation();return[m.id,m.type,round(p.x),round(p.y),round(p.z),m.hp,m.hitMs]}),
-     h:human.map(h=>[h.id,h.mode,h.pattern,round(h.timer),round(h.anim),...h.target.map(round),h.attacks,h.builds,h.targetId,h.aimLocked?1:0,{plan:h.buildPlan??null,done:h.buildDone,x:round(h.x),y:round(h.y),z:round(h.z),yaw:round(h.yaw),stage:h.buildStage,stageMs:round(h.buildStageMs),hand:h.handTarget??null,gripId:h.grip?.blockId??null,reaction:h.reaction?{...h.reaction,elapsedMs:round(h.reaction.elapsedMs)}:null,pendingReactionTargetId:h.pendingReactionTargetId??null,satisfactionMs:round(h.buildSatisfactionMs??0)}]),
+     h:human.map(h=>[h.id,h.mode,h.pattern,round(h.timer),round(h.anim),...h.target.map(round),h.attacks,h.builds,h.targetId,h.aimLocked?1:0,{plan:h.buildPlan??null,done:h.buildDone,x:round(h.x),y:round(h.y),z:round(h.z),yaw:round(h.yaw),stage:h.buildStage,stageMs:round(h.buildStageMs),hand:h.handTarget??null,gripId:h.grip?.blockId??null,reaction:h.reaction?{...h.reaction,elapsedMs:round(h.reaction.elapsedMs)}:null,pendingReactionTargetId:h.pendingReactionTargetId??null,satisfactionMs:round(h.buildSatisfactionMs??0),anger:round(h.anger),ammo:h.ammo,speech:h.speech,noticeMs:round(h.noticeMs)}]),
     p:projectiles.map(p=>[p.id,p.owner,...p.p.map(round),...p.q.map(round),p.sleeping?1:0]),throwStats,
+    sp:spawners.map(s=>[s.id,s.hp,s.broken?1:0,s.stock,s.used,round(s.hitMs)]),
     n:tower.layers,f:tower.scattered,k:kills,w:shockwaves.map(w=>[w.id,round(w.x),round(w.z),round(w.r),round(w.maxRadius),w.pattern,round(w.age)])};
   const raw=new TextEncoder().encode(JSON.stringify(state));if(raw.length+2>NET_DEF.snapshotLimit){console.warn('게임 상태가 패킷 예산 초과',raw.length);return;}
   const out=new Uint8Array(raw.length+2);out[0]=NET_DEF.snapshotType;out[1]=NET_DEF.protocol;out.set(raw,2);
@@ -2980,16 +3111,19 @@ const net={
   if(!this.room||this.isHost)return;
   const snapshotDt=Math.max(1/NET_DEF.stepHz,(state.t-nowTicks)/NET_DEF.stepHz);
   nowTicks=state.t;seconds=state.s;
-  for(const [id,x,y,z,yaw,mode,leftMs,dx,dz] of state.v){const v=vacuums.find(v=>v.id===id);if(!v)continue;
-   v.body.setTranslation({x,y,z},true);v.yaw=yaw;Object.assign(v.attack,{state:mode,leftMs,dx,dz});
+  for(const row of state.sp??[]){const [id,hp,broken,stock,used,hitMs]=row,s=spawnerById(id);if(!s)continue;s.hp=hp;s.broken=!!broken;s.stock=stock;s.used=used;s.hitMs=hitMs;}
+  const liveVacuums=new Set();
+  for(const [id,x,y,z,yaw,mode,leftMs,dx,dz,dead] of state.v){const v=ensureVacuum(id);liveVacuums.add(id);
+   v.body.setTranslation({x,y,z},true);v.yaw=yaw;v.dead=!!dead;Object.assign(v.attack,{state:mode,leftMs,dx,dz});
   }
+  for(let i=vacuums.length-1;i>=0;i--){if(!liveVacuums.has(vacuums[i].id)){tower.world.removeRigidBody(vacuums[i].body);vacuums.splice(i,1);}}
   const existing=new Map(tower.blocks.map(b=>[b.id,b]));
    for(const row of state.b){const [id,x,y,z,qx,qy,qz,qw,fallen,building]=row;let b=existing.get(id);
     if(!b){if(tower.blocks.length>=TOWER.maxLayers*3)continue;b=tower.addSingleBlock();if(!b)continue;}
      b.p=[x,y,z];b.q=[qx,qy,qz,qw];b.fallen=!!fallen;b.building=!!building;
   }
   tower.scattered=state.f;tower.layers=state.n;
-  if(state.k)kills={mouse:state.k.mouse??0,beetle:state.k.beetle??0,spider:state.k.spider??0};
+  if(state.k)kills={toyMouse:state.k.toyMouse??0};
   // Ground-wave visuals are view-only on guests; the host has already resolved the true impulse.
   if(Array.isArray(state.w))shockwaves=state.w.map(w=>({id:w[0],x:w[1],z:w[2],r:w[3],maxRadius:w[4],pattern:w[5],age:w[6]}));
   for(const row of state.cats){
@@ -3004,6 +3138,7 @@ const net={
    actor.dash.leftMs=dashMs;actor.charge={...visual.charge};actor.jump={...visual.jump};
    actor.motion={...visual.motion};if(actor===localCat&&died)mobileViewport.resetInput?.();actor.speed=visual.speed;actor.surfaceY=visual.surfaceY;
    actor.claw.animation={...visual.claw.animation};actor.claw.side=visual.claw.side;actor.invuln=visual.invuln;
+   if(visual.combo)Object.assign(actor.combo,visual.combo);
   }
   const alive=new Set();
   for(const row of state.m){const [id,type,x,y,z,hp,hitMs]=row;alive.add(id);
@@ -3019,7 +3154,7 @@ const net={
   }
   for(let i=mobs.length-1;i>=0;i--){if(!alive.has(mobs[i].id)){combatUI.unregister(mobs[i]);tower.world.removeRigidBody(mobs[i].body);mobs.splice(i,1);}}
   for(const row of state.h){const h=human[row[0]];if(!h)continue;
-    [h.id,h.mode,h.pattern,h.timer,h.anim,h.target[0],h.target[1],h.target[2],h.attacks,h.builds,h.targetId,h.aimLocked]=row;const visual=row[12];h.buildPlan=visual.plan;h.buildDone=visual.done;h.x=visual.x??h.x;h.y=visual.y??h.y;h.z=visual.z??h.z;h.yaw=visual.yaw??h.yaw;h.buildStage=visual.stage??null;h.buildStageMs=visual.stageMs??0;h.handTarget=visual.hand??null;h.remoteGripId=visual.gripId??null;h.reaction=visual.reaction?{...visual.reaction}:null;h.pendingReactionTargetId=visual.pendingReactionTargetId??null;h.buildSatisfactionMs=visual.satisfactionMs??0;
+    [h.id,h.mode,h.pattern,h.timer,h.anim,h.target[0],h.target[1],h.target[2],h.attacks,h.builds,h.targetId,h.aimLocked]=row;const visual=row[12];h.buildPlan=visual.plan;h.buildDone=visual.done;h.x=visual.x??h.x;h.y=visual.y??h.y;h.z=visual.z??h.z;h.yaw=visual.yaw??h.yaw;h.buildStage=visual.stage??null;h.buildStageMs=visual.stageMs??0;h.handTarget=visual.hand??null;h.remoteGripId=visual.gripId??null;h.reaction=visual.reaction?{...visual.reaction}:null;h.pendingReactionTargetId=visual.pendingReactionTargetId??null;h.buildSatisfactionMs=visual.satisfactionMs??0;h.anger=visual.anger??0;h.ammo=visual.ammo??h.ammo;h.speech=visual.speech??h.speech;h.noticeMs=visual.noticeMs??0;
    h.warningMs=HUMAN_ATTACKS[h.pattern].warningMs;h.strikeMs=HUMAN_ATTACKS[h.pattern].strikeMs;
   }
   projectiles=state.p.map(([id,owner,x,y,z,qx,qy,qz,qw,sleeping])=>({id,owner,p:[x,y,z],q:[qx,qy,qz,qw],sleeping:!!sleeping}));throwStats=state.throwStats;
@@ -3190,14 +3325,17 @@ async function main(){try{
  document.querySelector('#error').textContent=String(error.stack||error);
  document.querySelector('#error').classList.add('show');console.error(error);}}
 if(new URLSearchParams(location.search).get('debug')==='1'){window.__meowTumble={get state(){return{product:"와르르냥 / Meow Tumble",version:DEF.version,build:DEF.build,phase,seconds,fallen:tower.scattered,total:tower.blocks.length,movingBlocks:tower.movingBlocks,collapse:collapseState?{...collapseState}:null,
- level:cat?.level,xp:cat?.xp,mass:cat?.mass,hp:cat?.hp,animation:cat?.motion?.state,animationMs:cat?.motion?.elapsedMs,maxHp:DEF.cat.maxHp,kills:{...kills},vacuums:vacuums.map(v=>({id:v.id,state:v.attack.state,leftMs:v.attack.leftMs,cooldownMs:v.attack.cooldownMs,p:v.body.translation()})),mobs:mobs.length,zone:cat?zoneAt(cat.x,cat.z):null,respawning:cat?.motion?.state==='dead',cat:cat?{x:cat.x,z:cat.z,y:cat.y,yaw:cat.yaw,
+ level:cat?.level,xp:cat?.xp,mass:cat?.mass,hp:cat?.hp,animation:cat?.motion?.state,animationMs:cat?.motion?.elapsedMs,maxHp:DEF.cat.maxHp,kills:{...kills},combo:cat?{count:cat.combo.count,mult:cat.combo.mult,leftMs:cat.combo.leftMs,best:cat.combo.best,config:DEF.combo}:null,spawners:spawners.map(s=>({id:s.id,hp:s.hp,broken:s.broken,stock:s.stock,used:s.used,at:s.def.at.slice()})),vacuums:vacuums.map(v=>({id:v.id,state:v.attack.state,leftMs:v.attack.leftMs,cooldownMs:v.attack.cooldownMs,dead:v.dead,batteryMs:v.batteryMs,p:v.body.translation()})),mobs:mobs.length,mobList:mobs.map(m=>{const p=m.body.translation();return{id:m.id,type:m.type,hp:m.hp,state:m.ai.state,waypoint:m.ai.waypoint,x:p.x,y:p.y,z:p.z};}),zone:cat?zoneAt(cat.x,cat.z):null,respawning:cat?.motion?.state==='dead',cat:cat?{x:cat.x,z:cat.z,y:cat.y,yaw:cat.yaw,
  knockX:cat.knockX,knockZ:cat.knockZ,vy:cat.vy}:null,camera:camera?{yaw:camera.yaw,pitch:camera.pitch,eye:camera.eye.slice()}:null,
  impactGraceMs:cat?.impactGraceMs,unwedge:cat?.unwedge?{blockedMs:cat.unwedge.blockedMs,cooldownMs:cat.unwedge.cooldownMs,recoveries:cat.unwedge.recoveries,lastDirection:cat.unwedge.lastDirection?.slice()??null}:null,controls:{lookPointer:look.id,chargeLookPointer:look.chargeId,joyPointer:joy.id},layers:tower.layers,maxLayers:TOWER.maxLayers,nextBuilder:humanBuilderTurnId(),activeBodies:tower.blocks.length-tower.sleeperCount,
- humans:(human??[]).map(h=>{const id=h.grip?.blockId??h.remoteGripId??h.buildPlan?.blockId??null,block=id===null?null:tower.blocks.find(b=>b.id===id),shoulder=humanBuildShoulder(h),slam= (h.pattern==='slam'||h.pattern==='sweep')&&['warning','strike','recover'].includes(h.mode);return{id:h.id,label:HUMAN_PROFILES[h.id].label,pattern:h.pattern,mode:h.mode,target:h.target.slice(),aimLocked:h.aimLocked,height:HUMAN_MODEL.height,scale:HUMAN_MODEL.scale,x:h.x,y:h.y,z:h.z,yaw:h.yaw,buildStage:h.buildStage,buildDone:h.buildDone,lastBuildAbort:h.lastBuildAbort??null,builds:h.builds,attacks:h.attacks,attackTimer:['warning','strike','recover'].includes(h.mode)?h.timer:null,blockId:id,blockMass:block?.mass??null,blockPosition:block?.p.slice()??null,blockBuilding:block?.building??false,handTarget:h.handTarget?.slice()??null,armReachLimit:HUMAN_BUILD.armUpper+HUMAN_BUILD.armForearm,handDistance:h.handTarget?len(vsub(h.handTarget,shoulder)):null,bodyLean:humanBuildLean(h),bodyCrouch:humanBuildCrouch(h),attackPending:h.pendingReactionTargetId,slamPoint:slam?humanGroundSlamPoint(h):null,slamWrist:slam?humanGroundSlamWrist(h):null,reaction:h.reaction?{...h.reaction}:null};}),towerBlocks:tower.blocks.map(b=>({id:b.id,mass:b.mass,p:b.p.slice(),building:b.building,fallen:b.fallen})),projectiles:projectiles.map(p=>({id:p.id,owner:p.owner,p:p.p.slice(),q:p.q.slice(),sleeping:p.sleeping})),impactDamage:{config:IMPACT_DAMAGE,events:collisionDamage.events,decisions:collisionDamage.decisions,catBlockEvents:collisionDamage.catBlockEvents,pairs:collisionDamage.pairs.size},throwPhysics:{kind:'toy-ball',radius:HUMAN_THROW.radius,reference:throwReference(),mass:HUMAN_THROW.mass,speed:HUMAN_THROW.speed,maxBalls:HUMAN_THROW.maxBalls,stats:throwStats},
+ humans:(human??[]).map(h=>{const id=h.grip?.blockId??h.remoteGripId??h.buildPlan?.blockId??null,block=id===null?null:tower.blocks.find(b=>b.id===id),shoulder=humanBuildShoulder(h),slam= (h.pattern==='slam'||h.pattern==='sweep')&&['warning','strike','recover'].includes(h.mode);return{id:h.id,label:HUMAN_PROFILES[h.id].label,pattern:h.pattern,mode:h.mode,anger:h.anger,ammo:h.ammo,refill:h.refill?{...h.refill}:null,available:HUMAN_PROFILES[h.id].patterns.filter(p=>humanPatternAvailable(h,p)),target:h.target.slice(),aimLocked:h.aimLocked,height:HUMAN_MODEL.height,scale:HUMAN_MODEL.scale,x:h.x,y:h.y,z:h.z,yaw:h.yaw,buildStage:h.buildStage,buildDone:h.buildDone,lastBuildAbort:h.lastBuildAbort??null,builds:h.builds,attacks:h.attacks,attackTimer:['warning','strike','recover'].includes(h.mode)?h.timer:null,blockId:id,blockMass:block?.mass??null,blockPosition:block?.p.slice()??null,blockBuilding:block?.building??false,handTarget:h.handTarget?.slice()??null,armReachLimit:HUMAN_BUILD.armUpper+HUMAN_BUILD.armForearm,handDistance:h.handTarget?len(vsub(h.handTarget,shoulder)):null,bodyLean:humanBuildLean(h),bodyCrouch:humanBuildCrouch(h),attackPending:h.pendingReactionTargetId,slamPoint:slam?humanGroundSlamPoint(h):null,slamWrist:slam?humanGroundSlamWrist(h):null,reaction:h.reaction?{...h.reaction}:null};}),towerBlocks:tower.blocks.map(b=>({id:b.id,mass:b.mass,p:b.p.slice(),building:b.building,fallen:b.fallen})),projectiles:projectiles.map(p=>({id:p.id,owner:p.owner,p:p.p.slice(),q:p.q.slice(),sleeping:p.sleeping})),impactDamage:{config:IMPACT_DAMAGE,events:collisionDamage.events,decisions:collisionDamage.decisions,catBlockEvents:collisionDamage.catBlockEvents,pairs:collisionDamage.pairs.size},throwPhysics:{kind:'toy-ball',radius:HUMAN_THROW.radius,reference:throwReference(),mass:HUMAN_THROW.mass,speed:HUMAN_THROW.speed,maxBalls:HUMAN_THROW.maxBalls,stats:throwStats},
  shockwaves:shockwaves.length,impulses:tower.totalImpulses,physicsEngine:'Rapier 3D 0.21.0',physicsVersion:DEF.version,motion:cat?.motion?.state,motionElapsedMs:cat?.motion?.elapsedMs,humanHits:cat?.humanHits,successfulRolls:cat?.successfulRolls,landings:cat?.landings,chargePercent:cat?Math.round(cat.charge.ratio*100):0,chargeHeld:cat?.charge.held,clawCooldownMs:cat?.claw.cooldown.leftMs,clawAnimationMs:cat?.claw.animation.leftMs,clawHitPending:cat?.claw.pendingHit,clawAttacks:cat?.claw.attacks,clawLastHits:cat?.claw.lastHits,jumpHeld:cat?.jump.held,jumpPercent:cat?Math.round(cat.jump.ratio*100):0,jumpLaunchVelocity:cat?.jump.lastVelocity,headbuttBaseSpeed:cat?headbuttBaseSpeed(cat.level):null,dashVelocity:cat?.dash.velocity,dashCooldownMs:cat?.dash.cooldown.leftMs,
  catBodyMass:tower.catBody?.mass(),contacts:tower.contacts,loopRunning:simLoop.running,drawCalls:renderer?.drawCalls,
  mobVitals:[...combatUI.plates].filter(([,p])=>p.mob).map(([id,p])=>({id,type:p.type,hp:p.mob.hp,maxHp:MOB_TYPES[p.type].maxHp,display:p.node.style.display})),
  combatFeedback:{pending:combatUI.pending.length,activeNumbers:combatUI.floats.filter(f=>f.endMs>performance.now()).length,activeBursts:combatUI.bursts.length,dropped:combatUI.dropped}}},
- start,reset:()=>start(),get actors(){return [...roomCats].map(([id,c])=>({id,x:c.x,z:c.z,y:c.y,level:c.level,hp:c.hp,charge:c.charge.ratio}));},get gl(){return renderer?.gl},get network(){return {connected:!!net.room,isHost:net.isHost,players:net.room?.players.length??1,room:net.room?.room??null,receivedTick:net.snapshotVersion,pin:GAMEKIT_PIN,sdkVersion:GAMEKIT_VERSION,sourceCommit:GAMEKIT_SOURCE_COMMIT,distCommit:GAMEKIT_PIN,manifestSha256:GAMEKIT_MANIFEST_SHA256}}};}
+ start,reset:()=>start(),
+ // Debug-only scene parameters for deterministic captures; the host simulation still runs every rule.
+ inject:{anger(value){for(const h of human??[])h.anger=clamp(value,0,DEF.humans.anger.max);},ammo(id,value){const h=human?.[id];if(h)h.ammo=Math.max(0,value|0);},breakSpawner(id){const s=spawnerById(id);if(s&&!s.broken&&cat){s.hp=1;damageSpawner(s,cat,{x:s.def.at[0],y:ARENA.floorY+.4,z:s.def.at[1]});}}},
+ get actors(){return [...roomCats].map(([id,c])=>({id,x:c.x,z:c.z,y:c.y,level:c.level,hp:c.hp,charge:c.charge.ratio}));},get gl(){return renderer?.gl},get network(){return {connected:!!net.room,isHost:net.isHost,players:net.room?.players.length??1,room:net.room?.room??null,receivedTick:net.snapshotVersion,pin:GAMEKIT_PIN,sdkVersion:GAMEKIT_VERSION,sourceCommit:GAMEKIT_SOURCE_COMMIT,distCommit:GAMEKIT_PIN,manifestSha256:GAMEKIT_MANIFEST_SHA256}}};}
 main();
 

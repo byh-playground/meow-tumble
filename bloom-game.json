@@ -5,10 +5,11 @@
   "en": "MEOW TUMBLE",
   "genre": "simulation",
   "tags": ["3D 물리", "고양이", "1–4인"],
-  "desc": "고양이를 성장시켜 젠가 탑을 무너뜨리는 3D 물리 게임입니다.",
+  "desc": "젠가를 연속으로 들이받는 콤보로 성장해 사람의 방해를 뚫고 탑을 무너뜨리는 3D 물리 게임입니다.",
   "points": [
     "물리 기반 젠가 탑 붕괴",
-    "고양이 사냥·성장",
+    "탑 타격 콤보 성장",
+    "화난 사람의 가전·장난감 방해",
     "최대 4인 플레이"
   ],
   "showcase": "https://byh-playground.github.io/meow-tumble/#/showcase"

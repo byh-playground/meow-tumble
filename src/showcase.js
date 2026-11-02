@@ -11,7 +11,7 @@ const SHOWCASE = installShowcase({
     "action": "chapter",
     "index": 0,
     "title": "작은 고양이의 집안 모험",
-    "caption": "사냥하고 구르며 성장해 거대한 탑으로 향합니다."
+    "caption": "젠가를 들이받아 콤보로 성장하며 거대한 탑으로 향합니다."
   },
   {
     "atMs": 500,
