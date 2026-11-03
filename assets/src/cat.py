@@ -160,11 +160,12 @@ def paw(bm):
         if v.co.y < -.55 and v.co.z > .1: colours[v] = fixed(.99, .66, .72)
     return colours
 
-objs = [build('catBody', body), build('catHead', head), build('catEar', ear), build('catPaw', paw)]
-for o in objs: o.select_set(True)
-bpy.context.view_layer.objects.active = objs[0]
-win = bpy.context.window_manager.windows[0]
-with bpy.context.temp_override(window=win, screen=win.screen, scene=bpy.context.scene, view_layer=bpy.context.view_layer, active_object=objs[0], selected_objects=objs):
-    bpy.ops.export_scene.gltf(filepath=r'C:\projects\meow-tumble\assets\models\cat.glb', export_format='GLB', use_selection=True, export_apply=True,
-                              export_vertex_color='ACTIVE', export_active_vertex_color_when_no_material=True, export_materials='NONE')
-print({o.name: (len(o.data.vertices), tuple(round(x, 2) for x in o.dimensions)) for o in objs})
+if not globals().get('NO_EXPORT'):
+    objs = [build('catBody', body), build('catHead', head), build('catEar', ear), build('catPaw', paw)]
+    for o in objs: o.select_set(True)
+    bpy.context.view_layer.objects.active = objs[0]
+    win = bpy.context.window_manager.windows[0]
+    with bpy.context.temp_override(window=win, screen=win.screen, scene=bpy.context.scene, view_layer=bpy.context.view_layer, active_object=objs[0], selected_objects=objs):
+        bpy.ops.export_scene.gltf(filepath=r'C:\projects\meow-tumble\assets\models\cat.glb', export_format='GLB', use_selection=True, export_apply=True,
+                                  export_vertex_color='ACTIVE', export_active_vertex_color_when_no_material=True, export_materials='NONE')
+    print({o.name: (len(o.data.vertices), tuple(round(x, 2) for x in o.dimensions)) for o in objs})

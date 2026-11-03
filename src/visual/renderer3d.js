@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { Q, compose } from './math3d.js';
 import { COLOR, meshCube, meshSphere, meshCylinder, meshRing, meshDisc } from './geometry.js';
 import { MATERIALS, makeHouseAtlas } from './house.js';
@@ -10,23 +11,31 @@ import { MATERIALS, makeHouseAtlas } from './house.js';
 THREE.ColorManagement.enabled = false;
 
 const VERTEX = `
-varying vec3 vNormal;varying vec3 vWorld;varying vec2 vUv;varying vec4 vColor;varying float vTile;varying float vUnlit;varying vec4 vDetail;
+varying vec3 vNormal;varying vec3 vWorld;varying vec2 vUv;varying vec4 vColor;varying float vTile;varying float vUnlit;varying vec4 vDetail;varying vec4 vColor2;
+#ifndef STATIC
+#include <skinning_pars_vertex>
+#endif
 #ifdef STATIC
 attribute vec4 tint;attribute float tile;
 #else
-uniform vec4 col;uniform float unlit;uniform float dynamicTile;uniform vec2 uvScale;attribute vec4 detail;
+uniform vec4 col;uniform vec4 col2;uniform float unlit;uniform float dynamicTile;uniform vec2 uvScale;attribute vec4 detail;
 #endif
 void main(){
 #ifdef STATIC
- vec4 wp=vec4(position,1.);vNormal=normal;vUv=uv;vColor=tint;vTile=tile;vUnlit=0.;vDetail=vec4(1.);
+ vec4 wp=vec4(position,1.);vNormal=normal;vUv=uv;vColor=tint;vTile=tile;vUnlit=0.;vDetail=vec4(1.);vColor2=tint;
 #else
- vec4 wp=modelMatrix*vec4(position,1.);vNormal=mat3(modelMatrix)*normal;vUv=uv*uvScale;vColor=col;vTile=dynamicTile;vUnlit=unlit;vDetail=detail;
+ vec3 objectNormal=vec3(normal);
+#include <skinbase_vertex>
+#include <skinnormal_vertex>
+ vec3 transformed=vec3(position);
+#include <skinning_vertex>
+ vec4 wp=modelMatrix*vec4(transformed,1.);vNormal=mat3(modelMatrix)*objectNormal;vUv=uv*uvScale;vColor=col;vColor2=col2;vTile=dynamicTile;vUnlit=unlit;vDetail=detail;
 #endif
  vWorld=wp.xyz;gl_Position=projectionMatrix*viewMatrix*wp;}`;
 
 const FRAGMENT = `
 uniform sampler2D atlas;
-varying vec3 vNormal;varying vec3 vWorld;varying vec2 vUv;varying vec4 vColor;varying float vTile;varying float vUnlit;varying vec4 vDetail;
+varying vec3 vNormal;varying vec3 vWorld;varying vec2 vUv;varying vec4 vColor;varying float vTile;varying float vUnlit;varying vec4 vDetail;varying vec4 vColor2;
 void main(){vec3 nn=normalize(vNormal);float sun=max(0.,dot(nn,normalize(vec3(-.4,.89,.52))));
 float illum=.70+.31*sun;float indirect=.045*exp(-length(vWorld.xz-vec2(0.,0.))/24.);
 float lamp=0.;
@@ -38,11 +47,20 @@ vec3 pigment=vec3(1.);
 if(vTile>-.5){float t=floor(vTile+.5);
 vec2 tiled=vec2(mod(t,4.),floor(t/4.));
 vec2 fracUv=fract(vUv);pigment=texture2D(atlas,(tiled+mix(vec2(.012),vec2(.988),fracUv))/4.).rgb;}
-// Detail alpha is a tint mask: 1 takes the caller's coat colour, 0 keeps the authored colour (eyes, nose, inner ear).
-vec3 base=mix(vDetail.rgb,vDetail.rgb*vColor.rgb,vDetail.a);
+// Detail alpha is a tint mask: 1 takes the caller's coat colour, .5 the accent colour (stripes), 0 keeps the authored colour.
+float m0=smoothstep(.75,.95,vDetail.a),m1=smoothstep(.2,.4,vDetail.a)*(1.-m0);
+vec3 base=mix(vDetail.rgb,mix(vDetail.rgb*vColor.rgb,vDetail.rgb*vColor2.rgb,m1/max(.001,m0+m1)),m0+m1);
 vec3 color=base*pigment*mix(illum,1.,vUnlit);
 color=pow(max(color,vec3(.00001)),vec3(.96));
 gl_FragColor=vec4(color,vColor.a);}`;
+
+/* glb COLOR_0 -> `detail` (rgb + tint mask alpha); geometry without authored colour is fully tinted white. */
+function colourToDetail(g) {
+  const count = g.attributes.position.count, color = g.attributes.color, detail = new Float32Array(count * 4).fill(1);
+  if (color) for (let i = 0; i < count; i++) { detail[i * 4] = color.getX(i); detail[i * 4 + 1] = color.getY(i); detail[i * 4 + 2] = color.getZ(i); detail[i * 4 + 3] = color.itemSize === 4 ? color.getW(i) : 1; }
+  if (color) g.deleteAttribute('color');
+  g.setAttribute('detail', new THREE.BufferAttribute(detail, 4));
+}
 
 function toGeometry(source) {
   const g = new THREE.BufferGeometry();
@@ -72,7 +90,7 @@ class Toon3D {
     const material = (isStatic, depthWrite) => new THREE.ShaderMaterial({
       vertexShader: VERTEX, fragmentShader: FRAGMENT, defines: isStatic ? { STATIC: 1 } : {},
       uniforms: {
-        atlas: { value: this.atlas }, col: { value: new THREE.Vector4(1, 1, 1, 1) }, unlit: { value: 0 },
+        atlas: { value: this.atlas }, col: { value: new THREE.Vector4(1, 1, 1, 1) }, col2: { value: new THREE.Vector4(1, 1, 1, 1) }, unlit: { value: 0 },
         dynamicTile: { value: -1 }, uvScale: { value: new THREE.Vector2(1, 1) },
       },
       transparent: true, depthTest: true, depthWrite, side: THREE.FrontSide,
@@ -104,15 +122,48 @@ class Toon3D {
       if (!meshes.length) throw new Error(`${url}: 메시가 없습니다.`);
       for (const mesh of meshes) {
         const name = meshes.length === 1 ? key : mesh.name, g = mesh.geometry.clone(); g.applyMatrix4(mesh.matrixWorld);
-        const count = g.attributes.position.count, color = g.attributes.color;
-        const detail = new Float32Array(count * 4).fill(1);
-        if (color) for (let i = 0; i < count; i++) { detail[i * 4] = color.getX(i); detail[i * 4 + 1] = color.getY(i); detail[i * 4 + 2] = color.getZ(i); detail[i * 4 + 3] = color.itemSize === 4 ? color.getW(i) : 1; }
-        g.deleteAttribute('color'); g.setAttribute('detail', new THREE.BufferAttribute(detail, 4));
+        const count = g.attributes.position.count; colourToDetail(g);
         if (!g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Array(count * 2).fill(0), 2));
         g.computeBoundingBox(); const size = g.boundingBox.getSize(new THREE.Vector3());
         this.modelSize[name] = [size.x, size.y, size.z]; this.geometry[name] = g; this.pool[name] = { meshes: [], used: 0 };
       }
     }));
+  }
+
+  /* Skinned characters: loadRigs registers a glb (mesh + armature + clips); createRig clones one per actor.
+     The mesh is skinned in rig space ('detached' bind), so the caller supplies the whole world matrix per draw. */
+  async loadRigs(urls) {
+    const loader = new GLTFLoader(); this.rigSources ??= {};
+    await Promise.all(Object.entries(urls).map(async ([key, url]) => {
+      const gltf = await loader.loadAsync(url); this.rigSources[key] = gltf;
+      gltf.scene.traverse(node => { if (node.isSkinnedMesh) { colourToDetail(node.geometry); if (!node.geometry.attributes.uv) node.geometry.setAttribute('uv', new THREE.Float32BufferAttribute(new Array(node.geometry.attributes.position.count * 2).fill(0), 2)); } });
+    }));
+  }
+
+  createRig(key) {
+    const source = this.rigSources[key], root = SkeletonUtils.clone(source.scene); let mesh = null;
+    root.traverse(node => { if (!mesh && node.isSkinnedMesh) mesh = node; });
+    if (!mesh) throw new Error(`${key}: 스킨드 메시가 없습니다.`);
+    root.updateMatrixWorld(true); mesh.parent.remove(mesh);
+    mesh.bindMode = 'detached'; mesh.material = this.materials.write; mesh.matrixAutoUpdate = false; mesh.matrixWorldAutoUpdate = false;
+    mesh.onBeforeRender = (renderer, scene, camera, geometry, mat) => {
+      const d = mesh.userData, u = mat.uniforms;
+      u.col.value.set(d.r, d.g, d.b, d.a); u.col2.value.set(d.r2, d.g2, d.b2, d.a); u.unlit.value = 0; u.dynamicTile.value = -1; u.uvScale.value.set(1, 1);
+      mat.uniformsNeedUpdate = true;
+    };
+    this.addStatic(mesh);
+    const mixer = new THREE.AnimationMixer(root), actions = {};
+    for (const clip of source.animations) { const action = mixer.clipAction(clip); action.play(); action.setEffectiveWeight(0); actions[clip.name] = action; }
+    return { root, mesh, mixer, actions, clips: Object.fromEntries(source.animations.map(c => [c.name, c.duration])) };
+  }
+
+  /* Apply the current action weights/times, then draw the mesh with a caller-built 4x4 world matrix. */
+  drawRig(rig, matrix, col, accent, alpha = 1) {
+    rig.mixer.update(0); rig.root.updateMatrixWorld(true);
+    const mesh = rig.mesh, d = mesh.userData;
+    mesh.matrixWorld.fromArray(matrix); mesh.material = this.depthWrite ? this.materials.write : this.materials.noWrite;
+    d.r = col[0]; d.g = col[1]; d.b = col[2]; d.r2 = accent[0]; d.g2 = accent[1]; d.b2 = accent[2]; d.a = (col[3] ?? 1) * alpha * this.localOpacity;
+    this.show(mesh);
   }
 
   resize() {
@@ -148,7 +199,7 @@ class Toon3D {
       mesh.frustumCulled = false; mesh.matrixAutoUpdate = false; mesh.matrixWorldAutoUpdate = false;
       mesh.onBeforeRender = (renderer, scene, camera, geometry, mat) => {
         const d = mesh.userData, u = mat.uniforms;
-        u.col.value.set(d.r, d.g, d.b, d.a); u.unlit.value = d.unlit; u.dynamicTile.value = d.tile; u.uvScale.value.set(d.uvx, d.uvy);
+        u.col.value.set(d.r, d.g, d.b, d.a); u.col2.value.set(d.r2 ?? d.r, d.g2 ?? d.g, d.b2 ?? d.b, d.a); u.unlit.value = d.unlit; u.dynamicTile.value = d.tile; u.uvScale.value.set(d.uvx, d.uvy);
         mat.uniformsNeedUpdate = true;
       };
       this.scene.add(mesh); entry.meshes.push(mesh);
