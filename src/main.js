@@ -278,7 +278,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
  const DEF={
-    build:'20261103-cat-model-v0250',version:'0.25.0',
+    build:'20261103-human-model-v0260',version:'0.26.0',
   // One continuous game: after each collapse the people rebuild with heavier wood, and the cat starts over
   // at LV1 keeping a permanent mass bonus from the chains it landed. No result screen, no mode, no timer.
   stage:{blockMassGrowth:1.5,legacyMassPerCombo:1.1,clearIntervalMs:140,layerIntervalMs:900},
@@ -2714,12 +2714,11 @@ function drawHuman(g,h){
  for(const side of [-1,1]){
    const hip=p(side*.27,1.51-.42*crouch,0),knee=p(side*.30,.92-.22*crouch,.52*crouch+lightStep),ankle=p(side*.30,.20,.28*crouch+gait*.16);
   limb(g,hip,knee,.22*scale,style.pants);limb(g,knee,ankle,.205*scale,style.pants);
-   g.cube(p(side*.30,.11,.18+.28*crouch+gait*.15),[.48*scale,.21*scale,.77*scale],style.shoe,qyaw(h.yaw));
+   g.draw('humanShoe',p(side*.30,.11,.18+.28*crouch+gait*.15),[scale,scale,scale],style.shoe,qyaw(h.yaw));
  }
    const torso=(a,b,c)=>humanBuildPoint(h,a,b,c,lean,crouch),torsoQ=quaternionMultiply(qyaw(h.yaw),[Math.sin(lean*.5),0,0,Math.cos(lean*.5)]);
-   g.cube(p(0,1.55-.42*crouch,0),[.98*scale,.52*scale,.52*scale],style.pants,qyaw(h.yaw));
-  g.cube(torso(0,2.18+breathing,0),[1.27*scale,1.25*scale,.74*scale],style.shirt,torsoQ);
-  g.cube(torso(0,2.70+breathing,.025),[1.33*scale,.15*scale,.77*scale],style.light,torsoQ);
+   g.draw('humanHips',p(0,1.55-.42*crouch,0),[scale,scale,scale],style.pants,qyaw(h.yaw));
+  g.draw('humanTorso',torso(0,2.18+breathing,0),[scale,scale,scale],style.shirt,torsoQ);
   g.cube(torso(0,2.82+breathing,.04),[.50*scale,.20*scale,.46*scale],style.trim,torsoQ);
   g.cube(torso(0,2.15,-.393),[.12*scale,.55*scale,.025*scale],style.trim,torsoQ);
  for(const side of [-1,1]){
@@ -2772,20 +2771,17 @@ function drawHuman(g,h){
   limb(g,elbow,wrist,.175*scale,style.skin);
   const palm=groundSlam&&side===activeSide?[.30*scale,.36*scale,.12*scale]:buildPose?.held&&side===activeSide?[.44,.28,.46]:[.30*scale,.26*scale,.23*scale];
   const palmTarget=humanWristRotationTarget(h,side,buildPose,groundSlam,acting,recover,warning,strike),palmRotation=blendHumanWristRotation(h,side,palmTarget),wristCuff=vadd(wrist,vmul(vsub(elbow,wrist),.12));
-  g.orb(wristCuff,[.075*scale,.085*scale,.075*scale],style.light);g.cube(wrist,palm,style.skin,palmRotation);
+  g.orb(wristCuff,[.075*scale,.085*scale,.075*scale],style.light);g.draw('humanHand',wrist,palm.map((v,i)=>v/[.30,.26,.23][i]),style.skin,palmRotation);
  }
   const headAngle=reactionLive&&!building?humanReactionLookAngle(h):0,headCenter=torso(0,3.40,.08),headPoint=reactionLive&&!building
    ?(a,b,c)=>{const d=yawPart([0,0,0],h.yaw+headAngle,a*scale,(b-3.40)*scale,(c-.08)*scale);return vadd(headCenter,d);}
    :torso,headQ=reactionLive&&!building?qyaw(h.yaw+headAngle):torsoQ;
   g.cube(headPoint(0,2.96,.05),[.32*scale,.25*scale,.29*scale],style.skin,headQ);
-  g.cube(headPoint(0,3.34,.08),[.91*scale,1.09*scale,.79*scale],style.skin,headQ);
-  g.cube(headPoint(0,3.79,.02),[.97*scale,.27*scale,.86*scale],style.hair,headQ);
-  g.cube(headPoint(0,3.70,.40),[.97*scale,.16*scale,.20*scale],style.hair,headQ);
-  if(h.id===0)g.cube(headPoint(-.31,3.66,-.04),[.37*scale,.24*scale,.76*scale],style.hair,headQ);
-  else g.cube(headPoint(.22,3.72,-.03),[.50*scale,.25*scale,.81*scale],style.hair,headQ);
+  g.draw('humanHead',headPoint(0,3.34,.08),[scale,scale,scale],style.skin,headQ);
+g.draw(h.id===0?'humanHair0':'humanHair1',headPoint(0,3.34,.08),[scale,scale,scale],style.hair,headQ);
  const blink=Math.sin(sceneView.displaySeconds*.85+h.id*1.9)>.994?.18:1;
  for(const side of [-1,1]){
-   g.orb(headPoint(side*.49,3.35,.07),[.085*scale,.14*scale,.10*scale],style.skin);
+   
    const eyeY=surprisedFace?1.28:angryFace?.78:1,pupilY=surprisedFace?1.18:angryFace?.82:1;
    g.orb(headPoint(side*.195,3.38,.486),[.066*scale,.071*scale*blink*eyeY,.027*scale],COLOR.cream);
    g.orb(headPoint(side*.195,3.375,.511),[.034*scale,.046*scale*blink*pupilY,.018*scale],COLOR.dark);
@@ -2793,7 +2789,7 @@ function drawHuman(g,h){
    const browQ=browTilt?quaternionMultiply(headQ,[0,0,Math.sin(side*browTilt*.5),Math.cos(side*browTilt*.5)]):headQ;
    g.cube(headPoint(side*.20,browY,.492),[.16*scale,.026*scale,.026*scale],style.hair,browQ);
  }
-  g.orb(headPoint(0,3.25,.493),[.06*scale,.08*scale,.055*scale],style.skin);
+  
   if(surprisedFace)g.orb(headPoint(0,3.12,.512),[.11*scale,.16*scale,.045*scale],COLOR.dark);
   else if(angryFace){
    limb(g,headPoint(-.075,3.09,.493),headPoint(0,3.14,.503),.022*scale,style.trim);
@@ -2897,7 +2893,7 @@ function drawWorld({alpha=0}={}){if(!renderer)return;const frameNow=performance.
   // Framing targets the cat plus a modest look-ahead; aiming only from the eye
   // along a fixed ray puts the cat below the bottom edge at close range.
   const focus=[c.x+Math.sin(orbit)*2.7,c.y+.95*catScaleForLevel(c.level)+Math.sin(pitch)*3.0,c.z+Math.cos(orbit)*2.7];
-  g.frame(eye,focus);
+  const shot=camera.debugShot;g.frame(shot?shot.eye:eye,shot?shot.at:focus);
  }
  // no global reliance on 2D Renderer2D — gamekit's 2D renderer is not used for 3D meshes
  renderHouse(g);
@@ -2980,9 +2976,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewpo
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
-  namespace:'meow-tumble-0.25.0',inputBytes:5,snapshotLimit:15000,
+  namespace:'meow-tumble-0.26.0',inputBytes:5,snapshotLimit:15000,
   inputType:91,snapshotType:92,resetType:93,startType:94,perksType:95,protocol:21});
-const LOBBY_VERSION='meow-tumble-0.25.0';
+const LOBBY_VERSION='meow-tumble-0.26.0';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};
@@ -3519,7 +3515,7 @@ async function main(){try{
  RAPIER=imported.default?.World?imported.default:imported;
  if(typeof RAPIER.init==='function')await RAPIER.init();
  if(!RAPIER.World||!RAPIER.ColliderDesc||!RAPIER.RigidBodyDesc)throw new Error('Rapier 3D API 검증 실패');
- await openLegacySave();renderer=new Toon3D(gameCanvas);await renderer.loadModels({block:'./assets/models/block.glb',cat:'./assets/models/cat.glb'});renderHouse(renderer);resetWorld();bindControls();mobileViewport.bind();bindMenu();simLoop.start();
+ await openLegacySave();renderer=new Toon3D(gameCanvas);await renderer.loadModels({block:'./assets/models/block.glb',cat:'./assets/models/cat.glb',human:'./assets/models/human.glb'});renderHouse(renderer);resetWorld();bindControls();mobileViewport.bind();bindMenu();simLoop.start();
  document.querySelector('#boot').classList.add('hidden');
  document.querySelector('#error').classList.remove('show');
  }catch(error){document.querySelector('#boot').textContent='게임 실행 실패: '+(error.message||error);
@@ -3536,7 +3532,7 @@ if(new URLSearchParams(location.search).get('debug')==='1'){window.__meowTumble=
  combatFeedback:{pending:combatUI.pending.length,activeNumbers:combatUI.floats.filter(f=>f.endMs>performance.now()).length,activeBursts:combatUI.bursts.length,dropped:combatUI.dropped}}},
  start,reset:()=>start(),
  // Debug-only scene parameters for deterministic captures; the host simulation still runs every rule.
- inject:{look(yaw,pitch){if(camera){camera.yaw=yaw;camera.pitch=pitch;}},orbit(angle){if(camera)camera.debugOrbit=angle;},anger(value){for(const h of human??[])h.anger=clamp(value,0,DEF.humans.anger.max);},
+ inject:{look(yaw,pitch){if(camera){camera.yaw=yaw;camera.pitch=pitch;}},orbit(angle){if(camera)camera.debugOrbit=angle;},shot(eye,at){if(camera)camera.debugShot=eye?{eye,at}:null;},anger(value){for(const h of human??[])h.anger=clamp(value,0,DEF.humans.anger.max);},
   // A real physical shove on every standing block so the tower collapses through Rapier (stage test).
   collapse(){beginCollapse();},
   topple(){for(const b of tower.blocks){if(b.fallen||b.building)continue;const p=b.body.translation();b.body.applyImpulseAtPoint({x:(p.x>=0?1:-1)*b.mass*9,y:b.mass*2,z:(p.z>=0?1:-1)*b.mass*6},{x:p.x,y:p.y+.3,z:p.z},true);}},ammo(id,value){const h=human?.[id];if(h)h.ammo=Math.max(0,value|0);},breakSpawner(id){const s=spawnerById(id);if(s&&!s.broken&&cat){s.hp=1;damageSpawner(s,cat,{x:s.def.at[0],y:ARENA.floorY+.4,z:s.def.at[1]});}}},
