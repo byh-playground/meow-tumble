@@ -10,7 +10,7 @@
 
 작은 고양이가 식탁 위 거대한 젠가탑을 연속으로 들이받아 **콤보로 성장**하고, 화가 난 사람이 집에 있는 물건(공·전동 쥐·로봇청소기)으로 방해하면 외곽 방의 거점을 부숴 끊는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.21.1** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.22.0** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -30,9 +30,9 @@ A small cat chains headbutts into the Jenga tower for combo XP, dodges the incre
 
 `index.html` 하나가 현행 소스이자 배포 파일입니다. 빌드가 없습니다. 저장소에서 `python -m http.server 8080`을 실행한 뒤 http://localhost:8080 에 접속합니다. WebGL 및 외부 GameKit·Rapier CDN 접속이 필요합니다. 멀티플레이에는 공개 Nostr relay와 WebRTC 연결이 필요합니다.
 
-GameKit **v0.14.3**의 source `dd59a57fcf66409cef16632ffb433c0b760324fa`, dist `418e17c455db56d6ed073d82d115191d9dd8bf04`, manifest SHA-256 `20244c2beeee33719f407a9baa92c55a4bd55a0e4eb9f094590bb0eed652296e`에 고정합니다. `RoomSession`의 `profiles.lockstep`, 멤버십 어댑터, 방 capability가 SDK의 현재 공개 API와 맞는지 확인하고, 부팅 때 9개 모듈의 필수 named export를 검사합니다. 연결 중 취소는 즉시 정리하고, 승인된 참가자의 퇴장은 `RoomSession.leave()` 합의를 기다린 뒤 정리합니다. 입력·루프·PRNG·방/세션·보간·확정 표시 이벤트를 SDK가 맡고, 호스트의 Rapier 월드가 싱글/멀티의 같은 게임 규칙을 실행합니다. 게스트 보간은 표시 전용이며 별도 이동 시뮬레이션을 만들지 않습니다. 전체 모듈 해시는 [dependencies.json](docs/dependencies.json)에 있습니다.
+GameKit **v0.41.3**의 source `bb3f59614c8d4da8188a3ffdc2eff43314fabe5f`, dist `c819a0b48fb650ee8222f7d5ea90a63a2b9306d1`, manifest SHA-256 `d9c141ee18be4ce7a33cc8c39bdba75d5cd76e0b8ecdf7c2038386bc75cd9851`에 고정합니다. `RoomSession`의 `profiles.lockstep`, 멤버십 어댑터, 방 capability가 SDK의 현재 공개 API와 맞는지 확인하고, 부팅 때 10개 모듈(save 포함)의 필수 named export를 검사합니다. 연결 중 취소는 즉시 정리하고, 승인된 참가자의 퇴장은 `RoomSession.leave()` 합의를 기다린 뒤 정리합니다. 입력·루프·PRNG·방/세션·보간·확정 표시 이벤트를 SDK가 맡고, 호스트의 Rapier 월드가 싱글/멀티의 같은 게임 규칙을 실행합니다. 게스트 보간은 표시 전용이며 별도 이동 시뮬레이션을 만들지 않습니다. 전체 모듈 해시는 [dependencies.json](docs/dependencies.json)에 있습니다.
 
-GameKit RoomSession의 wire protocol 3과 Room 계약 2는 v0.3.2에서도 같지만 세션 HELLO는 SDK library version을 검사합니다. 서로 다른 SDK 버전의 클라이언트는 함께 시작할 수 없으므로 게임 버전과 방 namespace를 올립니다. 현재 namespace는 **0.20.0**, 게임 패킷 protocol 19이며 Rapier 0.21.0은 유지합니다.
+GameKit RoomSession의 wire protocol 3과 Room 계약 2는 v0.3.2에서도 같지만 세션 HELLO는 SDK library version을 검사합니다. 서로 다른 SDK 버전의 클라이언트는 함께 시작할 수 없으므로 게임 버전과 방 namespace를 올립니다. 현재 namespace는 **0.22.0**, 게임 패킷 protocol 20이며 Rapier 0.21.0은 유지합니다.
 
 ## 검증과 배포
 

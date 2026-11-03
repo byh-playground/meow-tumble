@@ -49,7 +49,7 @@ jobs:
           assert gamekit["sourceCommit"] == source_commit.group(1)
           assert gamekit["distCommit"] == dist_commit.group(1)
           assert gamekit["manifestSha256"] == manifest_sha256.group(1)
-          assert len(gamekit["modules"]) == 9
+          assert len(gamekit["modules"]) == 10
           assert all(re.fullmatch(r"[0-9a-f]{64}", module["sha256"]) for module in gamekit["modules"])
 
           provenance = {
