@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { Q, vadd, qrotate, norm } from './math3d.js';
 import { COLOR } from './geometry.js';
 
@@ -62,48 +63,44 @@ class HouseScene {
  ring(p,r,c,a=.9){this.draw('ring',p,[r,1,r],c,Q(),a,null)}
  draw(type,p,s,c,q=Q(),a=1,mat=null){this.items.push({type,p,s,c,q,a,mat});}
  bake(renderer){
-  if(this.ready)return;const gl=renderer.gl;
-  const stride=13, chunks=[];let verts=[],indices=[],indexBase=0;
+  if(this.ready)return;
+  const chunks=[];let pos=[],nor=[],uvs=[],tint=[],tiles=[],indices=[],indexBase=0;
   const flush=()=>{if(!indexBase)return;
-   const v=gl.createBuffer(),i=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,v);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(verts),gl.STATIC_DRAW);
-   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,i);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(indices),gl.STATIC_DRAW);
-   chunks.push({vertex:v,index:i,count:indices.length});verts=[];indices=[];indexBase=0;
+   const g=new THREE.BufferGeometry();
+   g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(nor,3));
+   g.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));g.setAttribute('tint',new THREE.Float32BufferAttribute(tint,4));
+   g.setAttribute('tile',new THREE.Float32BufferAttribute(tiles,1));g.setIndex(new THREE.Uint16BufferAttribute(indices,1));
+   const mesh=new THREE.Mesh(g,renderer.materials.house);mesh.matrixAutoUpdate=false;mesh.matrixWorldAutoUpdate=false;
+   chunks.push(renderer.addStatic(mesh));pos=[];nor=[];uvs=[];tint=[];tiles=[];indices=[];indexBase=0;
   };
   for(const item of this.items){
    if(item.a<.99){this.alpha.push(item);continue;}
    const geom=renderer.sourceMeshes[item.type];if(!geom)continue;
-   const {pos,norm:normals,ind,uv}=geom,n=pos.length/3;if(indexBase+n>64000)flush();
+   const {pos:gp,norm:normals,ind,uv}=geom,n=gp.length/3;if(indexBase+n>64000)flush();
    const mat=typeof item.mat==='string'?MATERIALS[item.mat]:item.mat,tile=mat?.tile??-1,scale=mat?.scale??.2;
    const col=typeof item.c==='string'?COLOR[item.c]:item.c;
    for(let j=0;j<n;j++){
-    const xx=pos[j*3]*item.s[0],yy=pos[j*3+1]*item.s[1],zz=pos[j*3+2]*item.s[2];
+    const xx=gp[j*3]*item.s[0],yy=gp[j*3+1]*item.s[1],zz=gp[j*3+2]*item.s[2];
     const pp=vadd(item.p,qrotate(item.q,[xx,yy,zz]));
     const nn=norm(qrotate(item.q,[normals[j*3]/Math.max(.01,item.s[0]),normals[j*3+1]/Math.max(.01,item.s[1]),normals[j*3+2]/Math.max(.01,item.s[2])]));
-    let u=uv[j*2]??.5,vv=uv[j*2+1]??.5;
+    let u=uv?.[j*2]??.5,vv=uv?.[j*2+1]??.5;
     if(item.type==='cube'){
      const normalX=Math.abs(normals[j*3]),normalY=Math.abs(normals[j*3+1]);
      const du=normalX>0.5?item.s[2]:item.s[0], dv=normalY>0.5?item.s[2]:item.s[1];
      u*=du*scale;vv*=dv*scale;
     }else{u*=Math.max(item.s[0],item.s[2])*scale;vv*=item.s[1]*scale;}
-    verts.push(pp[0],pp[1],pp[2],nn[0],nn[1],nn[2],u,vv,col[0],col[1],col[2],col[3]??1,tile);
+    pos.push(pp[0],pp[1],pp[2]);nor.push(nn[0],nn[1],nn[2]);uvs.push(u,vv);tint.push(col[0],col[1],col[2],col[3]??1);tiles.push(tile);
    }
    for(const idx of ind)indices.push(idx+indexBase);
    indexBase+=n;this.triangleCount+=ind.length/3;
   }
   flush();this.batches=chunks;this.ready=true;this.items.length=0;
  }
- render(renderer){const gl=renderer.gl;if(!this.ready)this.bake(renderer);const a=renderer.attrib,u=renderer.u;
-  gl.useProgram(renderer.prog);gl.uniform1f(u.staticMode,1);gl.uniformMatrix4fv(u.vp,false,renderer.vp);
-  for(const chunk of this.batches){gl.bindBuffer(gl.ARRAY_BUFFER,chunk.vertex);
-   const stride=13*4;function ptr(key,sz,offset){gl.enableVertexAttribArray(a[key]);gl.vertexAttribPointer(a[key],sz,gl.FLOAT,false,stride,offset*4)}
-   ptr('p',3,0);ptr('n',3,3);ptr('uv',2,6);ptr('tint',4,8);ptr('tile',1,12);
-   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,chunk.index);gl.drawElements(gl.TRIANGLES,chunk.count,gl.UNSIGNED_SHORT,0);renderer.drawCalls++;
-  }
-  gl.uniform1f(u.staticMode,0);
+ render(renderer){if(!this.ready)this.bake(renderer);
+  for(const mesh of this.batches)renderer.show(mesh);
   for(const item of this.alpha){renderer.draw(item.type,item.p,item.s,item.c,item.q,item.a,1,item.mat)}
  }
- dispose(renderer){const gl=renderer.gl;for(const b of this.batches){gl.deleteBuffer(b.vertex);gl.deleteBuffer(b.index);}this.batches=[];this.ready=false;this.alpha=[];}
+ dispose(renderer){for(const mesh of this.batches){renderer.removeStatic(mesh);mesh.geometry.dispose();}this.batches=[];this.ready=false;this.alpha=[];}
 }
-
 
 export { MATERIALS, makeHouseAtlas, HouseScene };

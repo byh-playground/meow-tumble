@@ -10,7 +10,7 @@
 
 작은 고양이가 식탁 위 거대한 젠가탑을 연속으로 들이받아 **콤보로 성장**하고, 화가 난 사람이 집에 있는 물건(공·전동 쥐·로봇청소기)으로 방해하면 외곽 방의 거점을 부숴 끊는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.23.0** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.24.0** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -287,3 +287,9 @@ A light claw hit on a mass-20 block a builder is carrying prompts a brief look a
 - **노드 (각 최대 3)**: 🦴 뼈대(시작 질량 ×1.1) · 💥 박치기(기본 속도 +0.5) · 🔗 연쇄(최대 연쇄 +1) · ❤️ 체력(최대 HP +10) · 🐾 할퀴기(거점·전동 쥐 피해 +1). 창·쿨다운 같은 관용을 늘리는 노드는 두지 않는다(C-079).
 - **흐름**: 혼자 시작 → 🌳 스탯 트리 → 이 빌드로 시작. 멀티는 대기실의 🌳 버튼으로 각자 배분하고, 게스트는 배분을 `perks` 패킷(type 95)으로 방장에게 보내 방장이 `resetWorld`에서 그 고양이에 적용한다(protocol 21, namespace 0.23.0).
 - **기록 갱신**: HUD 주기마다 로컬 고양이의 단계·최고 연쇄·붕괴 수가 기록보다 크면 한 번씩 저장한다(호스트·게스트 공통, 스냅샷 값 기준).
+
+## three.js 렌더러 0.24.0
+- 직접 만든 WebGL 렌더러(셰이더·버퍼 관리 약 75줄)를 three.js(r170, importmap으로 jsDelivr 로드)로 교체했습니다. 이후 Blender에서 내보낸 glb 모델을 같은 scene에 올리기 위한 기반입니다.
+- 게임 그리기 코드(`g.cube/orb/tube/cone/disc/ring/draw`)는 그대로입니다. 호출마다 풀링된 Mesh를 호출 순서로 정렬해 프레임 끝의 `g.render()` 한 번으로 제출합니다. 기존 톤 셰이더(태양·조명 램프·아틀라스 재질)는 `ShaderMaterial`로 그대로 옮겨 화면이 같게 유지됩니다.
+- 집 정적 지오메트리는 한 번 합쳐 BufferGeometry 배치로 만듭니다. 시뮬레이션은 렌더러를 읽지 않습니다.
+- 검증: 같은 시나리오(시작·탑 접근·박치기)의 전후 캡처 비교와 호출 수 182 동일. 실제 GPU 프레임 시간은 미측정입니다(검증 환경은 SwiftShader).

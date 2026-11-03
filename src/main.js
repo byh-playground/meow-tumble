@@ -278,7 +278,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
  const DEF={
-    build:'20261103-gamekit-0-41-3-v0230',version:'0.23.0',
+    build:'20261103-three-v0240',version:'0.24.0',
   // One continuous game: after each collapse the people rebuild with heavier wood, and the cat starts over
   // at LV1 keeping a permanent mass bonus from the chains it landed. No result screen, no mode, no timer.
   stage:{blockMassGrowth:1.5,legacyMassPerCombo:1.1,clearIntervalMs:140,layerIntervalMs:900},
@@ -2915,13 +2915,13 @@ function drawWorld({alpha=0}={}){if(!renderer)return;const frameNow=performance.
  const localFade=(['roll','launched','dead','respawn'].includes(c.motion.state))?1:
    clamp((catCamDist-.45)/1.65,.58,1);
  g.localOpacity=localFade;
- g.gl.depthMask(localFade>=.999);
+ g.depthWrite=localFade>=.999;
  drawCat(g,c);
- g.localOpacity=1;g.gl.depthMask(true);
+ g.localOpacity=1;g.depthWrite=true;
  for(const actor of sceneView.cats)if(actor.id!==localCat.id)drawCat(g,actor);
  drawParticles(g);
  // Render-only event consumer after camera projection; no gameplay feedback loop.
- const visualNow=frameNow;combatUI.flush(visualNow);combatUI.drawBursts(g,visualNow);combatUI.update(g,visualNow);
+ const visualNow=frameNow;combatUI.flush(visualNow);combatUI.drawBursts(g,visualNow);g.render();combatUI.update(g,visualNow);
  net.updateLabels(g);
  ui.chargeFill.style.width=(cat.charge.held&&cat.charge.elapsedMs<DEF.cat.claw.tapMaxMs?12:Math.round(cat.charge.ratio*100))+'%';ui.chargeButton.classList.toggle('charging',cat.charge.held&&cat.charge.elapsedMs>=DEF.cat.claw.tapMaxMs);ui.jumpFill.style.width=Math.round(cat.jump.ratio*100)+'%';ui.jumpButton.classList.toggle('charging',cat.jump.held);
  const danger=human.some(h=>h.mode==='warning');ui.warning.classList.toggle('show',danger&&phase==='play');const target=tower.nearest(c,1.38);ui.targetText.textContent=cat.charge.held?(cat.charge.elapsedMs<DEF.cat.claw.tapMaxMs?'🐾 지금 놓으면 할퀴기':'💥 '+Math.round(cat.charge.ratio*100)+'% · 놓으면 박치기!'):target?'💥 물리 충돌로 젠가 공략':'🏰 식탁으로 올라가 젠가 공략';ui.target.classList.toggle('active',!!target);
@@ -2983,9 +2983,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewpo
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
-  namespace:'meow-tumble-0.23.0',inputBytes:5,snapshotLimit:15000,
+  namespace:'meow-tumble-0.24.0',inputBytes:5,snapshotLimit:15000,
   inputType:91,snapshotType:92,resetType:93,startType:94,perksType:95,protocol:21});
-const LOBBY_VERSION='meow-tumble-0.23.0';
+const LOBBY_VERSION='meow-tumble-0.24.0';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};
