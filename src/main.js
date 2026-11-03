@@ -278,7 +278,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
  const DEF={
-    build:'20261103-dot-eyes-mouth-v0262',version:'0.26.2',
+    build:'20261103-cheek-whiskers-v0263',version:'0.26.3',
   // One continuous game: after each collapse the people rebuild with heavier wood, and the cat starts over
   // at LV1 keeping a permanent mass bonus from the chains it landed. No result screen, no mode, no timer.
   stage:{blockMassGrowth:1.5,legacyMassPerCombo:1.1,clearIntervalMs:140,layerIntervalMs:900},
@@ -2525,7 +2525,8 @@ function drawCat(g,c){
  g.draw('catEar',part(.26,earY,.70),[.28,.44*(1-.38*rollTuck),.25],fur,earQuat);
  if(net.room){g.orb(part(0,.51,.31),[.35,.068,.31],catAccent[Math.max(0,actorIndex)]||COLOR.yellow);g.orb(part(0,.40,.62),[.095,.12,.06],COLOR.yellow);}
  if(c.level>=3)g.orb(part(0,.49,.51),[.22,.09,.13],c.level===5?COLOR.yellow:COLOR.mint);
- for(const side of [-1,1])for(let n=0;n<2;n++)limb(g,part(side*.085,.66-n*.055,1.03),part(side*.49,.72-n*.14,1.04),.015,COLOR.cream);
+ // Whiskers grow from the cheeks, never from the nose: lines crossing the muzzle hide the mouth that carries the expression.
+ for(const side of [-1,1])for(let n=0;n<2;n++)limb(g,part(side*.31,.665-n*.06,.905),part(side*.60,.695-n*.13,.935),.015,COLOR.cream);
  const legMove=walking?Math.sin(sceneView.displaySeconds*19)*.13:0;
  for(const side of [-1,1])for(const back of [-1,1]){
   const legZ=back*.45,step=(back===1?1:-1)*side*legMove;
@@ -2976,9 +2977,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewpo
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
-  namespace:'meow-tumble-0.26.2',inputBytes:5,snapshotLimit:15000,
+  namespace:'meow-tumble-0.26.3',inputBytes:5,snapshotLimit:15000,
   inputType:91,snapshotType:92,resetType:93,startType:94,perksType:95,protocol:21});
-const LOBBY_VERSION='meow-tumble-0.26.2';
+const LOBBY_VERSION='meow-tumble-0.26.3';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};

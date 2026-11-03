@@ -10,7 +10,7 @@
 
 작은 고양이가 식탁 위 거대한 젠가탑을 연속으로 들이받아 **콤보로 성장**하고, 화가 난 사람이 집에 있는 물건(공·전동 쥐·로봇청소기)으로 방해하면 외곽 방의 거점을 부숴 끊는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.26.2** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.26.3** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -316,4 +316,7 @@ A light claw hit on a mass-20 block a builder is carrying prompts a brief look a
 
 ## 점눈 + 표정은 입으로 0.26.2
 - 고양이 얼굴을 점 두 개 눈으로 단순화하고, 표정은 입에 몰았습니다. `ω` 고양이 입의 오른쪽 입꼬리를 올려 보조개 선을 넣고, 송곳니를 하나 내밉니다. 눈썹과 눈꺼풀은 없앴습니다. 모델(`assets/src/cat.py`의 `head`, 프리셋 `final`)만 바뀝니다.
+
+## 수염은 볼에서 0.26.3
+- 고양이 수염의 시작점을 코 옆에서 볼 쪽으로 옮겼습니다. 코에서 뻗는 수염이 입 주변을 가로질러 입으로 만든 표정을 가렸기 때문입니다. 수염은 볼에서 옆으로만 뻗습니다.
 
