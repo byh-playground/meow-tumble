@@ -1,13 +1,13 @@
 {
   "gamekit": {
-    "version": "0.14.3",
-    "sourceCommit": "dd59a57fcf66409cef16632ffb433c0b760324fa",
-    "distCommit": "418e17c455db56d6ed073d82d115191d9dd8bf04",
-    "manifestSha256": "20244c2beeee33719f407a9baa92c55a4bd55a0e4eb9f094590bb0eed652296e",
+    "version": "0.41.3",
+    "sourceCommit": "bb3f59614c8d4da8188a3ffdc2eff43314fabe5f",
+    "distCommit": "c819a0b48fb650ee8222f7d5ea90a63a2b9306d1",
+    "manifestSha256": "d9c141ee18be4ce7a33cc8c39bdba75d5cd76e0b8ecdf7c2038386bc75cd9851",
     "modules": [
       {
         "file": "interpolation.js",
-        "sha256": "061960f311ad57894914186baa01f6b257269637353056ac93f86d34265a4ef8"
+        "sha256": "854e90343fba611d4f0d118048c33256624543c454c9134e0c4b5cd18d14a509"
       },
       {
         "file": "input.js",
@@ -23,11 +23,11 @@
       },
       {
         "file": "transport.js",
-        "sha256": "cb509226a9644e86857f12e137943bf0cc04c5f4bace4dbdf4137efa6240fc3a"
+        "sha256": "8f7f9d68a2be3b1c7839ab0f975178b0bed4f454496ad4e91a5c28e6e3f0a6d3"
       },
       {
         "file": "rollback.js",
-        "sha256": "071fb0f82521d212d00f112abd90fc149616d80b79d4628db0008637ce102596"
+        "sha256": "10a057e4d6e47e9d095ddfe323100e50f0e347d7f5db93b979cd456c1c22a030"
       },
       {
         "file": "presentation-events.js",
@@ -39,7 +39,11 @@
       },
       {
         "file": "camera.js",
-        "sha256": "c9d6f59a49e7ca0640b4f55fbe9aab2d1e5362d99ad0bb3871596a66fd3859c0"
+        "sha256": "99c1be43b6a38945028d029a5ecc594f7ff6dfc71075305264930748cafe88b6"
+      },
+      {
+        "file": "save.js",
+        "sha256": "540b2af25e91bd6b5683c3ae8f80484a951baea9dc90452233dd72c26a4696ed"
       }
     ]
   },

@@ -3,24 +3,24 @@ import { COLOR, meshCube, meshSphere, meshCylinder, meshRing, meshDisc } from '.
 import { MATERIALS, makeHouseAtlas, HouseScene } from './visual/house.js';
 import { Toon3D } from './visual/renderer3d.js';
 
-/* Bloom GameKit · v0.14.3, pinned published dist and matching source commit. No duplicate input/loop/PRNG engine.
+/* Bloom GameKit · v0.41.3, pinned published dist and matching source commit. No duplicate input/loop/PRNG engine.
  * The 3D renderer, Rapier physics, gameplay and presentation remain owned by Meow Tumble.
  * Browser WebRTC uses the official group-room transport, never a second signaling stack. */
-const GAMEKIT_VERSION='0.14.3';
-const GAMEKIT_SOURCE_COMMIT='dd59a57fcf66409cef16632ffb433c0b760324fa';
-const GAMEKIT_PIN='418e17c455db56d6ed073d82d115191d9dd8bf04';
-const GAMEKIT_MANIFEST_SHA256='20244c2beeee33719f407a9baa92c55a4bd55a0e4eb9f094590bb0eed652296e';
+const GAMEKIT_VERSION='0.41.3';
+const GAMEKIT_SOURCE_COMMIT='bb3f59614c8d4da8188a3ffdc2eff43314fabe5f';
+const GAMEKIT_PIN='c819a0b48fb650ee8222f7d5ea90a63a2b9306d1';
+const GAMEKIT_MANIFEST_SHA256='d9c141ee18be4ce7a33cc8c39bdba75d5cd76e0b8ecdf7c2038386bc75cd9851';
 const GAMEKIT_CDN=`https://cdn.jsdelivr.net/gh/byh-playground/bloom-gamekit@${GAMEKIT_PIN}/`;
-let ActionState,SeededPRNG,createLoop,createNostrDynamicRoom,createRoomSession,profiles,PresentationRuntime,RenderObject,PresentationEventQueue,createNavigation,CollisionBoom;
+let ActionState,SeededPRNG,createLoop,createNostrDynamicRoom,createRoomSession,profiles,PresentationRuntime,RenderObject,PresentationEventQueue,createNavigation,CollisionBoom,createSave,localStorageAdapter,memoryAdapter;
 try{
- const [inputModule,deterministicModule,loopModule,transportModule,sessionModule,interpolationModule,eventModule,navigationModule,cameraModule]=await Promise.all([
+ const [inputModule,deterministicModule,loopModule,transportModule,sessionModule,interpolationModule,eventModule,navigationModule,cameraModule,saveModule]=await Promise.all([
   import(GAMEKIT_CDN+'input.js'),import(GAMEKIT_CDN+'deterministic.js'),
-  import(GAMEKIT_CDN+'simloop.js'),import(GAMEKIT_CDN+'transport.js'),import(GAMEKIT_CDN+'rollback.js'),import(GAMEKIT_CDN+'interpolation.js'),import(GAMEKIT_CDN+'presentation-events.js'),import(GAMEKIT_CDN+'navigation.js'),import(GAMEKIT_CDN+'camera.js')]);
- ({createNavigation}=navigationModule);({CollisionBoom}=cameraModule);
+  import(GAMEKIT_CDN+'simloop.js'),import(GAMEKIT_CDN+'transport.js'),import(GAMEKIT_CDN+'rollback.js'),import(GAMEKIT_CDN+'interpolation.js'),import(GAMEKIT_CDN+'presentation-events.js'),import(GAMEKIT_CDN+'navigation.js'),import(GAMEKIT_CDN+'camera.js'),import(GAMEKIT_CDN+'save.js')]);
+ ({createNavigation}=navigationModule);({CollisionBoom}=cameraModule);({createSave,localStorageAdapter,memoryAdapter}=saveModule);
  ({PresentationRuntime,RenderObject}=interpolationModule);({PresentationEventQueue}=eventModule);
  ({ActionState}=inputModule);({SeededPRNG}=deterministicModule);
  ({createLoop}=loopModule);({createNostrDynamicRoom}=transportModule);({createRoomSession,profiles}=sessionModule);
- const requiredFunctions=[['input.js','ActionState',ActionState],['deterministic.js','SeededPRNG',SeededPRNG],['simloop.js','createLoop',createLoop],['transport.js','createNostrDynamicRoom',createNostrDynamicRoom],['rollback.js','createRoomSession',createRoomSession],['interpolation.js','PresentationRuntime',PresentationRuntime],['interpolation.js','RenderObject',RenderObject],['presentation-events.js','PresentationEventQueue',PresentationEventQueue],['navigation.js','createNavigation',createNavigation],['camera.js','CollisionBoom',CollisionBoom]];
+ const requiredFunctions=[['input.js','ActionState',ActionState],['deterministic.js','SeededPRNG',SeededPRNG],['simloop.js','createLoop',createLoop],['transport.js','createNostrDynamicRoom',createNostrDynamicRoom],['rollback.js','createRoomSession',createRoomSession],['interpolation.js','PresentationRuntime',PresentationRuntime],['interpolation.js','RenderObject',RenderObject],['presentation-events.js','PresentationEventQueue',PresentationEventQueue],['navigation.js','createNavigation',createNavigation],['camera.js','CollisionBoom',CollisionBoom],['save.js','createSave',createSave],['save.js','localStorageAdapter',localStorageAdapter],['save.js','memoryAdapter',memoryAdapter]];
  const invalidExports=requiredFunctions.filter(([, ,value])=>typeof value!=='function').map(([file,name])=>`${file}:${name}`);
  if(invalidExports.length||!profiles||typeof profiles!=='object'||!profiles.lockstep||profiles.lockstep.mode!=='lockstep')throw new TypeError(`Bloom GameKit v${GAMEKIT_VERSION} ESM API 불일치: ${[...invalidExports,...(!profiles||typeof profiles!=='object'||!profiles.lockstep||profiles.lockstep.mode!=='lockstep'?['rollback.js:profiles.lockstep']:[])].join(', ')}`);
 }catch(error){
@@ -278,7 +278,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
  const DEF={
-    build:'20261103-gamekit-0-14-3-v0211',version:'0.21.1',
+    build:'20261103-gamekit-0-41-3-v0220',version:'0.22.0',
   // One continuous game: after each collapse the people rebuild with heavier wood, and the cat starts over
   // at LV1 keeping a permanent mass bonus from the chains it landed. No result screen, no mode, no timer.
   stage:{blockMassGrowth:1.5,legacyMassPerCombo:1.1,clearIntervalMs:140,layerIntervalMs:900},
@@ -2935,9 +2935,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewpo
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
-  namespace:'meow-tumble-0.21.0',inputBytes:5,snapshotLimit:15000,
+  namespace:'meow-tumble-0.22.0',inputBytes:5,snapshotLimit:15000,
   inputType:91,snapshotType:92,resetType:93,startType:94,protocol:20});
-const LOBBY_VERSION='meow-tumble-0.21.0';
+const LOBBY_VERSION='meow-tumble-0.22.0';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};
