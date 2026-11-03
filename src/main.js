@@ -36,7 +36,7 @@ function limb(g,p0,p1,r,col){const d=vsub(p1,p0),mid=vmul(vadd(p0,p1),.5),axis=n
    All wooden pieces and the cat are dynamic rigid bodies; joints, supports,
    scripted collapse, block HP and level immunities do not exist. */
 const PHYS={gravity:17.5,solverIterations:10,friction:1.1,restitution:0.025};
-const TOWER={width:1.07,length:3.48,height:.70,gap:.025,initialLayers:8,maxLayers:26,mass:20,winScattered:32};
+const TOWER={width:1.07,length:3.48,height:.70,gap:.025,initialLayers:8,maxLayers:26,mass:20};
 const ARENA={halfX:10.9,halfZ:8.6,edgeX:10.35,edgeZ:8.0,floorY:-3.05,houseHalfX:46,houseHalfZ:36,spawnX:0,spawnZ:23.5};
 // Exact model/placement anchors from pre-shrink d82b224 (0.12.1); no human rigid bodies existed there.
 const HUMAN_MODEL=Object.freeze({scale:6.20,height:3.925*6.20,z:-10.0,labelY:3.925*6.20+.08,shadowRadius:3.85*6.20/5.30});
@@ -278,7 +278,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
  const DEF={
-    build:'20261103-cat-rig-v0270',version:'0.27.0',
+    build:'20261103-xp-goal-v0271',version:'0.27.1',
   // One continuous game: after each collapse the people rebuild with heavier wood, and the cat starts over
   // at LV1 keeping a permanent mass bonus from the chains it landed. No result screen, no mode, no timer.
   stage:{blockMassGrowth:1.5,legacyMassPerCombo:1.1,clearIntervalMs:140,layerIntervalMs:900},
@@ -292,7 +292,8 @@ class PhysicsTower {
    {id:'claw',icon:'🐾',label:'할퀴기',desc:'거점·전동 쥐 피해 +1',damagePerLevel:1}]},
   // After the success threshold, physics keeps stepping until the debris is quiet.
   // These are PRESENTATION timings only; they never influence Rapier impulses.
-  round:{durationMs:0,winBlocks:TOWER.winScattered,
+  // The collapse goal is a share of the blocks that exist (a fixed count can exceed the tower: 8 layers x 3 = 24 blocks).
+  round:{durationMs:0,winRatio:.5,
     collapseMinMs:2800,collapseQuietMs:1350,collapseMaxMs:11800,collapseMovingTolerance:2},
   cat:{size:{min:.6,max:1.2,baseRadius:.5},moveSpeed:6.3,mass:{base:1,growthFactor:1.5},jump:{baseVelocity:10,maxMultiplier:2,durationMs:1000},charge:{durationMs:1500,baseSpeed:{base:5,perLevel:5/7},maxMultiplier:2,minDashMs:250,maxDashMs:560,cooldownMs:1550},claw:{tapMaxMs:250,cooldownMs:320,animationMs:260,hitAtMs:65,reach:2.55,queryRadius:1.46,queryForward:1.16,minFacingDot:.18,knockback:1.25},dodgeCooldownMs:1350,dodgeDurationMs:650,rollRecoveryMs:180,rollSpeed:12.5,rollIFrameStartMs:70,rollIFrameEndMs:495,launchAirControl:1.05,stunDurationMs:820,recoverDurationMs:550,maxHp:100,hitInvulnMs:1250},
    humans:{buildDurationMs:45000,waveSpeed:15.2,impulse:11.8,slamUpSpeed:21.0,slamOutSpeed:14.5,otherUpSpeed:6.4,otherOutSpeed:10.2,launchMassExponent:.32,
@@ -303,12 +304,12 @@ class PhysicsTower {
   // pressing attack inside it IS the next headbutt — no charging, charge ratio 1 in GOLDEN decaying to
   // coyoteEndCharge through COYOTE — and the cat pops upward. Links = combo count = XP multiplier.
   // A press up to bufferMs before contact is kept as a reservation. Miss, timeout or damage ends the chain.
-  combo:{xpPerImpulse:1/20,maxLinks:3,goldenMs:50,coyoteMs:150,bufferMs:100,coyoteStartCharge:.94,coyoteEndCharge:.70,popUpSpeed:7,popHopSpeed:1.5,popMs:150,linkLockMs:70},
+  combo:{xpPerHit:1,maxLinks:3,goldenMs:50,coyoteMs:150,bufferMs:100,coyoteStartCharge:.94,coyoteEndCharge:.70,popUpSpeed:7,popHopSpeed:1.5,popMs:150,linkLockMs:70},
   // Impact feel is presentation only: the host simulation, input and network never pause.
   // hold = my own confirmed tower hit freezes my rendered frame briefly (pose hold), then the live view resumes.
   feel:{holdMs:45,strongHoldMs:65,strongMult:4,kick:.09,kickDecayPerSecond:9,flashMs:120,sparks:10,sparkPower:9,sparkTailSec:.05,debris:5,farHearingDistance:18,voiceLimit:3,pitchPerCombo:1.06},
   input:{chargeLookDeadzonePx:6,jumpBufferMs:150,coyoteMs:100,rollBufferMs:150,clawBufferMs:120},
-  farming:{levelXp:[0,2,5,9,14,20,28,37,47,58,70,83],get maxLevel(){return this.levelXp.length},deathLossRatio:.10},
+  farming:{levelXp:[0,8,20,36,56,80,108,140,176,216,260,308],get maxLevel(){return this.levelXp.length},deathLossRatio:.10},
   graphics:{maxParticles:180,maxCombatBursts:16,maxDamageNumbers:26,mobHudDistance:25}
 };
 document.querySelectorAll('[data-max-level]').forEach(node=>node.textContent=DEF.farming.maxLevel);
@@ -328,14 +329,14 @@ const RAPIER_URL='https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.21.0/
 const tower=new PhysicsTower();
 // Authoritative scene definitions. The only mob is the people's smart toy mouse; no wild prey roams the house.
 const MOB_TYPES=Object.freeze({
- toyMouse:Object.freeze({label:'전동 쥐',icon:'🐭',maxHp:2,mass:.80,radius:.36,speed:5.1,vision:12,xp:4,color:'wood3'})
+ toyMouse:Object.freeze({label:'전동 쥐',icon:'🐭',maxHp:2,mass:.80,radius:.36,speed:5.1,vision:12,xp:2,color:'wood3'})
 });
 // Household bases the people rely on. Each sits in an outer room and a cat can wreck it with claws.
 // A base with `stock` spills its remaining contents when broken; the dock base powers the vacuum.
 const SPAWNER_DEFS=Object.freeze([
- Object.freeze({id:'dock',label:'청소기 도킹',icon:'🔌',room:'거실',at:[26,-22],hp:4,xp:15,radius:1.1,visual:'dock'}),
- Object.freeze({id:'toybox',label:'장난감 상자',icon:'📦',room:'침실',at:[-24,27],hp:3,xp:15,radius:1.2,visual:'box',stock:9,batch:3}),
- Object.freeze({id:'basket',label:'공 바구니',icon:'🧺',room:'현관',at:[6.5,28.5],hp:3,xp:15,radius:.9,visual:'basket'})
+ Object.freeze({id:'dock',label:'청소기 도킹',icon:'🔌',room:'거실',at:[26,-22],hp:4,xp:8,radius:1.1,visual:'dock'}),
+ Object.freeze({id:'toybox',label:'장난감 상자',icon:'📦',room:'침실',at:[-24,27],hp:3,xp:8,radius:1.2,visual:'box',stock:9,batch:3}),
+ Object.freeze({id:'basket',label:'공 바구니',icon:'🧺',room:'현관',at:[6.5,28.5],hp:3,xp:8,radius:.9,visual:'basket'})
 ]);
 // Fixed waypoint routes from the bases to the dining table (doorways, ramp, tabletop).
 // Both routes line up with the ramp foot from straight ahead so nothing slips under the ramp slab.
@@ -543,7 +544,7 @@ function zoneAt(x,z){
 // A household appliance HAS-A Rapier body; patrol and committed attacks are reusable capabilities.
 const VACUUM_CONFIG=Object.freeze({radius:.85,height:.34,mass:2.4,patrolSpeed:1.5,vision:6.5,
  windupMs:1000,chargeSpeed:8,chargeMs:650,recoveryMs:1600,wallRecoveryMs:2400,cooldownMs:4000,
- spawnGraceMs:5000,spawnSafeRadius:9,batteryMs:40000,stopXp:12});
+ spawnGraceMs:5000,spawnSafeRadius:9,batteryMs:40000,stopXp:6});
 let vacuums=[];
 class PhysicsAppliance {
  constructor(id,config,route,base){
@@ -968,7 +969,8 @@ function registerComboHit(actor,event){const cfg=DEF.combo,c=actor.combo;
  if(dashHit){c.windowSerial=c.dashSerial;c.count=c.armed?c.count+1:1;c.armed=false;}
  (c.log??=[]).push({tick:nowTicks,kind:'hit',dashHit,serial:c.dashSerial,count:c.count,buffered:c.bufferedUntilTick,speed:+event.attackSpeed.toFixed(2)});if(c.log.length>16)c.log.shift();
  const mult=dashHit?c.count:1;c.mult=Math.max(1,c.count);c.best=Math.max(c.best,c.count);
- const base=Math.max(1,Math.ceil(event.impulse*cfg.xpPerImpulse)),gained=grantXp(actor,base*mult,event.p);
+ // Every valid hit is worth the same, whatever its impulse or the block mass; only the chain multiplier scales it.
+ const gained=grantXp(actor,cfg.xpPerHit*mult,event.p);
  // Hit direction from the attacking cat's actual velocity (the solver contact point is event.p).
  const body=tower.playerBodies.get(actor.id)?.body,v=body?body.linvel():{x:0,y:0,z:1},speed=Math.hypot(v.x,v.y,v.z)||1;
  combatUI.queue({kind:'combo',tick:nowTicks,entityId:actor.id,sequence:++c.sequence,count:dashHit?c.count:1,mult,xp:gained,blockId:event.blockId,p:event.p.slice(),dir:[v.x/speed,v.y/speed,v.z/speed].map(n=>Math.round(n*100)/100)});
@@ -1183,12 +1185,12 @@ function updateHUD(){
  const min=Math.floor(seconds/60),sec=Math.floor(seconds%60);ui.clock.textContent=min+':'+String(sec).padStart(2,'0');
  ui.hpFill.style.width=clamp(cat.hp/catMaxHp(cat)*100,0,100)+'%';ui.hpText.textContent=Math.ceil(cat.hp)+' / '+catMaxHp(cat);
  persistLegacyProgress();
- ui.progress.style.width=Math.min(100,tower.scattered/DEF.round.winBlocks*100)+'%';
+ ui.progress.style.width=Math.min(100,tower.scattered/collapseGoal()*100)+'%';
  ui.stageTitle.textContent=stage.index+'단계 · 젠가탑 무너뜨리기';
  ui.fraction.textContent=phase==='collapse'
   ?'🏰 대붕괴 진행 중 · '+tower.scattered+' / '+tower.blocks.length+'개'
   :stage.rebuild?(stage.rebuild.step==='clear'?'🧹 사람이 무너진 블록을 치우는 중':'🪵 더 무거운 블록으로 다시 쌓는 중 '+tower.layers+' / '+TOWER.initialLayers+'층')
-  :'물리적으로 무너진 블록 '+tower.scattered+' / '+DEF.round.winBlocks+' · 블록 질량 '+tower.blockMass;
+  :'물리적으로 무너진 블록 '+tower.scattered+' / '+collapseGoal()+' · 블록 질량 '+tower.blockMass;
  ui.dash.style.width=cat.charge.held?Math.round(cat.charge.ratio*100)+'%':cat.dash.cooldown.leftMs>0?Math.round(100*(1-cat.dash.cooldown.leftMs/DEF.cat.charge.cooldownMs))+'%':'100%';
  ui.status.textContent=phase==='collapse'?'🏰 물리 붕괴 관전 중!':cat.motion.state==='dead'?'🐾 리스폰 준비 중':cat.motion.state==='launched'?'💫 공중으로 튕기는 중!':cat.motion.state==='stunned'?'💫 땅에 쓰러져 행동불능!':cat.motion.state==='recover'?'🐈 일어나는 중':cat.motion.state==='roll'?'↻ 구르는 중':cat.charge.held?(cat.charge.elapsedMs<DEF.cat.claw.tapMaxMs?'🐾 지금 놓으면 할퀴기':'💥 박치기 차지 '+Math.round(cat.charge.ratio*100)+'% · 놓으면 발사'):cat.jump.held?'↥ 점프 차지 '+Math.round(cat.jump.ratio*100)+'% · 놓으면 점프':cat.motion.state==='dash'?'💥 돌진 중!':cat.openingMs>0?'✦ 구르기 성공! 반격 기회':cat.claw.animation.leftMs>0?'🐾 할퀴기!':cat.dash.cooldown.leftMs<=0?'짧게 할퀴기 · 길게 박치기 · 점프 차지':'🐾 할퀴기는 가능 · 박치기 재준비 중';
  ui.level.textContent=levelLabel(cat.level);ui.power.textContent='질량 '+cat.mass.toFixed(2)+' · 박치기 '+headbuttBaseSpeed(cat.level).toFixed(1)+'→'+(headbuttBaseSpeed(cat.level)*DEF.cat.charge.maxMultiplier).toFixed(1);
@@ -1722,6 +1724,7 @@ function perksFromAllocation(allocation){const perks=emptyPerks();for(const node
 function legacyPoints(data){return (data?.bestStage??1)*DEF.perks.pointsPerStage+Math.floor((data?.collapses??0)/DEF.perks.collapsesPerPoint);}
 function headbuttBaseSpeed(level,perks=cat?.perks){const speed=DEF.cat.charge.baseSpeed;return speed.base+perkNode('headbutt').speedPerLevel*(perks?.headbutt??0)+speed.perLevel*(level-1);}
 function levelLabel(level){return level+(level>=DEF.farming.maxLevel?' MAX':'');}
+function collapseGoal(){return Math.max(1,Math.ceil(tower.blocks.length*DEF.round.winRatio));}
 function levelForXp(xp){return 1+DEF.farming.levelXp.slice(1).filter(value=>xp>=value).length;}
 function setCatXp(actor,xp){
  const before=actor.xp;
@@ -2013,7 +2016,7 @@ function updateGame(dt,frame){if(phase!=='play'&&phase!=='collapse')return;
   tower.syncCat();if(id!==localCat.id)collectMobsAfterStep();if(cat.motion.state!=='dead')updateCatMotion(dt);
  });
  updateParticles(dt);
- if(!stage.rebuild&&tower.scattered>=DEF.round.winBlocks){beginCollapse();updateHUD();return}
+ if(!stage.rebuild&&tower.blocks.length&&tower.scattered>=collapseGoal()){beginCollapse();updateHUD();return}
  if(net.isHost&&nowTicks%3===0)net.publishState();
  // No time-out loss: death costs XP once; tower state and the ongoing round are preserved.
  if(nowTicks%7===0)updateHUD();
@@ -2978,9 +2981,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewpo
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
-  namespace:'meow-tumble-0.27.0',inputBytes:5,snapshotLimit:15000,
+  namespace:'meow-tumble-0.27.1',inputBytes:5,snapshotLimit:15000,
   inputType:91,snapshotType:92,resetType:93,startType:94,perksType:95,protocol:21});
-const LOBBY_VERSION='meow-tumble-0.27.0';
+const LOBBY_VERSION='meow-tumble-0.27.1';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};
