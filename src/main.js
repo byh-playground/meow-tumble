@@ -278,7 +278,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
  const DEF={
-    build:'20261103-short-whiskers-v0264',version:'0.26.4',
+    build:'20261103-cat-details-v0265',version:'0.26.5',
   // One continuous game: after each collapse the people rebuild with heavier wood, and the cat starts over
   // at LV1 keeping a permanent mass bonus from the chains it landed. No result screen, no mode, no timer.
   stage:{blockMassGrowth:1.5,legacyMassPerCombo:1.1,clearIntervalMs:140,layerIntervalMs:900},
@@ -2506,7 +2506,7 @@ function drawCat(g,c){
  g.draw('catBody',part(0,.57,-.14),bodyScale,fur,poseQuat);
  // A high-contrast back patch is a readable orientation marker during full 360° dodge.
  // This belongs to the same rotated rig, not a floor-fixed effect.
- g.draw('sphere',part(0,.94,-.28),[.41,.075,.39],stripe,poseQuat);
+ g.draw('sphere',part(0,.925,-.22),[.38,.08,.58],stripe,poseQuat);
  if(isRoll&&c.y-c.surfaceY<.65){
   // Circular footwork dust communicates direction and timing without overpowering danger telegraphs.
   const arc=(Math.min(1,t)*Math.PI*2),rx=c.motion.rollDirX,rz=c.motion.rollDirZ;
@@ -2544,7 +2544,10 @@ function drawCat(g,c){
   part(tailPoints[3][0]+Math.sin(tailWiggle*.8+1)*.4,tailPoints[3][1],tailPoints[3][2])
  ];
  const [t0,t1,t2,t3]=tail;
- limb(g,t0,t1,.28,stripe);limb(g,t1,t2,.24,fur);limb(g,t2,t3,.18,stripe);g.orb(t3,[.11,.11,.11],stripe);
+ // Banded tail: seven short segments along the same three-piece path alternate coat and stripe colours while tapering.
+ const tailAt=u=>{const s=Math.min(2,Math.floor(u*3)),f=u*3-s,a=tail[s],b=tail[s+1];return[lerp(a[0],b[0],f),lerp(a[1],b[1],f),lerp(a[2],b[2],f)];};
+ for(let i=0;i<7;i++)limb(g,tailAt(i/7),tailAt((i+1)/7+(i<6?.012:0)),lerp(.28,.17,i/6),i%2?fur:stripe);
+ g.orb(t3,[.11,.11,.11],stripe);
  if(isClaw&&clawT>.12&&clawT<.93){
   // Three bright curved streaks, anchored to the cat's local forward/right axes.
   // Pure presentation: collision has already been decided by Rapier's shape query.
@@ -2977,9 +2980,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewpo
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
-  namespace:'meow-tumble-0.26.4',inputBytes:5,snapshotLimit:15000,
+  namespace:'meow-tumble-0.26.5',inputBytes:5,snapshotLimit:15000,
   inputType:91,snapshotType:92,resetType:93,startType:94,perksType:95,protocol:21});
-const LOBBY_VERSION='meow-tumble-0.26.4';
+const LOBBY_VERSION='meow-tumble-0.26.5';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};

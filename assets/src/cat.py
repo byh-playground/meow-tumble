@@ -105,14 +105,17 @@ def head(bm):
             line([(sgn * .075 * (1 - math.cos(math.pi * t / 14)) / 1.0 * .5 + sgn * .0, -.185 - .035 * math.sin(math.pi * t / 14)) for t in range(15)], .012)
     elif m == 'smugcat':
         # Expression lives in the mouth: a cat "w" whose right corner climbs into a dimple, plus one small fang.
-        line([(0, -.165 - .06 * t / 6) for t in range(7)], .017)                                                    # philtrum
-        line([(-.17 * t / 18, -.232 - .048 * math.sin(math.pi * t / 18) + .030 * (t / 18) ** 3) for t in range(19)], .017)    # left curl
-        line([(.21 * t / 24, -.232 - .048 * math.sin(math.pi * t / 24) + .105 * (t / 24) ** 2.2) for t in range(25)], .017)   # right curl, lifted
-        line([(.236, -.150), (.250, -.134), (.258, -.114)], .013)                                                   # dimple tick
+        line([(0, -.165 - .06 * t / 6) for t in range(7)], .021)                                                    # philtrum
+        line([(-.17 * t / 18, -.232 - .048 * math.sin(math.pi * t / 18) + .030 * (t / 18) ** 3) for t in range(19)], .021)    # left curl
+        line([(.21 * t / 24, -.232 - .048 * math.sin(math.pi * t / 24) + .105 * (t / 24) ** 2.2) for t in range(25)], .021)   # right curl, lifted
+        line([(.236, -.150), (.250, -.134), (.258, -.114)], .016)                                                   # dimple tick
         part((.018, .036, .014), (-.105, -.262, surface_z(-.105, -.262) + .005), fixed(1, .98, .93), 8, 6)         # fang
     elif m == 'tongue':
         line([(-.12 + .27 * t / 30, -.215 - .012 * math.sin(math.pi * t / 30) + .04 * max(0, t / 30 - .5) ** 1.4) for t in range(31)], .016)
         part((.05, .018, .075), (.035, -.25, surface_z(.035, -.25) + .02), TONGUE, 10, 8)
+    for side in (-1, 1):                              # cheek blush, as in the reference
+        bx, by = side * .30, -.075
+        part((.09, .062, .03), (bx, by, surface_z(bx, by) + .006), fixed(1, .70, .66), 14, 10)
     part((.09, .07, .07), (0, -.10, .465), fixed(.99, .61, .66), 12, 10)               # nose
     return colours
 
