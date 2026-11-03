@@ -10,7 +10,7 @@
 
 작은 고양이가 식탁 위 거대한 젠가탑을 연속으로 들이받아 **콤보로 성장**하고, 화가 난 사람이 집에 있는 물건(공·전동 쥐·로봇청소기)으로 방해하면 외곽 방의 거점을 부숴 끊는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.24.1** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.25.0** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -298,4 +298,11 @@ A light claw hit on a mass-20 block a builder is carrying prompts a brief look a
 - Blender 5.2에서 모서리를 깎은 블록(`assets/models/block.glb`, 96 정점, 4.5KB)을 만들어 탑 블록을 이 모델로 그립니다. 제작 스크립트는 `assets/src/block.py`이고 Blender에서 실행하면 같은 glb가 나옵니다.
 - 모델은 자기 바운딩 박스를 기준으로 물리 크기에 맞춰 스케일합니다(`renderer.modelSize`). 로드에 실패하면 기존 큐브로 그립니다.
 - 하이라이트·타격 섬광 껍질도 같은 모델을 씁니다.
+
+## 고양이 모델 0.25.0
+- 고양이의 몸·머리·귀·발을 Blender에서 만든 모델(`assets/models/cat.glb`, 4개 메시 약 2.5K 정점)로 바꿨습니다. 제작 스크립트는 `assets/src/cat.py`입니다. 포즈(squash·stretch·구르기·튕김·꼬리·할퀴기)는 기존 코드가 그대로 계산하고, 도형만 모델로 바뀝니다.
+- 머리에 볼·주둥이·눈(흰자·눈동자·하이라이트)·코를 한 메시로 넣어 그리기 호출이 줄었습니다(눈·코·귀 안쪽 도형 제거). 귀는 안쪽 분홍 면이 있고, 발에는 발가락과 분홍 패드가 있습니다.
+- 정점색: glb의 `COLOR_0` 알파를 틴트 마스크로 씁니다(알파 1은 코트 색을 따르고, 0은 모델에 칠한 색 그대로). 그래서 멀티 4색 고양이에도 눈·코·귀 안쪽이 물들지 않습니다.
+- 모델 로드는 필수입니다(실패하면 오류 화면). 블록의 큐브 대체 경로는 없앴습니다.
+- 디버그(`?debug=1`): `inject.look(yaw,pitch)`, `inject.orbit(angle)`로 카메라만 돌려 고양이 얼굴을 확인할 수 있습니다(게임 카메라는 항상 뒤에 있어 얼굴이 안 보입니다).
 

@@ -10,23 +10,23 @@ import { MATERIALS, makeHouseAtlas } from './house.js';
 THREE.ColorManagement.enabled = false;
 
 const VERTEX = `
-varying vec3 vNormal;varying vec3 vWorld;varying vec2 vUv;varying vec4 vColor;varying float vTile;varying float vUnlit;
+varying vec3 vNormal;varying vec3 vWorld;varying vec2 vUv;varying vec4 vColor;varying float vTile;varying float vUnlit;varying vec4 vDetail;
 #ifdef STATIC
 attribute vec4 tint;attribute float tile;
 #else
-uniform vec4 col;uniform float unlit;uniform float dynamicTile;uniform vec2 uvScale;
+uniform vec4 col;uniform float unlit;uniform float dynamicTile;uniform vec2 uvScale;attribute vec4 detail;
 #endif
 void main(){
 #ifdef STATIC
- vec4 wp=vec4(position,1.);vNormal=normal;vUv=uv;vColor=tint;vTile=tile;vUnlit=0.;
+ vec4 wp=vec4(position,1.);vNormal=normal;vUv=uv;vColor=tint;vTile=tile;vUnlit=0.;vDetail=vec4(1.);
 #else
- vec4 wp=modelMatrix*vec4(position,1.);vNormal=mat3(modelMatrix)*normal;vUv=uv*uvScale;vColor=col;vTile=dynamicTile;vUnlit=unlit;
+ vec4 wp=modelMatrix*vec4(position,1.);vNormal=mat3(modelMatrix)*normal;vUv=uv*uvScale;vColor=col;vTile=dynamicTile;vUnlit=unlit;vDetail=detail;
 #endif
  vWorld=wp.xyz;gl_Position=projectionMatrix*viewMatrix*wp;}`;
 
 const FRAGMENT = `
 uniform sampler2D atlas;
-varying vec3 vNormal;varying vec3 vWorld;varying vec2 vUv;varying vec4 vColor;varying float vTile;varying float vUnlit;
+varying vec3 vNormal;varying vec3 vWorld;varying vec2 vUv;varying vec4 vColor;varying float vTile;varying float vUnlit;varying vec4 vDetail;
 void main(){vec3 nn=normalize(vNormal);float sun=max(0.,dot(nn,normalize(vec3(-.4,.89,.52))));
 float illum=.70+.31*sun;float indirect=.045*exp(-length(vWorld.xz-vec2(0.,0.))/24.);
 float lamp=0.;
@@ -38,7 +38,9 @@ vec3 pigment=vec3(1.);
 if(vTile>-.5){float t=floor(vTile+.5);
 vec2 tiled=vec2(mod(t,4.),floor(t/4.));
 vec2 fracUv=fract(vUv);pigment=texture2D(atlas,(tiled+mix(vec2(.012),vec2(.988),fracUv))/4.).rgb;}
-vec3 color=vColor.rgb*pigment*mix(illum,1.,vUnlit);
+// Detail alpha is a tint mask: 1 takes the caller's coat colour, 0 keeps the authored colour (eyes, nose, inner ear).
+vec3 base=mix(vDetail.rgb,vDetail.rgb*vColor.rgb,vDetail.a);
+vec3 color=base*pigment*mix(illum,1.,vUnlit);
 color=pow(max(color,vec3(.00001)),vec3(.96));
 gl_FragColor=vec4(color,vColor.a);}`;
 
@@ -49,6 +51,7 @@ function toGeometry(source) {
   g.setAttribute('position', new THREE.Float32BufferAttribute(source.pos, 3));
   g.setAttribute('normal', new THREE.Float32BufferAttribute(source.norm, 3));
   g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setAttribute('detail', new THREE.Float32BufferAttribute(new Array(source.pos.length / 3 * 4).fill(1), 4));
   g.setIndex(new THREE.Uint16BufferAttribute(source.ind, 1));
   return g;
 }
@@ -88,18 +91,27 @@ class Toon3D {
     this.eye = [0, 0, 0];
   }
 
-  /* Authored glb models draw through the same call-ordered path as primitives: draw('<name>', ...). `modelSize`
-     is the authored bounding box so callers can scale a model to a physics size without knowing the asset. */
+  /* Authored glb models draw through the same call-ordered path as primitives: draw('<name>', ...). A file with one
+     mesh is registered under its url key, a file with several under each node name. `modelSize` is the authored
+     bounding box so callers can scale a model to a physics size without knowing the asset. COLOR_0 carries a
+     per-vertex colour whose alpha is a tint mask (see the fragment shader). */
   async loadModels(urls) {
     const loader = new GLTFLoader(); this.modelSize ??= {};
-    await Promise.all(Object.entries(urls).map(async ([name, url]) => {
-      const gltf = await loader.loadAsync(url); let mesh = null;
-      gltf.scene.traverse(node => { if (!mesh && node.isMesh) mesh = node; });
-      if (!mesh) throw new Error(`${url}: 메시가 없습니다.`);
-      const g = mesh.geometry.clone(); g.applyMatrix4(mesh.matrixWorld);
-      if (!g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Array(g.attributes.position.count * 2).fill(0), 2));
-      g.computeBoundingBox(); const size = g.boundingBox.getSize(new THREE.Vector3());
-      this.modelSize[name] = [size.x, size.y, size.z]; this.geometry[name] = g; this.pool[name] = { meshes: [], used: 0 };
+    await Promise.all(Object.entries(urls).map(async ([key, url]) => {
+      const gltf = await loader.loadAsync(url), meshes = [];
+      gltf.scene.updateMatrixWorld(true);
+      gltf.scene.traverse(node => { if (node.isMesh) meshes.push(node); });
+      if (!meshes.length) throw new Error(`${url}: 메시가 없습니다.`);
+      for (const mesh of meshes) {
+        const name = meshes.length === 1 ? key : mesh.name, g = mesh.geometry.clone(); g.applyMatrix4(mesh.matrixWorld);
+        const count = g.attributes.position.count, color = g.attributes.color;
+        const detail = new Float32Array(count * 4).fill(1);
+        if (color) for (let i = 0; i < count; i++) { detail[i * 4] = color.getX(i); detail[i * 4 + 1] = color.getY(i); detail[i * 4 + 2] = color.getZ(i); detail[i * 4 + 3] = color.itemSize === 4 ? color.getW(i) : 1; }
+        g.deleteAttribute('color'); g.setAttribute('detail', new THREE.BufferAttribute(detail, 4));
+        if (!g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Array(count * 2).fill(0), 2));
+        g.computeBoundingBox(); const size = g.boundingBox.getSize(new THREE.Vector3());
+        this.modelSize[name] = [size.x, size.y, size.z]; this.geometry[name] = g; this.pool[name] = { meshes: [], used: 0 };
+      }
     }));
   }
 
