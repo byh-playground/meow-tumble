@@ -278,7 +278,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
  const DEF={
-    build:'20261103-cat-details-v0265',version:'0.26.5',
+    build:'20261103-cat-rig-v0270',version:'0.27.0',
   // One continuous game: after each collapse the people rebuild with heavier wood, and the cat starts over
   // at LV1 keeping a permanent mass bonus from the chains it landed. No result screen, no mode, no timer.
   stage:{blockMassGrowth:1.5,legacyMassPerCombo:1.1,clearIntervalMs:140,layerIntervalMs:900},
@@ -2400,6 +2400,28 @@ function drawSpawners(g){for(const s of spawners){const [x,z]=s.def.at,y=ARENA.f
  if(hit)g.ring([x,y+.08,z],r+.3,COLOR.yellow,.7);
 }}
 function axisAngle(axis,angle){const half=angle*.5,sc=Math.sin(half);return [axis[0]*sc,axis[1]*sc,axis[2]*sc,Math.cos(half)];}
+// One skinned rig per cat actor. Clip weights/times are driven from game state every frame (scrubbed, never free-running), so the pose
+// always matches the simulation; this is also what keeps remote cats in sync.
+const catRigs=new Map();
+function catRigFor(g,c){let rig=catRigs.get(c.id);if(!rig){rig=g.createRig('cat');rig.w={walk:0};rig.lastAt=sceneView.displaySeconds;catRigs.set(c.id,rig);}return rig;}
+const CAT_CLIPS=['idle','walk','charge','dash','clawR','clawL','jumpUp','jumpDown','fly','roll','flop'];
+function poseCatRig(rig,s){
+ const now=sceneView.displaySeconds,dt=Math.max(0,Math.min(.1,now-rig.lastAt));rig.lastAt=now;
+ // One clip owns the pose at a time; weights crossfade toward it so state changes never pop. Overlays beat locomotion.
+ let want='idle';
+ const forced=rig.debugPose;
+ if(s.roll)want='roll';else if(s.flight)want='fly';else if(s.stunned||s.recover||s.dead)want='flop';
+ else if(s.dash)want='dash';else if(s.claw)want=s.clawSide<0?'clawL':'clawR';
+ else if(s.charge||s.jumpCharge)want='charge';else if(s.jump)want=s.vy>0?'jumpUp':'jumpDown';else if(s.walking)want='walk';
+ const at=(name,fraction)=>Math.min(rig.clips[name]*.999,Math.max(0,fraction*rig.clips[name]));
+ const times={idle:now%rig.clips.idle,walk:((now/.34)%1)*rig.clips.walk,fly:(now%.4)/.4*rig.clips.fly*.999,
+  charge:at('charge',s.charge?s.chargeRatio:s.jumpRatio),dash:Math.min(rig.clips.dash*.999,s.stateMs/1000),
+  clawR:at('clawR',s.clawT),clawL:at('clawL',s.clawT),jumpUp:Math.min(rig.clips.jumpUp*.999,s.stateMs/1000),jumpDown:Math.min(rig.clips.jumpDown*.999,s.stateMs/1000),
+  roll:at('roll',s.rollTuck),flop:s.recover?at('flop',.5*(1-s.rise)):Math.min(rig.clips.flop*.999,s.stateMs/1000)};
+ if(forced){want=forced.clip;times[want]=Math.min(rig.clips[want]*.999,forced.fraction*rig.clips[want]);for(const name of CAT_CLIPS)rig.w[name]=name===want?1:0;}
+ for(const name of CAT_CLIPS){const action=rig.actions[name],w=rig.w[name]??(name==='idle'?1:0),target=name===want?1:0,next=w+(target-w)*Math.min(1,dt*16);
+  rig.w[name]=next;action.setEffectiveWeight(next);action.time=times[name];}
+}
 function drawCatTrail(g,c){for(const t of c.trail){const opacity=clamp(t.life/.20,0,1)*t.strength;
  g.draw('sphere',t.p,[.42,.30,.52].map(value=>value*t.scale),c.motion.state==='roll'?COLOR.mint:COLOR.pink,Q(),opacity,1);
 }}
@@ -2503,10 +2525,16 @@ function drawCat(g,c){
  };
  const bodyScale=[.53*(1+.12*squash),.43*(1-squash+stretch),.72*(1+curl*.10)];
  const poseQuat=qmul(qyaw(yaw),q);
- g.draw('catBody',part(0,.57,-.14),bodyScale,fur,poseQuat);
- // A high-contrast back patch is a readable orientation marker during full 360° dodge.
- // This belongs to the same rotated rig, not a floor-fixed effect.
- g.draw('sphere',part(0,.925,-.22),[.38,.08,.58],stripe,poseQuat);
+
+ // Skinned cat: the whole-body pose (squash, stretch, curl, roll/tumble rotation, bob) is computed here from game state as one
+ // matrix; authored clips only add limb, head, ear and tail motion on top.
+ const rig=catRigFor(worldRenderer,c);
+ poseCatRig(rig,{walking,roll:isRoll,flight:isFlight,stunned:isStunned,recover:isRecover,dead:isDead,dash:isDash,claw:isClaw,clawSide:c.claw.side,clawT,
+  charge:isCharge,chargeRatio:c.charge.ratio,jumpCharge:c.jump.held,jumpRatio:c.jump.ratio,jump:isJump,vy:c.vy,stateMs:m.elapsedMs,
+  rollTuck:isRoll?smooth(0,.16,t)*(1-smooth(.76,1,t)):0,rise:isRecover?smooth(.04,.94,clamp(m.elapsedMs/DEF.cat.recoverDurationMs,0,1)):0});
+ const bodyM=matmul(compose([p[0],p[1]+.72+bob+centerLift,p[2]],poseQuat,[1,1,1]),
+  compose([0,-.72*(1-squash+stretch),0],Q(),[(1-curl*.25)*(1+.06*squash),1-squash+stretch,(1-curl*.38)*(1+.04*curl)]));
+ worldRenderer.drawRig(rig,matmul(compose(vmul(origin,1-scale),Q(),[scale,scale,scale]),bodyM),fur,stripe);
  if(isRoll&&c.y-c.surfaceY<.65){
   // Circular footwork dust communicates direction and timing without overpowering danger telegraphs.
   const arc=(Math.min(1,t)*Math.PI*2),rx=c.motion.rollDirX,rz=c.motion.rollDirZ;
@@ -2516,38 +2544,8 @@ function drawCat(g,c){
     [.12-i*.024,.065,.12-i*.024],i===0?COLOR.cream:COLOR.mint);
   }
  }
- g.draw('sphere',part(0,.43,.23),[.40,.31*(1-squash*.4),.46],belly,poseQuat);
- g.draw('catHead',part(0,.79,.55),[1,1,1],fur,poseQuat);
- // Ears fold back during the roll; during knockback the full rig spins.
- const rollTuck=isRoll?smooth(0,.16,t)*(1-smooth(.76,1,t)):0;
- const earY=isStunned?1.07:1.16-.09*rollTuck,earQuat=qmul(qyaw(yaw),q);
- g.draw('catEar',part(-.26,earY,.70),[.28,.44*(1-.38*rollTuck),.25],fur,earQuat);
- g.draw('catEar',part(.26,earY,.70),[.28,.44*(1-.38*rollTuck),.25],fur,earQuat);
  if(net.room){g.orb(part(0,.51,.31),[.35,.068,.31],catAccent[Math.max(0,actorIndex)]||COLOR.yellow);g.orb(part(0,.40,.62),[.095,.12,.06],COLOR.yellow);}
  if(c.level>=3)g.orb(part(0,.49,.51),[.22,.09,.13],c.level===5?COLOR.yellow:COLOR.mint);
- // Whiskers are short stubs on the cheeks, never from the nose: long lines crossing the muzzle hide the mouth that carries the expression.
- for(const side of [-1,1])for(let n=0;n<2;n++)limb(g,part(side*.33,.665-n*.05,.905),part(side*.47,.68-n*.095,.92),.013,COLOR.cream);
- const legMove=walking?Math.sin(sceneView.displaySeconds*19)*.13:0;
- for(const side of [-1,1])for(const back of [-1,1]){
-  const legZ=back*.45,step=(back===1?1:-1)*side*legMove;
-  const rise=isJump?Math.min(.18,Math.abs(c.vy)*.025):0;
-  const tuck=isFlight?.18:isRoll?.25*rollTuck:0;
-  const slashing=isClaw&&back===1&&side===c.claw.side;
-  const swipe=slashing?clawSwing:0;
-  g.draw('catPaw',part(side*(.35-tuck*.5+.09*swipe),.27+Math.max(0,step)+rise+tuck+.23*swipe,legZ+step*.7+.72*swipe),[.18,.25*(1-tuck),.23],fur,poseQuat);
- }
- const tailWiggle=isFlight?sceneView.displaySeconds*18:sceneView.displaySeconds*5;
- const tail=isRoll?tailPoints.map(v=>part(...v)):[
-  part(...tailPoints[0]),
-  part(tailPoints[1][0]+Math.sin(tailWiggle)*.08,tailPoints[1][1],tailPoints[1][2]),
-  part(tailPoints[2][0]+Math.sin(tailWiggle+.7)*.25,tailPoints[2][1],tailPoints[2][2]),
-  part(tailPoints[3][0]+Math.sin(tailWiggle*.8+1)*.4,tailPoints[3][1],tailPoints[3][2])
- ];
- const [t0,t1,t2,t3]=tail;
- // Banded tail: seven short segments along the same three-piece path alternate coat and stripe colours while tapering.
- const tailAt=u=>{const s=Math.min(2,Math.floor(u*3)),f=u*3-s,a=tail[s],b=tail[s+1];return[lerp(a[0],b[0],f),lerp(a[1],b[1],f),lerp(a[2],b[2],f)];};
- for(let i=0;i<7;i++)limb(g,tailAt(i/7),tailAt((i+1)/7+(i<6?.012:0)),lerp(.28,.17,i/6),i%2?fur:stripe);
- g.orb(t3,[.11,.11,.11],stripe);
  if(isClaw&&clawT>.12&&clawT<.93){
   // Three bright curved streaks, anchored to the cat's local forward/right axes.
   // Pure presentation: collision has already been decided by Rapier's shape query.
@@ -2980,9 +2978,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewpo
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
-  namespace:'meow-tumble-0.26.5',inputBytes:5,snapshotLimit:15000,
+  namespace:'meow-tumble-0.27.0',inputBytes:5,snapshotLimit:15000,
   inputType:91,snapshotType:92,resetType:93,startType:94,perksType:95,protocol:21});
-const LOBBY_VERSION='meow-tumble-0.26.5';
+const LOBBY_VERSION='meow-tumble-0.27.0';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};
@@ -3519,7 +3517,7 @@ async function main(){try{
  RAPIER=imported.default?.World?imported.default:imported;
  if(typeof RAPIER.init==='function')await RAPIER.init();
  if(!RAPIER.World||!RAPIER.ColliderDesc||!RAPIER.RigidBodyDesc)throw new Error('Rapier 3D API 검증 실패');
- await openLegacySave();renderer=new Toon3D(gameCanvas);await renderer.loadModels({block:'./assets/models/block.glb',cat:'./assets/models/cat.glb',human:'./assets/models/human.glb'});renderHouse(renderer);resetWorld();bindControls();mobileViewport.bind();bindMenu();simLoop.start();
+ await openLegacySave();renderer=new Toon3D(gameCanvas);await renderer.loadModels({block:'./assets/models/block.glb',human:'./assets/models/human.glb'});await renderer.loadRigs({cat:'./assets/models/cat-rig.glb'});renderHouse(renderer);resetWorld();bindControls();mobileViewport.bind();bindMenu();simLoop.start();
  document.querySelector('#boot').classList.add('hidden');
  document.querySelector('#error').classList.remove('show');
  }catch(error){document.querySelector('#boot').textContent='게임 실행 실패: '+(error.message||error);
@@ -3536,7 +3534,7 @@ if(new URLSearchParams(location.search).get('debug')==='1'){window.__meowTumble=
  combatFeedback:{pending:combatUI.pending.length,activeNumbers:combatUI.floats.filter(f=>f.endMs>performance.now()).length,activeBursts:combatUI.bursts.length,dropped:combatUI.dropped}}},
  start,reset:()=>start(),
  // Debug-only scene parameters for deterministic captures; the host simulation still runs every rule.
- inject:{look(yaw,pitch){if(camera){camera.yaw=yaw;camera.pitch=pitch;}},orbit(angle){if(camera)camera.debugOrbit=angle;},shot(eye,at){if(camera)camera.debugShot=eye?{eye,at}:null;},anger(value){for(const h of human??[])h.anger=clamp(value,0,DEF.humans.anger.max);},
+ inject:{look(yaw,pitch){if(camera){camera.yaw=yaw;camera.pitch=pitch;}},orbit(angle){if(camera)camera.debugOrbit=angle;},rigPose(clip,fraction){for(const rig of catRigs.values())rig.debugPose=clip?{clip,fraction}:null;},shot(eye,at){if(camera)camera.debugShot=eye?{eye,at}:null;},anger(value){for(const h of human??[])h.anger=clamp(value,0,DEF.humans.anger.max);},
   // A real physical shove on every standing block so the tower collapses through Rapier (stage test).
   collapse(){beginCollapse();},
   topple(){for(const b of tower.blocks){if(b.fallen||b.building)continue;const p=b.body.translation();b.body.applyImpulseAtPoint({x:(p.x>=0?1:-1)*b.mass*9,y:b.mass*2,z:(p.z>=0?1:-1)*b.mass*6},{x:p.x,y:p.y+.3,z:p.z},true);}},ammo(id,value){const h=human?.[id];if(h)h.ammo=Math.max(0,value|0);},breakSpawner(id){const s=spawnerById(id);if(s&&!s.broken&&cat){s.hp=1;damageSpawner(s,cat,{x:s.def.at[0],y:ARENA.floorY+.4,z:s.def.at[1]});}}},
