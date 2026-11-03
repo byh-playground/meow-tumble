@@ -10,7 +10,7 @@
 
 작은 고양이가 식탁 위 거대한 젠가탑을 연속으로 들이받아 **콤보로 성장**하고, 화가 난 사람이 집에 있는 물건(공·전동 쥐·로봇청소기)으로 방해하면 외곽 방의 거점을 부숴 끊는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.22.0** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.23.0** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -32,7 +32,7 @@ A small cat chains headbutts into the Jenga tower for combo XP, dodges the incre
 
 GameKit **v0.41.3**의 source `bb3f59614c8d4da8188a3ffdc2eff43314fabe5f`, dist `c819a0b48fb650ee8222f7d5ea90a63a2b9306d1`, manifest SHA-256 `d9c141ee18be4ce7a33cc8c39bdba75d5cd76e0b8ecdf7c2038386bc75cd9851`에 고정합니다. `RoomSession`의 `profiles.lockstep`, 멤버십 어댑터, 방 capability가 SDK의 현재 공개 API와 맞는지 확인하고, 부팅 때 10개 모듈(save 포함)의 필수 named export를 검사합니다. 연결 중 취소는 즉시 정리하고, 승인된 참가자의 퇴장은 `RoomSession.leave()` 합의를 기다린 뒤 정리합니다. 입력·루프·PRNG·방/세션·보간·확정 표시 이벤트를 SDK가 맡고, 호스트의 Rapier 월드가 싱글/멀티의 같은 게임 규칙을 실행합니다. 게스트 보간은 표시 전용이며 별도 이동 시뮬레이션을 만들지 않습니다. 전체 모듈 해시는 [dependencies.json](docs/dependencies.json)에 있습니다.
 
-GameKit RoomSession의 wire protocol 3과 Room 계약 2는 v0.3.2에서도 같지만 세션 HELLO는 SDK library version을 검사합니다. 서로 다른 SDK 버전의 클라이언트는 함께 시작할 수 없으므로 게임 버전과 방 namespace를 올립니다. 현재 namespace는 **0.22.0**, 게임 패킷 protocol 20이며 Rapier 0.21.0은 유지합니다.
+GameKit RoomSession의 wire protocol 3과 Room 계약 2는 v0.3.2에서도 같지만 세션 HELLO는 SDK library version을 검사합니다. 서로 다른 SDK 버전의 클라이언트는 함께 시작할 수 없으므로 게임 버전과 방 namespace를 올립니다. 현재 namespace는 **0.23.0**, 게임 패킷 protocol 21이며 Rapier 0.21.0은 유지합니다.
 
 ## 검증과 배포
 
@@ -277,3 +277,13 @@ A light claw hit on a mass-20 block a builder is carrying prompts a brief look a
 - **종료**: 창 만료(timeout), 링크 박치기가 블록을 못 만남(miss), 실제 피해(hit), 새 수동 차지(restart). 일반 접촉·할퀴기 타격은 ×1 단타로 XP만 준다.
 - **표시**: 창이 열리면 고양이 발밑에 금색 링(GOLDEN)이 크림색으로 번지며 사라진다(COYOTE). HUD는 `N 연쇄 · 지금 공격!`과 남은 창.
 - **멀티**: 판정은 호스트 틱, 창은 전원 동일(접촉 전 100ms 예약이 지연을 일부 보전). 패킷·스냅샷 계약은 그대로(PATCH).
+
+## 시작 전 스탯 트리 0.23.0
+
+**메인 규칙**: 게임을 시작하기 전에 통산 기록으로 받은 포인트를 스탯 트리에 나눈다. 포인트는 판이 끝나도 사라지지 않고, 배분은 매 판 다시 한다.
+
+- **기록**: GameKit `save` 모듈(`localStorageAdapter`, 접두사 `meow-tumble/`, 키 `legacy`, schema 1)에 `{bestStage, bestChain, collapses, allocation}`을 둔다. 읽지 못한 기록은 덮어쓰지 않고 `reset()` 뒤 새로 시작한다. `?save=memory`면 메모리 어댑터(디버그·시험).
+- **포인트**: `최고 단계 × 1 + floor(붕괴 수 / 2)`. 첫 판은 1점.
+- **노드 (각 최대 3)**: 🦴 뼈대(시작 질량 ×1.1) · 💥 박치기(기본 속도 +0.5) · 🔗 연쇄(최대 연쇄 +1) · ❤️ 체력(최대 HP +10) · 🐾 할퀴기(거점·전동 쥐 피해 +1). 창·쿨다운 같은 관용을 늘리는 노드는 두지 않는다(C-079).
+- **흐름**: 혼자 시작 → 🌳 스탯 트리 → 이 빌드로 시작. 멀티는 대기실의 🌳 버튼으로 각자 배분하고, 게스트는 배분을 `perks` 패킷(type 95)으로 방장에게 보내 방장이 `resetWorld`에서 그 고양이에 적용한다(protocol 21, namespace 0.23.0).
+- **기록 갱신**: HUD 주기마다 로컬 고양이의 단계·최고 연쇄·붕괴 수가 기록보다 크면 한 번씩 저장한다(호스트·게스트 공통, 스냅샷 값 기준).
