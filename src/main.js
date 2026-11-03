@@ -278,7 +278,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
  const DEF={
-    build:'20261103-gamekit-0-14-3-v0210',version:'0.21.0',
+    build:'20261103-gamekit-0-14-3-v0211',version:'0.21.1',
   // One continuous game: after each collapse the people rebuild with heavier wood, and the cat starts over
   // at LV1 keeping a permanent mass bonus from the chains it landed. No result screen, no mode, no timer.
   stage:{blockMassGrowth:1.5,legacyMassPerCombo:1.1,clearIntervalMs:140,layerIntervalMs:900},
@@ -291,7 +291,11 @@ class PhysicsTower {
     // People escalate from hand swats to household gadgets as directional cat→block hits add anger.
     anger:{perSeverity:12,decayPerSecond:1.5,max:100},refill:{runSpeed:2.4,pickMs:1200,spilledPickMs:900}},
   // Tower hits chain into a combo; every hit pays XP scaled by the current multiplier (host-owned, from catBlockEvents).
-  combo:{windowMs:2500,maxMult:8,repeatDecay:[1,.75,.5,.25,.1],xpPerImpulse:1/20,rehitMs:400},
+  // Chain combo (after Bounko's GOLDEN/COYOTE): a charged headbutt touching a block opens a short window;
+  // pressing attack inside it IS the next headbutt — no charging, charge ratio 1 in GOLDEN decaying to
+  // coyoteEndCharge through COYOTE — and the cat pops upward. Links = combo count = XP multiplier.
+  // A press up to bufferMs before contact is kept as a reservation. Miss, timeout or damage ends the chain.
+  combo:{xpPerImpulse:1/20,maxLinks:3,goldenMs:50,coyoteMs:150,bufferMs:100,coyoteStartCharge:.94,coyoteEndCharge:.70,popUpSpeed:7,popHopSpeed:1.5,popMs:150,linkLockMs:70},
   // Impact feel is presentation only: the host simulation, input and network never pause.
   // hold = my own confirmed tower hit freezes my rendered frame briefly (pose hold), then the live view resumes.
   feel:{holdMs:45,strongHoldMs:65,strongMult:4,kick:.09,kickDecayPerSecond:9,flashMs:120,sparks:10,sparkPower:9,sparkTailSec:.05,debris:5,farHearingDistance:18,voiceLimit:3,pitchPerCombo:1.06},
@@ -836,7 +840,9 @@ const collisionDamage={
    // a later genuine cat hit moves the block.
    const budgets=attackVectors.map(v=>Math.hypot(...v));
    const catBlock=a.kind==='cat'&&b.kind==='block'?{cat:a,block:b,sourceIndex:0}:b.kind==='cat'&&a.kind==='block'?{cat:b,block:a,sourceIndex:1}:null;
-   if(catBlock&&geometricContact&&solvedImpulse>1e-5&&attackSpeeds[catBlock.sourceIndex]>=2.25&&budgets[catBlock.sourceIndex]>=1.2){
+   // A CCD-stopped headbutt can rest a hair short of the face (contactDist > 1e-5) while the solver still
+   // transferred the impulse; the solver impulse, not penetration, proves the hit.
+   if(catBlock&&touching&&solvedImpulse>1e-5&&attackSpeeds[catBlock.sourceIndex]>=2.25&&budgets[catBlock.sourceIndex]>=1.2){
     const {cat:source,block,sourceIndex}=catBlock;
     if(this.catBlockLastTick.get(key)!==nowTicks){
      this.catBlockLastTick.set(key,nowTicks);
@@ -934,26 +940,68 @@ function resolveClawHit(){
 }
 /* Tower combo: consecutive directional cat→block hits inside the window raise the multiplier;
    XP is paid per hit, and any confirmed damage to the cat ends the chain. */
-function updateCombos(dt){const ms=dt*1000;
+const ticksOf=ms=>Math.max(1,Math.round(ms/1000*NET_DEF.stepHz));
+function chainMaxLinks(actor){return DEF.combo.maxLinks+(actor.perks?.chainLinks??0);}
+function updateCombos(dt){
  const fresh=collisionDamage.catBlockEvents.filter(event=>event.sequence>comboCursor);
  if(fresh.length)comboCursor=fresh[fresh.length-1].sequence;
- for(const event of fresh){const actor=roomCats.get(event.catId);if(!actor||actor.motion.state==='dead')continue;registerComboHit(actor,event);}
- for(const actor of roomCats.values()){const c=actor.combo;if(c.count===0)continue;c.leftMs-=ms;if(c.leftMs<=0)endCombo(actor,'timeout');}
+ for(const event of fresh){const actor=roomCats.get(event.catId);if(!actor||actor.motion.state==='dead')continue;withCatActor(actor.id,()=>registerComboHit(actor,event));}
+ for(const actor of roomCats.values())withCatActor(actor.id,()=>{const c=actor.combo;
+  if(c.window){c.leftMs=Math.max(0,(c.window.until-nowTicks)*1000/NET_DEF.stepHz);if(nowTicks>c.window.until){c.window=null;c.leftMs=0;endCombo(actor,'timeout');}}
+  // A chained headbutt that ends without touching a block is a miss; the chain is over.
+  else if(c.armed&&actor.motion.state!=='dash')endCombo(actor,'miss');
+ });
 }
-function registerComboHit(actor,event){const cfg=DEF.combo,c=actor.combo,rehitTicks=Math.round(cfg.rehitMs/1000*NET_DEF.stepHz);
- const previous=c.hits.get(event.blockId);
- if(previous&&nowTicks-previous.tick<rehitTicks){previous.tick=nowTicks;return;}
- const repeats=previous?.count??0;c.hits.set(event.blockId,{count:repeats+1,tick:nowTicks});
- c.count++;c.mult=Math.min(cfg.maxMult,c.count);c.leftMs=cfg.windowMs;c.best=Math.max(c.best,c.count);
- const base=Math.max(1,Math.ceil(event.impulse*cfg.xpPerImpulse*cfg.repeatDecay[Math.min(repeats,cfg.repeatDecay.length-1)]));
- const gained=grantXp(actor,base*c.mult,event.p);
+function registerComboHit(actor,event){const cfg=DEF.combo,c=actor.combo;
+ // The link's own tick does not count as its contact: the chained headbutt must travel at least one tick.
+ const dashHit=!event.kind&&actor.motion.state==='dash'&&c.windowSerial!==c.dashSerial&&nowTicks>(c.linkTick??-1);
+ if(dashHit){c.windowSerial=c.dashSerial;c.count=c.armed?c.count+1:1;c.armed=false;}
+ (c.log??=[]).push({tick:nowTicks,kind:'hit',dashHit,serial:c.dashSerial,count:c.count,buffered:c.bufferedUntilTick,speed:+event.attackSpeed.toFixed(2)});if(c.log.length>16)c.log.shift();
+ const mult=dashHit?c.count:1;c.mult=Math.max(1,c.count);c.best=Math.max(c.best,c.count);
+ const base=Math.max(1,Math.ceil(event.impulse*cfg.xpPerImpulse)),gained=grantXp(actor,base*mult,event.p);
  // Hit direction from the attacking cat's actual velocity (the solver contact point is event.p).
  const body=tower.playerBodies.get(actor.id)?.body,v=body?body.linvel():{x:0,y:0,z:1},speed=Math.hypot(v.x,v.y,v.z)||1;
- combatUI.queue({kind:'combo',tick:nowTicks,entityId:actor.id,sequence:++c.sequence,count:c.count,mult:c.mult,xp:gained,blockId:event.blockId,p:event.p.slice(),dir:[v.x/speed,v.y/speed,v.z/speed].map(n=>Math.round(n*100)/100)});
+ combatUI.queue({kind:'combo',tick:nowTicks,entityId:actor.id,sequence:++c.sequence,count:dashHit?c.count:1,mult,xp:gained,blockId:event.blockId,p:event.p.slice(),dir:[v.x/speed,v.y/speed,v.z/speed].map(n=>Math.round(n*100)/100)});
+ if(!dashHit)return;
+ // The contact opens the GOLDEN→COYOTE window for the next link, unless the chain is already at its cap.
+ if(c.count>=chainMaxLinks(actor)){c.window=null;endCombo(actor,'complete');return;}
+ c.window={openedTick:nowTicks,until:nowTicks+ticksOf(cfg.goldenMs+cfg.coyoteMs)};
+ if(c.bufferedUntilTick>=nowTicks){c.bufferedUntilTick=-1;fireChainLink(1);}
 }
-function endCombo(actor,reason){const c=actor.combo;if(c.count===0)return;
- c.count=0;c.mult=1;c.leftMs=0;c.hits.clear();
- if(actor===localCat&&reason==='hit')announce('💢 피격! 콤보가 끊겼다',900);
+// Attack press while a chain window is open (or during the dash just before contact) becomes the next headbutt.
+function tryChainLink(){const c=cat.combo,cfg=DEF.combo;
+ // One physical press can surface as a start edge on two consecutive ticks; a link locks the next ticks out.
+ if(nowTicks<=(c.linkLockUntilTick??-1))return true;
+ if(c.window&&nowTicks<=c.window.until){
+  const elapsedMs=(nowTicks-c.window.openedTick)*1000/NET_DEF.stepHz;
+  const ratio=elapsedMs<cfg.goldenMs?1:lerp(cfg.coyoteStartCharge,cfg.coyoteEndCharge,clamp((elapsedMs-cfg.goldenMs)/cfg.coyoteMs,0,1));
+  fireChainLink(ratio);return true;
+ }
+ if(cat.motion.state==='dash'&&c.windowSerial!==c.dashSerial){c.bufferedUntilTick=nowTicks+ticksOf(cfg.bufferMs);return true;}
+ return false;
+}
+function fireChainLink(ratio){const cfg=DEF.combo,config=DEF.cat.charge,c=cat.combo;
+ if(CAT_DISABLED_STATES.has(cat.motion.state)||cat.motion.state==='roll')return;
+ c.window=null;c.leftMs=0;c.armed=true;c.dashSerial++;c.linkTick=nowTicks;c.linkLockUntilTick=nowTicks+ticksOf(cfg.linkLockMs);cancelCharge();cat.charge.inputMs=0;cat.charge.tapPending=false;
+ const speed=headbuttBaseSpeed(cat.level)*(1+(config.maxMultiplier-1)*ratio),dirX=Math.sin(cat.aimYaw),dirZ=Math.cos(cat.aimYaw);
+ const body=tower.catBody,velocity=body.linvel(),forwardVelocity=velocity.x*dirX+velocity.z*dirZ,delta=Math.max(0,speed-forwardVelocity);
+ cat.yaw=cat.aimYaw;cat.dash.direction.x=dirX;cat.dash.direction.z=dirZ;cat.dash.velocity=speed;cat.dash.leftMs=lerp(config.minDashMs,config.maxDashMs,ratio);cat.dash.cooldown.leftMs=config.cooldownMs;
+ // Two real impulses: the pop now (up, with a small hop off the face so block friction cannot eat the lift),
+ // then the forward headbutt impulse once popMs has passed and the cat is airborne (applied in updateCat).
+ const hop=cfg.popHopSpeed;
+ body.applyImpulse({x:(-dirX*hop-velocity.x)*body.mass(),y:Math.max(0,cfg.popUpSpeed-velocity.y)*body.mass(),z:(-dirZ*hop-velocity.z)*body.mass()},true);
+ setCatMotion('dash',{chargeRatio:ratio,chained:true,popMs:cfg.popMs,pendingForward:speed});
+ void delta;
+ (c.log??=[]).push({tick:nowTicks,kind:'link',ratio:+ratio.toFixed(2),serial:c.dashSerial,vyBefore:+velocity.y.toFixed(2),vyAfter:+body.linvel().y.toFixed(2)});if(c.log.length>16)c.log.shift();
+ particle([cat.x,cat.y+.30,cat.z],'yellow',14,2.6);sfx('dash',.9,1+c.count*.08);
+ if(cat===localCat)announce(ratio>=1?'✦ 저스트! 연쇄 박치기':'연쇄 박치기 '+Math.round(ratio*100)+'%',700);
+}
+function endCombo(actor,reason){const c=actor.combo;const had=c.count>0||c.armed||c.window;
+ c.count=0;c.mult=1;c.leftMs=0;c.window=null;c.armed=false;c.bufferedUntilTick=-1;
+ if(!had)return;
+ if(actor===localCat&&reason==='hit')announce('💢 피격! 연쇄가 끊겼다',900);
+ else if(actor===localCat&&reason==='miss')announce('빗나감 · 연쇄 종료',700);
+ else if(actor===localCat&&reason==='complete')announce('🔥 최대 연쇄 달성!',900);
 }
 function damageCat(amount,reason,physical=false){if((physical?cat.spawnProtectionMs>0:cat.invuln>0)||cat.motion.state==='dead'||phase!=='play')return;
  cat.hp=Math.max(0,cat.hp-amount);cat.invuln=DEF.cat.hitInvulnMs;endCombo(cat,'hit');if(cat===localCat){announce(reason+' −'+amount+' HP',1100);sfx('hit',.65);}
@@ -978,7 +1026,7 @@ const rand=(a,b)=>a+(b-a)*rng.nextUint32()/4294967296;
 function makeCat(){return {id:"local",x:ARENA.spawnX,z:ARENA.spawnZ,y:ARENA.floorY,surfaceY:ARENA.floorY,vy:0,vx:0,vz:0,knockX:0,knockZ:0,aimYaw:Math.PI,legacy:{comboSum:0,stages:0},get mass(){return catMassForLevel(this.level,this.legacy.comboSum)},yaw:Math.PI,targetYaw:Math.PI,speed:0,hp:DEF.cat.maxHp,xp:0,level:1,growthSequence:0,openingMs:0,invuln:0,spawnProtectionMs:0,respawn:{leftMs:0},
  impactGraceMs:0,unwedge:{anchor:null,blockedMs:0,cooldownMs:0,recoveries:0,lastDirection:null},holdBlocked:false,charge:{held:false,elapsedMs:0,ratio:0,inputMs:0,tapPending:false},claw:{cooldown:{leftMs:0},animation:{leftMs:0},pendingHit:false,bufferMs:0,side:-1,attacks:0,lastHits:0},jump:{held:false,elapsedMs:0,ratio:0,lastVelocity:0,requestMs:0,releaseQueued:false,bufferRatio:0,coyoteMs:0,canJump:false},dash:{cooldown:{leftMs:0},leftMs:0,velocity:0,direction:{x:0,z:1}},dodgeCd:0,dodgeMs:0,dodgeBuffer:{leftMs:0,dx:0,dz:1},ticks:0,
  motion:{state:'idle',elapsedMs:0,rollAxis:[1,0,0],rollDirX:0,rollDirZ:1,spinAxis:[1,0,0],spinRad:0,spinRate:0,wasAirborne:false,airborneRoll:false,fromRoll:false,rollRecoveryMs:0},trail:[],landings:0,humanHits:0,successfulRolls:0,
- combo:{count:0,mult:1,leftMs:0,best:0,sequence:0,hits:new Map()}};}
+ combo:{count:0,mult:1,leftMs:0,best:0,sequence:0,window:null,armed:false,bufferedUntilTick:-1,dashSerial:0,windowSerial:-1}};}
 // Two family members defending their Jenga record with what the house already has.
 // `anger` is the unlock threshold; `base` names the household base a gadget comes from.
 const HUMAN_PROFILES=Object.freeze([
@@ -1140,7 +1188,7 @@ function updateHUD(){
  ui.xpFill.parentElement.setAttribute('aria-valuetext',maxed?'MAX · 최고 레벨':(Math.round((cat.xp-prev)*10)/10)+' / '+(next-prev)+' XP');
  ui.area.textContent=zoneAt(cat.x,cat.z)+(cat.y>ARENA.floorY+2.0?' · 높은 곳':'');
  ui.kills.textContent='🐭 전동 쥐 '+kills.toyMouse+' · ⚽ '+projectiles.length+'/'+HUMAN_THROW.maxBalls+' · 🔥 최고 ×'+cat.combo.best;
- ui.growthHelp.textContent=cat.level>=DEF.farming.maxLevel?'🏆 최고 레벨 MAX · 젠가를 무너뜨리세요!':'🧱 젠가를 연속으로 들이받으면 콤보 XP · 피격되면 끊겨요';
+ ui.growthHelp.textContent=cat.level>=DEF.farming.maxLevel?'🏆 최고 레벨 MAX · 젠가를 무너뜨리세요!':'🧱 박치기가 닿는 순간 한 번 더! 연쇄 박치기로 XP 배수';
  // Guide arrow: a household base the people have started using is the next strategic target; otherwise the table.
  let aim=[0,0],dist=Math.hypot(cat.x,cat.z),label='🏰 식탁';
  for(const s of spawners){if(s.broken||s.used===0)continue;const d=Math.hypot(s.def.at[0]-cat.x,s.def.at[1]-cat.z);if(d<dist||label==='🏰 식탁'){aim=s.def.at;dist=d;label=s.def.icon+' '+s.def.label;}}
@@ -1185,7 +1233,7 @@ function sfx(name,amount=1,pitch=1){if(!audioContext||audioContext.state!=='runn
  const t=audioContext.currentTime;let base=220,len=.14,type='triangle',gain=.05;
  switch(name){case'charge':base=490;len=.12;type='triangle';gain=.045;break;case'dash':base=135;len=.25;type='sawtooth';gain=.055;break;case'claw':base=780;len=.105;type='triangle';gain=.035;break;case'crash':base=90;len=.33;type='sawtooth';gain=.065;break;case'block':base=350;len=.13;type='sine';gain=.037;break;case'warn':base=540;len=.18;type='square';gain=.023;break;case'hit':base=180;len=.3;type='sawtooth';gain=.09;break;case'win':base=650;len=.46;gain=.11;break;case'lose':base=155;len=.5;gain=.04;break;case'jump':base=360;len=.11;gain=.045;break;case'collect':base=800;len=.16;gain=.055;break;case'dull':base=110;len=.14;gain=.045;break;case'crack':base=180;len=.16;gain=.075;break;case'roll':base=300;len=.14;gain=.045;break;case'land':base=108;len=.23;gain=.07;break;case'impact':base=82;len=.55;type='sawtooth';gain=.10;break;case'bounce':base=260;len=.17;type='square';gain=.065;break;}
  base*=pitch;const osc=audioContext.createOscillator(),g=audioContext.createGain();osc.type=type;osc.frequency.setValueAtTime(base*(.96+Math.random()*.08),t);osc.frequency.exponentialRampToValueAtTime(Math.max(40,base*(name==='win'?1.65:.55)),t+len);g.gain.setValueAtTime(gain*Math.max(.2,Math.min(1.5,amount)),t);g.gain.exponentialRampToValueAtTime(.0001,t+len);osc.connect(g);g.connect(audioContext.destination);osc.start(t);osc.stop(t+len+.01);osc.onended=()=>{activeVoices=Math.max(0,activeVoices-1);};}
-function start(){wakeAudio();resetWorld();phase='play';navigation.replace({screen:'play'});net.startButton.style.display='none';ui.start.classList.add('hidden');ui.hud.classList.remove('inactive');roundStart=performance.now();announce('🧱 젠가를 연속으로 들이받아 콤보로 성장! 화난 사람의 방해는 외곽 거점을 부숴 끊어라!',4300);gameCanvas.focus();}
+function start(){wakeAudio();resetWorld();phase='play';navigation.replace({screen:'play'});net.startButton.style.display='none';ui.start.classList.add('hidden');ui.hud.classList.remove('inactive');roundStart=performance.now();announce('🧱 박치기가 닿는 순간 한 번 더 눌러 연쇄! 화난 사람의 방해는 외곽 거점을 부숴 끊어라!',4300);gameCanvas.focus();}
 function blinkHuman(h,msg,ms=1200){h.speech=msg;h.noticeMs=ms;}
 function patternRadius(h){return HUMAN_ATTACKS[h.pattern].radius;}
 function createShockwave(h,x,z,scale=1){shockwaves.push({id:nowTicks*10+h.id+shockwaves.length*.01,x,z,r:0,previous:0,
@@ -1679,6 +1727,8 @@ function releaseCharge(){
  cat.yaw=cat.aimYaw;cat.dash.direction.x=dirX;cat.dash.direction.z=dirZ;
  cat.dash.velocity=speed;cat.dash.leftMs=lerp(config.minDashMs,config.maxDashMs,ratio);
  cat.dash.cooldown.leftMs=config.cooldownMs;
+ // A fresh manual headbutt starts a new chain opportunity; a previous unfinished chain is over.
+ cat.combo.dashSerial++;if(cat.combo.armed||cat.combo.window)endCombo(cat,'restart');
  body.applyImpulse({x:dirX*delta*body.mass(),y:0,z:dirZ*delta*body.mass()},true);
  setCatMotion('dash',{chargeRatio:ratio});
  camera.shake=Math.max(camera.shake,.08+ratio*.19);
@@ -1815,10 +1865,12 @@ function updateCat(dt,input){
  const allowed=!canceled&&!cat.holdBlocked,chargeStart=allowed&&!!(flags&1),chargeRelease=allowed&&!!(flags&2),jumpStart=allowed&&!!(flags&4),rollPressed=allowed&&!!(flags&8);
  const chargeHeld=allowed&&!!(flags&16),jumpRelease=allowed&&!!(flags&32),jumpHeld=allowed&&!!(flags&64);
  if(!['roll','launched','dash','stunned','dead'].includes(cat.motion.state))cat.yaw=cat.aimYaw;
- if(chargeStart){cat.charge.inputMs=0;cat.charge.tapPending=true;}
- if(chargeHeld){cat.charge.inputMs+=ms;cat.charge.tapPending=true;}
+ // A press inside a chain window (or just before the chained contact) is the next link, never a new charge.
+ const linked=chargeStart&&tryChainLink();
+ if(chargeStart&&!linked){cat.charge.inputMs=0;cat.charge.tapPending=true;}
+ if(chargeHeld&&!linked){cat.charge.inputMs+=ms;cat.charge.tapPending=true;}
  // Held bits are persistent command intent, not a second device queue.
- if(chargeHeld||chargeStart)beginCharge();
+ if((chargeHeld||chargeStart)&&!linked)beginCharge();
  if(chargeHeld&&cat.charge.held)tickAttackCharge(ms);
  else if(!chargeRelease&&!chargeHeld){cancelCharge();cat.charge.inputMs=0;cat.charge.tapPending=false;}
  if(jumpStart&&!jumpReady()&&!CAT_DISABLED_STATES.has(cat.motion.state)){jump.requestMs=DEF.input.jumpBufferMs;jump.releaseQueued=false;}
@@ -1836,6 +1888,12 @@ function updateCat(dt,input){
  if(cat.motion.state==='dash'){
   cat.dash.leftMs=Math.max(0,cat.dash.leftMs-ms);
   vx=cat.dash.direction.x*cat.dash.velocity;vz=cat.dash.direction.z*cat.dash.velocity;
+  // Right after a chained link the body flies on its own pop: no drive pressing it into the block face.
+  // When the pop phase ends, the chained headbutt impulse fires forward in the current aim.
+  if(cat.motion.popMs>0){cat.motion.popMs=Math.max(0,cat.motion.popMs-ms);const cur=body.linvel();vx=cur.x;vz=cur.z;
+   if(cat.motion.popMs<=0&&cat.motion.pendingForward){const speed=cat.motion.pendingForward;cat.motion.pendingForward=0;const fx=Math.sin(cat.aimYaw),fz=Math.cos(cat.aimYaw),forward=cur.x*fx+cur.z*fz,delta=Math.max(0,speed-forward);
+    cat.yaw=cat.aimYaw;cat.dash.direction.x=fx;cat.dash.direction.z=fz;cat.dash.leftMs=Math.max(cat.dash.leftMs,DEF.cat.charge.minDashMs);
+    body.applyImpulse({x:fx*delta*body.mass(),y:0,z:fz*delta*body.mass()},true);vx=fx*speed;vz=fz*speed;particle([cat.x,cat.y+.3,cat.z],'white',10,2);}}
   if(cat.ticks%3===0)particle([cat.x,cat.y+.32,cat.z],'white',2,.6);
   if(cat.dash.leftMs<=0)setCatMotion(!isCatSupported(p)?'jump':'idle');
  }else if(cat.motion.state==='roll'){
@@ -2819,7 +2877,9 @@ function drawWorld({alpha=0}={}){if(!renderer)return;const frameNow=performance.
  net.updateLabels(g);
  ui.chargeFill.style.width=(cat.charge.held&&cat.charge.elapsedMs<DEF.cat.claw.tapMaxMs?12:Math.round(cat.charge.ratio*100))+'%';ui.chargeButton.classList.toggle('charging',cat.charge.held&&cat.charge.elapsedMs>=DEF.cat.claw.tapMaxMs);ui.jumpFill.style.width=Math.round(cat.jump.ratio*100)+'%';ui.jumpButton.classList.toggle('charging',cat.jump.held);
  const danger=human.some(h=>h.mode==='warning');ui.warning.classList.toggle('show',danger&&phase==='play');const target=tower.nearest(c,1.38);ui.targetText.textContent=cat.charge.held?(cat.charge.elapsedMs<DEF.cat.claw.tapMaxMs?'🐾 지금 놓으면 할퀴기':'💥 '+Math.round(cat.charge.ratio*100)+'% · 놓으면 박치기!'):target?'💥 물리 충돌로 젠가 공략':'🏰 식탁으로 올라가 젠가 공략';ui.target.classList.toggle('active',!!target);
- const combo=cat.combo;ui.combo.classList.toggle('show',combo.count>0&&phase==='play');if(combo.count>0){ui.comboMult.textContent='×'+combo.mult;ui.comboHits.textContent=combo.count+' 연속 타격';ui.comboFill.style.width=clamp(combo.leftMs/DEF.combo.windowMs*100,0,100)+'%';}
+ const combo=cat.combo,windowMs=DEF.combo.goldenMs+DEF.combo.coyoteMs;ui.combo.classList.toggle('show',combo.count>0&&phase==='play');if(combo.count>0){ui.comboMult.textContent='×'+combo.mult;ui.comboHits.textContent=combo.count+' 연쇄'+(combo.window?' · 지금 공격!':'');ui.comboFill.style.width=clamp(combo.leftMs/windowMs*100,0,100)+'%';}
+ // Chain window telegraph: a gold ring at the cat's feet during GOLDEN that fades through COYOTE.
+ if(combo.window&&combo.leftMs>0){const t=1-combo.leftMs/windowMs,golden=t*windowMs<DEF.combo.goldenMs;g.ring([c.x,c.y+.06,c.z],.9+t*.9,golden?COLOR.yellow:COLOR.cream,golden?.95:.8*(1-t));}
  let mobInAim=false;
  for(const mob of sceneView.mobs){const p=mob,dx=p.x-c.x,dz=p.z-c.z,dist=Math.hypot(dx,dz);
   if(dist<3.9&&(dx*Math.sin(cat.aimYaw)+dz*Math.cos(cat.aimYaw))/Math.max(.01,dist)>.48){mobInAim=true;break;}}
@@ -3413,7 +3473,7 @@ async function main(){try{
  document.querySelector('#error').textContent=String(error.stack||error);
  document.querySelector('#error').classList.add('show');console.error(error);}}
 if(new URLSearchParams(location.search).get('debug')==='1'){window.__meowTumble={get state(){return{product:"와르르냥 / Meow Tumble",version:DEF.version,build:DEF.build,phase,seconds,fallen:tower.scattered,total:tower.blocks.length,movingBlocks:tower.movingBlocks,collapse:collapseState?{...collapseState}:null,
- level:cat?.level,xp:cat?.xp,mass:cat?.mass,hp:cat?.hp,animation:cat?.motion?.state,animationMs:cat?.motion?.elapsedMs,maxHp:DEF.cat.maxHp,kills:{...kills},stage:{index:stage.index,blockMass:tower.blockMass,rebuild:stage.rebuild?{...stage.rebuild}:null,legacy:cat?{...cat.legacy}:null,blocks:tower.blocks.length},feel:{reduceMotion,holdLeftMs:sceneView.hold.leftMs,heldFrames:sceneView.hold.heldFrames??0,trace:(sceneView.hold.trace??[]).slice(),kick:(camera?.kick??[0,0,0]).slice(),shake:camera?.shake??0,particles:particles.length,sparks:particles.filter(p=>p.kind==='spark').length,debris:particles.filter(p=>p.kind==='debris').length,flashing:tower.blocks.filter(b=>b.flash>0).map(b=>b.id),voices:activeVoices,config:DEF.feel},combo:cat?{count:cat.combo.count,mult:cat.combo.mult,leftMs:cat.combo.leftMs,best:cat.combo.best,config:DEF.combo}:null,spawners:spawners.map(s=>({id:s.id,hp:s.hp,broken:s.broken,stock:s.stock,used:s.used,at:s.def.at.slice()})),vacuums:vacuums.map(v=>({id:v.id,state:v.attack.state,leftMs:v.attack.leftMs,cooldownMs:v.attack.cooldownMs,dead:v.dead,batteryMs:v.batteryMs,p:v.body.translation()})),mobs:mobs.length,mobList:mobs.map(m=>{const p=m.body.translation();return{id:m.id,type:m.type,hp:m.hp,state:m.ai.state,waypoint:m.ai.waypoint,x:p.x,y:p.y,z:p.z};}),zone:cat?zoneAt(cat.x,cat.z):null,respawning:cat?.motion?.state==='dead',cat:cat?{x:cat.x,z:cat.z,y:cat.y,yaw:cat.yaw,
+ level:cat?.level,xp:cat?.xp,mass:cat?.mass,hp:cat?.hp,animation:cat?.motion?.state,animationMs:cat?.motion?.elapsedMs,maxHp:DEF.cat.maxHp,kills:{...kills},stage:{index:stage.index,blockMass:tower.blockMass,rebuild:stage.rebuild?{...stage.rebuild}:null,legacy:cat?{...cat.legacy}:null,blocks:tower.blocks.length},feel:{reduceMotion,holdLeftMs:sceneView.hold.leftMs,heldFrames:sceneView.hold.heldFrames??0,trace:(sceneView.hold.trace??[]).slice(),kick:(camera?.kick??[0,0,0]).slice(),shake:camera?.shake??0,particles:particles.length,sparks:particles.filter(p=>p.kind==='spark').length,debris:particles.filter(p=>p.kind==='debris').length,flashing:tower.blocks.filter(b=>b.flash>0).map(b=>b.id),voices:activeVoices,config:DEF.feel},combo:cat?{count:cat.combo.count,mult:cat.combo.mult,leftMs:cat.combo.leftMs,best:cat.combo.best,window:cat.combo.window?{...cat.combo.window}:null,armed:cat.combo.armed,bufferedUntilTick:cat.combo.bufferedUntilTick,dashSerial:cat.combo.dashSerial,maxLinks:chainMaxLinks(cat),log:(cat.combo.log??[]).slice(),config:DEF.combo}:null,spawners:spawners.map(s=>({id:s.id,hp:s.hp,broken:s.broken,stock:s.stock,used:s.used,at:s.def.at.slice()})),vacuums:vacuums.map(v=>({id:v.id,state:v.attack.state,leftMs:v.attack.leftMs,cooldownMs:v.attack.cooldownMs,dead:v.dead,batteryMs:v.batteryMs,p:v.body.translation()})),mobs:mobs.length,mobList:mobs.map(m=>{const p=m.body.translation();return{id:m.id,type:m.type,hp:m.hp,state:m.ai.state,waypoint:m.ai.waypoint,x:p.x,y:p.y,z:p.z};}),zone:cat?zoneAt(cat.x,cat.z):null,respawning:cat?.motion?.state==='dead',cat:cat?{x:cat.x,z:cat.z,y:cat.y,yaw:cat.yaw,
  knockX:cat.knockX,knockZ:cat.knockZ,vy:cat.vy}:null,camera:camera?{yaw:camera.yaw,pitch:camera.pitch,eye:camera.eye.slice()}:null,
  impactGraceMs:cat?.impactGraceMs,unwedge:cat?.unwedge?{blockedMs:cat.unwedge.blockedMs,cooldownMs:cat.unwedge.cooldownMs,recoveries:cat.unwedge.recoveries,lastDirection:cat.unwedge.lastDirection?.slice()??null}:null,controls:{lookPointer:look.id,chargeLookPointer:look.chargeId,joyPointer:joy.id},layers:tower.layers,maxLayers:TOWER.maxLayers,nextBuilder:humanBuilderTurnId(),activeBodies:tower.blocks.length-tower.sleeperCount,
  humans:(human??[]).map(h=>{const id=h.grip?.blockId??h.remoteGripId??h.buildPlan?.blockId??null,block=id===null?null:tower.blocks.find(b=>b.id===id),shoulder=humanBuildShoulder(h),slam= (h.pattern==='slam'||h.pattern==='sweep')&&['warning','strike','recover'].includes(h.mode);return{id:h.id,label:HUMAN_PROFILES[h.id].label,pattern:h.pattern,mode:h.mode,anger:h.anger,ammo:h.ammo,refill:h.refill?{...h.refill}:null,available:HUMAN_PROFILES[h.id].patterns.filter(p=>humanPatternAvailable(h,p)),target:h.target.slice(),aimLocked:h.aimLocked,height:HUMAN_MODEL.height,scale:HUMAN_MODEL.scale,x:h.x,y:h.y,z:h.z,yaw:h.yaw,buildStage:h.buildStage,buildDone:h.buildDone,lastBuildAbort:h.lastBuildAbort??null,builds:h.builds,attacks:h.attacks,attackTimer:['warning','strike','recover'].includes(h.mode)?h.timer:null,blockId:id,blockMass:block?.mass??null,blockPosition:block?.p.slice()??null,blockBuilding:block?.building??false,handTarget:h.handTarget?.slice()??null,armReachLimit:HUMAN_BUILD.armUpper+HUMAN_BUILD.armForearm,handDistance:h.handTarget?len(vsub(h.handTarget,shoulder)):null,bodyLean:humanBuildLean(h),bodyCrouch:humanBuildCrouch(h),attackPending:h.pendingReactionTargetId,slamPoint:slam?humanGroundSlamPoint(h):null,slamWrist:slam?humanGroundSlamWrist(h):null,reaction:h.reaction?{...h.reaction}:null};}),towerBlocks:tower.blocks.map(b=>({id:b.id,mass:b.mass,p:b.p.slice(),building:b.building,fallen:b.fallen})),projectiles:projectiles.map(p=>({id:p.id,owner:p.owner,p:p.p.slice(),q:p.q.slice(),sleeping:p.sleeping})),impactDamage:{config:IMPACT_DAMAGE,events:collisionDamage.events,decisions:collisionDamage.decisions,catBlockEvents:collisionDamage.catBlockEvents,pairs:collisionDamage.pairs.size},throwPhysics:{kind:'toy-ball',radius:HUMAN_THROW.radius,reference:throwReference(),mass:HUMAN_THROW.mass,speed:HUMAN_THROW.speed,maxBalls:HUMAN_THROW.maxBalls,stats:throwStats},
