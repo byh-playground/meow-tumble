@@ -278,7 +278,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
  const DEF={
-    build:'20261103-three-v0240',version:'0.24.0',
+    build:'20261103-three-v0241',version:'0.24.1',
   // One continuous game: after each collapse the people rebuild with heavier wood, and the cat starts over
   // at LV1 keeping a permanent mass bonus from the chains it landed. No result screen, no mode, no timer.
   stage:{blockMassGrowth:1.5,legacyMassPerCombo:1.1,clearIntervalMs:140,layerIntervalMs:900},
@@ -2815,10 +2815,12 @@ function drawTower(g,viewCat){for(const b of tower.blocks){if(b.p[1]<ARENA.floor
   let col=b.color===0?COLOR.wood:b.color===1?COLOR.wood2:COLOR.wood3;
   if(b.fallen)col=b.color===0?COLOR.wood2:COLOR.wood;
   const n=b.spawn>0?1+Math.sin(b.spawn*12)*.016:1;
-  g.cube(b.p,b.size.map(v=>v*n),col,b.q);
-  if(b.highlight>0){g.cube(b.p,b.size.map(v=>v+(.012+b.highlight*.07)),COLOR.yellow,b.q,Math.min(.24,b.highlight*.85));}
+  // The authored block model is scaled from its own bounding box to the physics size; cubes stay as the load-failure fallback.
+  const block=(size,color,alpha)=>g.modelSize?.block?g.draw('block',b.p,size.map((v,i)=>v/g.modelSize.block[i]),color,b.q,alpha):g.cube(b.p,size,color,b.q,alpha);
+  block(b.size.map(v=>v*n),col,1);
+  if(b.highlight>0){block(b.size.map(v=>v+(.012+b.highlight*.07)),COLOR.yellow,Math.min(.24,b.highlight*.85));}
   // Hit flash: a short bright shell on the exact block the combo event named (presentation only).
-  if(b.flash>0){const t=b.flash/(DEF.feel.flashMs/1000);g.cube(b.p,b.size.map(v=>v+.03),COLOR.white,b.q,Math.min(.7,t*.8));}
+  if(b.flash>0){const t=b.flash/(DEF.feel.flashMs/1000);block(b.size.map(v=>v+.03),COLOR.white,Math.min(.7,t*.8));}
  }
  if(phase==='play'){const aim=tower.nearest(viewCat,1.60);if(aim){g.ring([aim.hit[0],.12,aim.hit[2]],.63,COLOR.yellow,.55);}}
 }
@@ -2983,9 +2985,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewpo
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
-  namespace:'meow-tumble-0.24.0',inputBytes:5,snapshotLimit:15000,
+  namespace:'meow-tumble-0.24.1',inputBytes:5,snapshotLimit:15000,
   inputType:91,snapshotType:92,resetType:93,startType:94,perksType:95,protocol:21});
-const LOBBY_VERSION='meow-tumble-0.24.0';
+const LOBBY_VERSION='meow-tumble-0.24.1';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};
@@ -3522,7 +3524,7 @@ async function main(){try{
  RAPIER=imported.default?.World?imported.default:imported;
  if(typeof RAPIER.init==='function')await RAPIER.init();
  if(!RAPIER.World||!RAPIER.ColliderDesc||!RAPIER.RigidBodyDesc)throw new Error('Rapier 3D API 검증 실패');
- await openLegacySave();renderer=new Toon3D(gameCanvas);renderHouse(renderer);resetWorld();bindControls();mobileViewport.bind();bindMenu();simLoop.start();
+ await openLegacySave();renderer=new Toon3D(gameCanvas);await renderer.loadModels({block:'./assets/models/block.glb'}).catch(error=>console.warn('모델 로드 실패, 기본 도형으로 그립니다.',error));renderHouse(renderer);resetWorld();bindControls();mobileViewport.bind();bindMenu();simLoop.start();
  document.querySelector('#boot').classList.add('hidden');
  document.querySelector('#error').classList.remove('show');
  }catch(error){document.querySelector('#boot').textContent='게임 실행 실패: '+(error.message||error);
