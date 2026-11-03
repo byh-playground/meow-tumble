@@ -10,7 +10,7 @@
 
 작은 고양이가 식탁 위 거대한 젠가탑을 연속으로 들이받아 **콤보로 성장**하고, 화가 난 사람이 집에 있는 물건(공·전동 쥐·로봇청소기)으로 방해하면 외곽 방의 거점을 부숴 끊는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.26.0** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.26.1** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -310,4 +310,7 @@ A light claw hit on a mass-20 block a builder is carrying prompts a brief look a
 - 사람의 몸통·엉덩이·머리(귀·코 포함)·머리카락 2종·신발·손을 Blender에서 만든 둥근 모델(`assets/models/human.glb`, 7개 메시 약 1.7K 정점)로 바꿨습니다. 제작 스크립트는 `assets/src/human.py`입니다. 각진 큐브 조합이던 몸이 모서리가 둥근 인형 형태가 됩니다.
 - 팔다리·표정(눈·눈썹·입)·어깨 띠 같은 상태별로 움직이는 부분은 기존 코드 그대로입니다. 어깨 띠는 둥근 몸통과 맞지 않아 뺐습니다.
 - 디버그(`?debug=1`): `inject.shot(eye,at)`으로 카메라를 임의 위치에 두어 사람을 가까이서 확인할 수 있습니다(`inject.shot(null)`로 해제).
+
+## 킹받는 고양이 0.26.1
+- 고양이 얼굴을 눈 크게 뜬 얼굴에서 얄미운 얼굴로 바꿨습니다. 눈은 작게, 눈꺼풀은 반쯤 덮고, 눈동자는 한쪽으로 흘기며, 눈썹은 한쪽만 올리고, 입꼬리는 한쪽만 올라갑니다. 모델(`assets/src/cat.py`의 `head`)만 바뀌고 게임 코드는 그대로입니다.
 

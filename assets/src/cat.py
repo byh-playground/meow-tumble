@@ -54,11 +54,29 @@ def head(bm):
         vs = sphere(bm, radii, centre, seg, rings)
         for v in vs: colours[v] = rgba
     bm.verts.ensure_lookup_table()
+    BROW = fixed(.42, .26, .14); MOUTH = fixed(.27, .15, .15)
+    def surface_z(x, y):                              # approximate head surface in front, for placing flat details
+        return .44 * math.sqrt(max(.2, 1 - (x / .45) ** 2 - (y / .43) ** 2)) + .045 * max(0, 1 - abs(x) / .5) * (1 if y < 0 else 0)
     for side in (-1, 1):
-        part((.14, .17, .13), (side * .18, .065, .36), fixed(1, .98, .93), 16, 12)      # eye white
-        part((.066, .118, .062), (side * .18, .065, .462), fixed(.12, .11, .20), 14, 10)  # pupil (front must clear the white)
-        part((.03, .044, .026), (side * .152, .115, .52), fixed(1, 1, 1), 8, 6)          # highlight
-        part((.05, .028, .03), (side * .10, -.14, .435), fixed(.99, .86, .80), 10, 8)   # muzzle pad
+        cx, cy, cz = side * .19, .06, .385
+        part((.10, .115, .09), (cx, cy, cz), fixed(1, .98, .93), 16, 12)                    # small eye white
+        part((.045, .07, .04), (cx + .036, cy - .012, cz + .07), fixed(.12, .11, .20), 12, 9)  # pupil looks off to the side
+        part((.02, .028, .018), (cx + .026, cy + .02, cz + .104), fixed(1, 1, 1), 8, 6)      # tiny highlight
+        lid = sphere(bm, (.112, .13, .10), (cx, cy, cz + .004), 16, 12)                      # half-closed lid in coat colour
+        lid_y = cy + .004
+        for v in lid:
+            if v.co.y < lid_y: v.co.y = lid_y
+        part((.05, .028, .03), (side * .10, -.14, .435), fixed(.99, .86, .80), 10, 8)       # muzzle pad
+    def brow(centre_x, centre_y, tilt):               # a short brow bar rotated about the head's forward axis
+        c = math.cos(tilt); sn = math.sin(tilt)
+        for v in sphere(bm, (.085, .017, .02), (0, 0, 0), 10, 6):
+            x, y = v.co.x * c - v.co.y * sn, v.co.x * sn + v.co.y * c
+            v.co = Vector((x + centre_x, y + centre_y, surface_z(centre_x, centre_y) + .004)); colours[v] = BROW
+    brow(-.19, .285, .34)                             # left brow raised and arched
+    brow(.19, .185, -.16)                             # right brow low and flat: the unimpressed look
+    for i in range(31):                               # one-sided smirk: the right corner climbs
+        t = i / 30; x = -.12 + .27 * t; y = -.215 - .012 * math.sin(math.pi * t) + .06 * max(0, t - .45) ** 1.4
+        for v in sphere(bm, (.016, .016, .012), (x, y, surface_z(x, y) + .006), 6, 4): colours[v] = MOUTH
     part((.09, .07, .07), (0, -.10, .465), fixed(.99, .61, .66), 12, 10)               # nose
     return colours
 
