@@ -1,7 +1,7 @@
-import bpy, bmesh, math
+import bpy, bmesh, math, os
 from mathutils import Vector, Quaternion
 NO_EXPORT = True
-exec(open(r'C:\Users\byh02\blender-mcp\cat_expr.py', encoding='utf-8').read())   # part builders: body, head, ear, paw, sphere, fixed, game
+exec(open(os.path.join(ASSETS_SRC, 'cat.py'), encoding='utf-8').read())   # part builders: body, head, ear, paw, sphere, fixed, game
 bpy.ops.wm.read_factory_settings(use_empty=True)
 
 FUR = (1, 1, 1, 1); ACCENT = (1, 1, 1, .5)
