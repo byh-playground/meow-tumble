@@ -278,7 +278,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
  const DEF={
-    build:'20261103-three-v0241',version:'0.24.1',
+    build:'20261103-cat-model-v0250',version:'0.25.0',
   // One continuous game: after each collapse the people rebuild with heavier wood, and the cat starts over
   // at LV1 keeping a permanent mass bonus from the chains it landed. No result screen, no mode, no timer.
   stage:{blockMassGrowth:1.5,legacyMassPerCombo:1.1,clearIntervalMs:140,layerIntervalMs:900},
@@ -2503,7 +2503,7 @@ function drawCat(g,c){
  };
  const bodyScale=[.53*(1+.12*squash),.43*(1-squash+stretch),.72*(1+curl*.10)];
  const poseQuat=qmul(qyaw(yaw),q);
- g.draw('sphere',part(0,.57,-.14),bodyScale,fur,poseQuat);
+ g.draw('catBody',part(0,.57,-.14),bodyScale,fur,poseQuat);
  // A high-contrast back patch is a readable orientation marker during full 360° dodge.
  // This belongs to the same rotated rig, not a floor-fixed effect.
  g.draw('sphere',part(0,.94,-.28),[.41,.075,.39],stripe,poseQuat);
@@ -2517,17 +2517,12 @@ function drawCat(g,c){
   }
  }
  g.draw('sphere',part(0,.43,.23),[.40,.31*(1-squash*.4),.46],belly,poseQuat);
- g.draw('sphere',part(0,.79,.55),[.45,.43,.44],fur,poseQuat);
+ g.draw('catHead',part(0,.79,.55),[1,1,1],fur,poseQuat);
  // Ears fold back during the roll; during knockback the full rig spins.
  const rollTuck=isRoll?smooth(0,.16,t)*(1-smooth(.76,1,t)):0;
  const earY=isStunned?1.07:1.16-.09*rollTuck,earQuat=qmul(qyaw(yaw),q);
- g.cone(part(-.26,earY,.70),[.28,.44*(1-.38*rollTuck),.25],fur,earQuat);
- g.cone(part(.26,earY,.70),[.28,.44*(1-.38*rollTuck),.25],fur,earQuat);
- for(const x of [-.26,.26])g.cone(part(x,earY+.02,.785),[.145,.27*(1-.36*rollTuck),.07],COLOR.pink,earQuat);
- for(const x of [-.18,.18]){g.orb(part(x,.855,.91),[.14,.17,.13],COLOR.white);
-  g.orb(part(x,.855,.994),[.059,.11,.058],COLOR.black);
-  g.orb(part(x-.027,.9,1.042),[.027,.04,.024],COLOR.white);}
- g.orb(part(0,.69,1.01),[.09,.07,.07],COLOR.pink);
+ g.draw('catEar',part(-.26,earY,.70),[.28,.44*(1-.38*rollTuck),.25],fur,earQuat);
+ g.draw('catEar',part(.26,earY,.70),[.28,.44*(1-.38*rollTuck),.25],fur,earQuat);
  if(net.room){g.orb(part(0,.51,.31),[.35,.068,.31],catAccent[Math.max(0,actorIndex)]||COLOR.yellow);g.orb(part(0,.40,.62),[.095,.12,.06],COLOR.yellow);}
  if(c.level>=3)g.orb(part(0,.49,.51),[.22,.09,.13],c.level===5?COLOR.yellow:COLOR.mint);
  for(const side of [-1,1])for(let n=0;n<2;n++)limb(g,part(side*.085,.66-n*.055,1.03),part(side*.49,.72-n*.14,1.04),.015,COLOR.cream);
@@ -2538,7 +2533,7 @@ function drawCat(g,c){
   const tuck=isFlight?.18:isRoll?.25*rollTuck:0;
   const slashing=isClaw&&back===1&&side===c.claw.side;
   const swipe=slashing?clawSwing:0;
-  g.orb(part(side*(.35-tuck*.5+.09*swipe),.27+Math.max(0,step)+rise+tuck+.23*swipe,legZ+step*.7+.72*swipe),[.18,.25*(1-tuck),.23],fur);
+  g.draw('catPaw',part(side*(.35-tuck*.5+.09*swipe),.27+Math.max(0,step)+rise+tuck+.23*swipe,legZ+step*.7+.72*swipe),[.18,.25*(1-tuck),.23],fur,poseQuat);
  }
  const tailWiggle=isFlight?sceneView.displaySeconds*18:sceneView.displaySeconds*5;
  const tail=isRoll?tailPoints.map(v=>part(...v)):[
@@ -2815,8 +2810,8 @@ function drawTower(g,viewCat){for(const b of tower.blocks){if(b.p[1]<ARENA.floor
   let col=b.color===0?COLOR.wood:b.color===1?COLOR.wood2:COLOR.wood3;
   if(b.fallen)col=b.color===0?COLOR.wood2:COLOR.wood;
   const n=b.spawn>0?1+Math.sin(b.spawn*12)*.016:1;
-  // The authored block model is scaled from its own bounding box to the physics size; cubes stay as the load-failure fallback.
-  const block=(size,color,alpha)=>g.modelSize?.block?g.draw('block',b.p,size.map((v,i)=>v/g.modelSize.block[i]),color,b.q,alpha):g.cube(b.p,size,color,b.q,alpha);
+  // The authored block model is scaled from its own bounding box to the physics size.
+  const block=(size,color,alpha)=>g.draw('block',b.p,size.map((v,i)=>v/g.modelSize.block[i]),color,b.q,alpha);
   block(b.size.map(v=>v*n),col,1);
   if(b.highlight>0){block(b.size.map(v=>v+(.012+b.highlight*.07)),COLOR.yellow,Math.min(.24,b.highlight*.85));}
   // Hit flash: a short bright shell on the exact block the combo event named (presentation only).
@@ -2886,7 +2881,7 @@ function drawWorld({alpha=0}={}){if(!renderer)return;const frameNow=performance.
   const inFlight=c.motion.state==='launched',inRoll=c.motion.state==='roll';
   const desiredArm=LOOK.followDistance+(inFlight?1.55:inRoll?1.25:0);
   const pivot=[c.x,c.y+1.32*catScaleForLevel(c.level),c.z];
-  const boomDir=norm([-sy*Math.cos(pitch),.15-Math.sin(pitch)*.42,-cy*Math.cos(pitch)]);
+  const orbit=camera.yaw+(camera.debugOrbit??0),boomDir=norm([-Math.sin(orbit)*Math.cos(pitch),.15-Math.sin(pitch)*.42,-Math.cos(orbit)*Math.cos(pitch)]);
   const available=cameraClearDistance(pivot,boomDir,desiredArm);
   if(!camera.boom)camera.boom=new CollisionBoom({distance:desiredArm,holdMs:LOOK.boomHoldMs,releaseHalfLifeMs:LOOK.boomReleaseHalfLifeMs});
   camera.armLength=camera.boom.update(desiredArm,available,frameDt*1000);
@@ -2901,7 +2896,7 @@ function drawWorld({alpha=0}={}){if(!renderer)return;const frameNow=performance.
   }
   // Framing targets the cat plus a modest look-ahead; aiming only from the eye
   // along a fixed ray puts the cat below the bottom edge at close range.
-  const focus=[c.x+sy*2.7,c.y+.95*catScaleForLevel(c.level)+Math.sin(pitch)*3.0,c.z+cy*2.7];
+  const focus=[c.x+Math.sin(orbit)*2.7,c.y+.95*catScaleForLevel(c.level)+Math.sin(pitch)*3.0,c.z+Math.cos(orbit)*2.7];
   g.frame(eye,focus);
  }
  // no global reliance on 2D Renderer2D — gamekit's 2D renderer is not used for 3D meshes
@@ -2985,9 +2980,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewpo
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
-  namespace:'meow-tumble-0.24.1',inputBytes:5,snapshotLimit:15000,
+  namespace:'meow-tumble-0.25.0',inputBytes:5,snapshotLimit:15000,
   inputType:91,snapshotType:92,resetType:93,startType:94,perksType:95,protocol:21});
-const LOBBY_VERSION='meow-tumble-0.24.1';
+const LOBBY_VERSION='meow-tumble-0.25.0';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};
@@ -3524,7 +3519,7 @@ async function main(){try{
  RAPIER=imported.default?.World?imported.default:imported;
  if(typeof RAPIER.init==='function')await RAPIER.init();
  if(!RAPIER.World||!RAPIER.ColliderDesc||!RAPIER.RigidBodyDesc)throw new Error('Rapier 3D API 검증 실패');
- await openLegacySave();renderer=new Toon3D(gameCanvas);await renderer.loadModels({block:'./assets/models/block.glb'}).catch(error=>console.warn('모델 로드 실패, 기본 도형으로 그립니다.',error));renderHouse(renderer);resetWorld();bindControls();mobileViewport.bind();bindMenu();simLoop.start();
+ await openLegacySave();renderer=new Toon3D(gameCanvas);await renderer.loadModels({block:'./assets/models/block.glb',cat:'./assets/models/cat.glb'});renderHouse(renderer);resetWorld();bindControls();mobileViewport.bind();bindMenu();simLoop.start();
  document.querySelector('#boot').classList.add('hidden');
  document.querySelector('#error').classList.remove('show');
  }catch(error){document.querySelector('#boot').textContent='게임 실행 실패: '+(error.message||error);
@@ -3541,7 +3536,7 @@ if(new URLSearchParams(location.search).get('debug')==='1'){window.__meowTumble=
  combatFeedback:{pending:combatUI.pending.length,activeNumbers:combatUI.floats.filter(f=>f.endMs>performance.now()).length,activeBursts:combatUI.bursts.length,dropped:combatUI.dropped}}},
  start,reset:()=>start(),
  // Debug-only scene parameters for deterministic captures; the host simulation still runs every rule.
- inject:{anger(value){for(const h of human??[])h.anger=clamp(value,0,DEF.humans.anger.max);},
+ inject:{look(yaw,pitch){if(camera){camera.yaw=yaw;camera.pitch=pitch;}},orbit(angle){if(camera)camera.debugOrbit=angle;},anger(value){for(const h of human??[])h.anger=clamp(value,0,DEF.humans.anger.max);},
   // A real physical shove on every standing block so the tower collapses through Rapier (stage test).
   collapse(){beginCollapse();},
   topple(){for(const b of tower.blocks){if(b.fallen||b.building)continue;const p=b.body.translation();b.body.applyImpulseAtPoint({x:(p.x>=0?1:-1)*b.mass*9,y:b.mass*2,z:(p.z>=0?1:-1)*b.mass*6},{x:p.x,y:p.y+.3,z:p.z},true);}},ammo(id,value){const h=human?.[id];if(h)h.ammo=Math.max(0,value|0);},breakSpawner(id){const s=spawnerById(id);if(s&&!s.broken&&cat){s.hp=1;damageSpawner(s,cat,{x:s.def.at[0],y:ARENA.floorY+.4,z:s.def.at[1]});}}},
