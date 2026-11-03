@@ -274,7 +274,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
  const DEF={
-    build:'20261103-gamekit-0-14-3-v0200',version:'0.20.0',
+    build:'20261103-gamekit-0-14-3-v0201',version:'0.20.1',
   // After the success threshold, physics keeps stepping until the debris is quiet.
   // These are PRESENTATION timings only; they never influence Rapier impulses.
   round:{durationMs:0,winBlocks:TOWER.winScattered,
@@ -285,6 +285,9 @@ class PhysicsTower {
     anger:{perSeverity:12,decayPerSecond:1.5,max:100},refill:{runSpeed:2.4,pickMs:1200,spilledPickMs:900}},
   // Tower hits chain into a combo; every hit pays XP scaled by the current multiplier (host-owned, from catBlockEvents).
   combo:{windowMs:2500,maxMult:8,repeatDecay:[1,.75,.5,.25,.1],xpPerImpulse:1/20,rehitMs:400},
+  // Impact feel is presentation only: the host simulation, input and network never pause.
+  // hold = my own confirmed tower hit freezes my rendered frame briefly (pose hold), then the live view resumes.
+  feel:{holdMs:45,strongHoldMs:65,strongMult:4,kick:.09,kickDecayPerSecond:9,flashMs:120,sparks:10,sparkPower:9,sparkTailSec:.05,debris:5,farHearingDistance:18,voiceLimit:3,pitchPerCombo:1.06},
   input:{chargeLookDeadzonePx:6,jumpBufferMs:150,coyoteMs:100,rollBufferMs:150,clawBufferMs:120},
   farming:{levelXp:[0,2,5,9,14,20,28,37,47,58,70,83],get maxLevel(){return this.levelXp.length},deathLossRatio:.10},
   graphics:{maxParticles:180,maxCombatBursts:16,maxDamageNumbers:26,mobHudDistance:25}
@@ -300,7 +303,7 @@ const ui={start:document.querySelector('#intro'),end:document.querySelector('#en
  warning:document.querySelector('#warning'),message:document.querySelector('#toast'),status:document.querySelector('#status'),target:document.querySelector('#targetIndicator'),targetText:document.querySelector('#targetText'),
  humanA:document.querySelector('#humanA'),humanB:document.querySelector('#humanB'),endingTitle:document.querySelector('#endingTitle'),endingSub:document.querySelector('#endingSub'),endingStats:document.querySelector('#endingStats'),hud:document.querySelector('#hud'),touch:document.querySelector('#touch'),
  level:document.querySelector('#level'),power:document.querySelector('#power'),xpFill:document.querySelector('#xpFill'),growthHelp:document.querySelector('#growthHelp'),farmArrow:document.querySelector('#farmArrow'),
- respawn:document.querySelector('#respawnBanner'),area:document.querySelector('#areaTag'),kills:document.querySelector('#huntCounter'),combo:document.querySelector('#comboHud'),comboMult:document.querySelector('#comboMult'),comboHits:document.querySelector('#comboHits'),comboFill:document.querySelector('#comboFill'),minimap:document.querySelector('#miniMap'),joy:document.querySelector('#stick'),knob:document.querySelector('#knob'),chargeButton:document.querySelector('[data-action="charge"]'),chargeFill:document.querySelector('#touchChargeFill'),jumpButton:document.querySelector('[data-action="jump"]'),jumpFill:document.querySelector('#touchJumpFill'),help:document.querySelector('#helpBtn'),sound:document.querySelector('#soundBtn')};
+ respawn:document.querySelector('#respawnBanner'),area:document.querySelector('#areaTag'),kills:document.querySelector('#huntCounter'),combo:document.querySelector('#comboHud'),comboMult:document.querySelector('#comboMult'),comboHits:document.querySelector('#comboHits'),comboFill:document.querySelector('#comboFill'),minimap:document.querySelector('#miniMap'),joy:document.querySelector('#stick'),knob:document.querySelector('#knob'),chargeButton:document.querySelector('[data-action="charge"]'),chargeFill:document.querySelector('#touchChargeFill'),jumpButton:document.querySelector('[data-action="jump"]'),jumpFill:document.querySelector('#touchJumpFill'),help:document.querySelector('#helpBtn'),sound:document.querySelector('#soundBtn'),motion:document.querySelector('#motionBtn')};
 let RAPIER=null;
 const RAPIER_URL='https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.21.0/+esm';
 const tower=new PhysicsTower();
@@ -386,11 +389,20 @@ class CombatPresentation {
     continue;
    }
    if(e.kind==='combo'){
-    // Chain feedback reads the confirmed tower hit: count and multiplier rise with the pitch.
-    this.popup((e.xp>0?'+'+e.xp+' XP':'MAX')+(e.mult>1?' ×'+e.mult:''),e.p,e.mult>=4?'heavy':'damage',now,e.count%2?10:-10);
-    particle(e.p,e.mult>=4?'yellow':'cream',6+Math.min(12,e.count*2),2.2+Math.min(2,e.count*.25));
-    if(e.entityId===localCat?.id){camera.shake=Math.max(camera.shake,.05+Math.min(.12,e.count*.012));sfx('crack',.5+Math.min(.5,e.count*.06));}
-    if(this.bursts.length<DEF.graphics.maxCombatBursts)this.bursts.push({p:e.p,at:now,ms:260,kind:'heavy',seq:e.sequence});
+    // Chain feedback reads the confirmed tower hit. Everyone sees the contact (flash, sparks, sound);
+    // only the cat that hit feels it (display hold + directional camera kick), so a teammate's hit
+    // never interrupts my aim in co-op.
+    const feel=DEF.feel,mine=e.entityId===localCat?.id,strong=e.mult>=feel.strongMult,dir=e.dir??[0,0,1];
+    this.popup((e.xp>0?'+'+e.xp+' XP':'MAX')+(e.mult>1?' ×'+e.mult:''),e.p,strong?'heavy':'damage',now,e.count%2?10:-10);
+    const block=tower.blocks.find(b=>b.id===e.blockId);if(block)block.flash=feel.flashMs/1000;
+    if(!reduceMotion){spark(e.p,dir,feel.sparks+(strong?4:0),feel.sparkPower);if(strong)debrisBurst(e.p,dir,feel.debris);}
+    else particle(e.p,'cream',6,1.8);
+    const distance=localCat?Math.hypot(localCat.x-e.p[0],localCat.z-e.p[2]):0,hearing=mine?1:Math.max(0,1-distance/feel.farHearingDistance);
+    if(hearing>0)sfx('crack',(.45+Math.min(.4,e.count*.05))*hearing,Math.pow(feel.pitchPerCombo,Math.min(12,e.count-1)));
+    if(mine){sceneView.beginHold(strong?feel.strongHoldMs:feel.holdMs);
+     if(!reduceMotion){const kick=vmul(norm([dir[0],dir[1]*.3,dir[2]]),-feel.kick*Math.min(1,e.mult/feel.strongMult)*(strong?1.4:1));camera.kick=vadd(camera.kick??[0,0,0],kick);}}
+    // Contact ring only: the sparks and flash already own the hit; no extra orb cloud (impact-feel §6 효과 예산).
+    if(this.bursts.length<DEF.graphics.maxCombatBursts)this.bursts.push({p:e.p,at:now,ms:strong?320:220,kind:'ring',seq:e.sequence});
     continue;
    }
    if(e.kind==='spawner'){
@@ -420,6 +432,7 @@ class CombatPresentation {
   const x=b.p[0],y=b.p[1],z=b.p[2];
   // Short contact halo follows the true Rapier impact point, never an unconfirmed click.
   g.ring([x,y-.32,z],rad*(.65+t*.25),c,alpha*.60);
+  if(b.kind==='ring'){g.ring([x,y,z],rad*(.3+t*1.1),COLOR.white,alpha*.8);continue;}
   g.draw('sphere',[x,y+.15+t*.3,z],[.10*(1-t)+.025,.10*(1-t)+.025,.10*(1-t)+.025],COLOR.white,Q(),alpha);
   if(b.kind==='claw')for(let streak=0;streak<3;streak++){
    const q=axisAngle([0,0,1],.38),height=.62*(1-t)+.07;
@@ -927,7 +940,9 @@ function registerComboHit(actor,event){const cfg=DEF.combo,c=actor.combo,rehitTi
  c.count++;c.mult=Math.min(cfg.maxMult,c.count);c.leftMs=cfg.windowMs;c.best=Math.max(c.best,c.count);
  const base=Math.max(1,Math.ceil(event.impulse*cfg.xpPerImpulse*cfg.repeatDecay[Math.min(repeats,cfg.repeatDecay.length-1)]));
  const gained=grantXp(actor,base*c.mult,event.p);
- combatUI.queue({kind:'combo',tick:nowTicks,entityId:actor.id,sequence:++c.sequence,count:c.count,mult:c.mult,xp:gained,p:event.p.slice()});
+ // Hit direction from the attacking cat's actual velocity (the solver contact point is event.p).
+ const body=tower.playerBodies.get(actor.id)?.body,v=body?body.linvel():{x:0,y:0,z:1},speed=Math.hypot(v.x,v.y,v.z)||1;
+ combatUI.queue({kind:'combo',tick:nowTicks,entityId:actor.id,sequence:++c.sequence,count:c.count,mult:c.mult,xp:gained,blockId:event.blockId,p:event.p.slice(),dir:[v.x/speed,v.y/speed,v.z/speed].map(n=>Math.round(n*100)/100)});
 }
 function endCombo(actor,reason){const c=actor.combo;if(c.count===0)return;
  c.count=0;c.mult=1;c.leftMs=0;c.hits.clear();
@@ -1119,12 +1134,24 @@ function drawMinimap(){const canvas=ui.minimap,ctx=canvas.getContext('2d');if(!c
  ctx.strokeStyle='#ff858c';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(X(cat.x),Y(cat.z));ctx.lineTo(X(cat.x)+Math.sin(cat.yaw)*10,Y(cat.z)+Math.cos(cat.yaw)*10);ctx.stroke();
 }
 const visualRand=(a,b)=>a+(b-a)*vfxRng.nextUint32()/4294967296;
-const particle=(p,col,amount=8,power=2)=>{for(let i=0;i<amount&&particles.length<DEF.graphics.maxParticles;i++)particles.push({p:p.slice(),v:[visualRand(-1,1)*power,visualRand(0.5,2)*power,visualRand(-1,1)*power],life:visualRand(.38,.9),max:1,size:visualRand(.035,.09),color:col})};
+const particle=(p,col,amount=8,power=2)=>{for(let i=0;i<amount&&particles.length<DEF.graphics.maxParticles;i++)particles.push({kind:'orb',p:p.slice(),v:[visualRand(-1,1)*power,visualRand(0.5,2)*power,visualRand(-1,1)*power],life:visualRand(.38,.9),max:1,size:visualRand(.035,.09),color:col})};
+// Reference recipes from the BLOOM particle lab, redrawn with this game's own 3D primitives:
+// `sparks` = velocity-aligned segments flying along the hit direction; `debris` = angular chips on a ballistic arc.
+const spark=(p,dir,amount,power)=>{for(let i=0;i<amount&&particles.length<DEF.graphics.maxParticles;i++){const spread=[visualRand(-.55,.55),visualRand(.1,.8),visualRand(-.55,.55)];
+ particles.push({kind:'spark',p:p.slice(),v:vmul(norm(vadd(dir,spread)),power*visualRand(.6,1.2)),life:visualRand(.16,.3),max:1,size:visualRand(.045,.075),color:i%3?'cream':'yellow'});}};
+const debrisBurst=(p,dir,amount)=>{for(let i=0;i<amount&&particles.length<DEF.graphics.maxParticles;i++){const spread=[visualRand(-.8,.8),visualRand(.6,1.4),visualRand(-.8,.8)];
+ particles.push({kind:'debris',p:p.slice(),v:vmul(norm(vadd(dir,spread)),visualRand(2.5,4.5)),life:visualRand(.45,.8),max:1,size:visualRand(.06,.12),color:i%2?'wood':'wood3',spin:visualRand(-9,9),angle:visualRand(0,Math.PI)});}};
 let audioContext=null,soundEnabled=true;
+// Effect reduction keeps every piece of information (numbers, flash, sound) and drops only motion: hold, kick, sparks, debris.
+let reduceMotion=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 function wakeAudio(){if(!soundEnabled)return;try{audioContext ||= new (window.AudioContext||window.webkitAudioContext)();if(audioContext.state==='suspended')void audioContext.resume()}catch{}}
-function sfx(name,amount=1){if(!audioContext||audioContext.state!=='running'||!soundEnabled)return;const t=audioContext.currentTime;let base=220,len=.14,type='triangle',gain=.05;
+let activeVoices=0;
+function sfx(name,amount=1,pitch=1){if(!audioContext||audioContext.state!=='running'||!soundEnabled)return;
+ // Bounded polyphony: a dense combo raises pitch, never stacks volume (impact-feel §3 충격음).
+ if(activeVoices>=DEF.feel.voiceLimit)return;activeVoices++;
+ const t=audioContext.currentTime;let base=220,len=.14,type='triangle',gain=.05;
  switch(name){case'charge':base=490;len=.12;type='triangle';gain=.045;break;case'dash':base=135;len=.25;type='sawtooth';gain=.055;break;case'claw':base=780;len=.105;type='triangle';gain=.035;break;case'crash':base=90;len=.33;type='sawtooth';gain=.065;break;case'block':base=350;len=.13;type='sine';gain=.037;break;case'warn':base=540;len=.18;type='square';gain=.023;break;case'hit':base=180;len=.3;type='sawtooth';gain=.09;break;case'win':base=650;len=.46;gain=.11;break;case'lose':base=155;len=.5;gain=.04;break;case'jump':base=360;len=.11;gain=.045;break;case'collect':base=800;len=.16;gain=.055;break;case'dull':base=110;len=.14;gain=.045;break;case'crack':base=180;len=.16;gain=.075;break;case'roll':base=300;len=.14;gain=.045;break;case'land':base=108;len=.23;gain=.07;break;case'impact':base=82;len=.55;type='sawtooth';gain=.10;break;case'bounce':base=260;len=.17;type='square';gain=.065;break;}
- const osc=audioContext.createOscillator(),g=audioContext.createGain();osc.type=type;osc.frequency.setValueAtTime(base*(.96+Math.random()*.08),t);osc.frequency.exponentialRampToValueAtTime(Math.max(40,base*(name==='win'?1.65:.55)),t+len);g.gain.setValueAtTime(gain*Math.max(.2,Math.min(1.5,amount)),t);g.gain.exponentialRampToValueAtTime(.0001,t+len);osc.connect(g);g.connect(audioContext.destination);osc.start(t);osc.stop(t+len+.01);}
+ base*=pitch;const osc=audioContext.createOscillator(),g=audioContext.createGain();osc.type=type;osc.frequency.setValueAtTime(base*(.96+Math.random()*.08),t);osc.frequency.exponentialRampToValueAtTime(Math.max(40,base*(name==='win'?1.65:.55)),t+len);g.gain.setValueAtTime(gain*Math.max(.2,Math.min(1.5,amount)),t);g.gain.exponentialRampToValueAtTime(.0001,t+len);osc.connect(g);g.connect(audioContext.destination);osc.start(t);osc.stop(t+len+.01);osc.onended=()=>{activeVoices=Math.max(0,activeVoices-1);};}
 function start(){wakeAudio();resetWorld();phase='play';navigation.replace({screen:'play'});net.startButton.style.display='none';ui.start.classList.add('hidden');ui.end.classList.add('hidden');ui.hud.classList.remove('inactive');roundStart=performance.now();announce('🧱 젠가를 연속으로 들이받아 콤보로 성장! 화난 사람의 방해는 외곽 거점을 부숴 끊어라!',4300);gameCanvas.focus();}
 function blinkHuman(h,msg,ms=1200){h.speech=msg;h.noticeMs=ms;}
 function patternRadius(h){return HUMAN_ATTACKS[h.pattern].radius;}
@@ -1828,7 +1855,7 @@ function tickJumpCharge(ms){
  cat.jump.ratio=cat.jump.elapsedMs/DEF.cat.jump.durationMs;
 }
 
-function updateParticles(dt){for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.life-=dt;if(p.life<=0){particles.splice(i,1);continue;}p.v[1]-=8*dt;p.p=vadd(p.p,vmul(p.v,dt));}}
+function updateParticles(dt){for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.life-=dt;if(p.life<=0){particles.splice(i,1);continue;}p.v[1]-=(p.kind==='spark'?3:8)*dt;p.p=vadd(p.p,vmul(p.v,dt));if(p.spin)p.angle+=p.spin*dt;}}
 function updateGame(dt,frame){if(phase!=='play'&&phase!=='collapse')return;
  seconds+=dt;nowTicks++;
  if(phase==='collapse'){
@@ -2650,6 +2677,8 @@ function drawTower(g,viewCat){for(const b of tower.blocks){if(b.p[1]<ARENA.floor
   const n=b.spawn>0?1+Math.sin(b.spawn*12)*.016:1;
   g.cube(b.p,b.size.map(v=>v*n),col,b.q);
   if(b.highlight>0){g.cube(b.p,b.size.map(v=>v+(.012+b.highlight*.07)),COLOR.yellow,b.q,Math.min(.24,b.highlight*.85));}
+  // Hit flash: a short bright shell on the exact block the combo event named (presentation only).
+  if(b.flash>0){const t=b.flash/(DEF.feel.flashMs/1000);g.cube(b.p,b.size.map(v=>v+.03),COLOR.white,b.q,Math.min(.7,t*.8));}
  }
  if(phase==='play'){const aim=tower.nearest(viewCat,1.60);if(aim){g.ring([aim.hit[0],.12,aim.hit[2]],.63,COLOR.yellow,.55);}}
 }
@@ -2675,7 +2704,10 @@ function drawHumanWarning(g){for(const h of human){if(h.mode!=='warning'&&h.mode
  }
 }
 
-function drawParticles(g){for(const p of particles){if(p.p[1]<-5)continue;g.orb(p.p,[p.size,p.size,p.size],COLOR[p.color]||COLOR.white)}}
+function drawParticles(g){for(const p of particles){if(p.p[1]<-5)continue;const color=COLOR[p.color]||COLOR.white;
+ if(p.kind==='spark'){const tail=vsub(p.p,vmul(p.v,DEF.feel.sparkTailSec));limb(g,tail,p.p,p.size*Math.max(.3,p.life/.3),color);}
+ else if(p.kind==='debris')g.cube(p.p,[p.size*1.6,p.size*.5,p.size],color,axisAngle(norm([1,.6,.3]),p.angle));
+ else g.orb(p.p,[p.size,p.size,p.size],color);}}
 // Direction-preserving spring arm: the game owns the pivot and Rapier sphere cast;
 // GameKit owns temporal boom distance. Never choose another yaw/height automatically.
 // Primary references: Unity Cinemachine Deoccluder (Pull Camera Forward),
@@ -2690,8 +2722,12 @@ function rotateLook(dx,dy,sensitivity){
  camera.yaw=(camera.yaw-dx*sensitivity+Math.PI*3)%(Math.PI*2)-Math.PI;
  camera.pitch=clamp(camera.pitch-dy*sensitivity,LOOK.pitchMin,LOOK.pitchMax);
 }
-function drawWorld({alpha=0}={}){if(!renderer)return;const frameNow=performance.now();sceneView.sample(alpha,frameNow);const g=renderer,c=sceneView.cat(localCat.id);if(!c)return;
+function drawWorld({alpha=0}={}){if(!renderer)return;const frameNow=performance.now();
  const frameDt=camera.lastFrameAt===undefined?1/60:Math.min(.1,Math.max(0,(frameNow-camera.lastFrameAt)/1000));camera.lastFrameAt=frameNow;
+ sceneView.sample(alpha,frameNow,frameDt*1000);const g=renderer,c=sceneView.cat(localCat.id);if(!c)return;
+ // Landing dust reads the confirmed fallen flag once per block (host and guest share it through snapshots).
+ for(const b of tower.blocks){if(b.fallen&&!b.landingShown){b.landingShown=true;if(b.p[1]<2.2)particle([b.p[0],Math.max(ARENA.floorY+.1,b.p[1]-.3),b.p[2]],'cream',10,1.6);}
+  if(b.flash>0)b.flash=Math.max(0,b.flash-frameDt);}
  const followFraction=rate=>1-Math.pow(1-rate,frameDt*60);
  if(phase==='collapse'){
   // Follow the actual Rapier collapse with an unobstructed wide shot of the
@@ -2713,10 +2749,12 @@ function drawWorld({alpha=0}={}){if(!renderer)return;const frameNow=performance.
   if(!camera.boom)camera.boom=new CollisionBoom({distance:desiredArm,holdMs:LOOK.boomHoldMs,releaseHalfLifeMs:LOOK.boomReleaseHalfLifeMs});
   camera.armLength=camera.boom.update(desiredArm,available,frameDt*1000);
   camera.eye=vadd(pivot,vmul(boomDir,camera.armLength));
-  const sh=camera.shake,cameraNoise=sh>0?[visualRand(-1,1)*sh,visualRand(-1,1)*sh*.65,visualRand(-1,1)*sh]:[0,0,0];
+  const sh=camera.shake,kick=camera.kick??[0,0,0],cameraNoise=vadd(sh>0?[visualRand(-1,1)*sh,visualRand(-1,1)*sh*.65,visualRand(-1,1)*sh]:[0,0,0],kick);
   camera.shake=Math.max(0,sh-1.08*frameDt);
+  // Directional kick decays exponentially; it is a presentation offset and never feeds input or aim.
+  if(len(kick)>.001)camera.kick=vmul(kick,Math.max(0,1-DEF.feel.kickDecayPerSecond*frameDt));
   let eye=camera.eye;
-  if(sh>0){const requested=vsub(vadd(camera.eye,cameraNoise),pivot),distance=len(requested);
+  if(sh>0||len(kick)>.001){const requested=vsub(vadd(camera.eye,cameraNoise),pivot),distance=len(requested);
    if(distance>0){const direction=vmul(requested,1/distance);eye=vadd(pivot,vmul(direction,cameraClearDistance(pivot,direction,distance)));}
   }
   // Framing targets the cat plus a modest look-ahead; aiming only from the eye
@@ -2868,9 +2906,12 @@ class VacuumRenderModel extends RenderObject {
 class ProjectileRenderModel extends RenderObject {static renderSchema={id:this.STEP,x:this.POSITION_X,y:this.POSITION_Y,z:this.POSITION_Z,qx:this.LINEAR,qy:this.LINEAR,qz:this.LINEAR,qw:this.LINEAR};}
 const sceneView={
  runtime:null,frame:null,cats:[],mobs:[],vacuums:[],projectiles:[],remoteReady:false,displaySeconds:0,
+ // Presentation-only hold for my own confirmed hit. Simulation ticks, input and snapshots never wait.
+ hold:{leftMs:0,heldFrames:0},
  reset(){const stepMs=net.room&&!net.isHost?100:1000/NET_DEF.stepHz;
-  this.runtime=new PresentationRuntime({stepMs,delayMs:stepMs});this.frame=null;this.remoteReady=false;
+  this.runtime=new PresentationRuntime({stepMs,delayMs:stepMs});this.frame=null;this.remoteReady=false;this.hold.leftMs=0;
  },
+ beginHold(ms){if(reduceMotion)return;this.hold.leftMs=Math.max(this.hold.leftMs,ms);},
  // A loop timing discontinuity discards alpha's old interval, not simulation state.
  resetLocalClock(){if(!this.runtime||(net.room&&!net.isHost))return;
   this.reset();this.capture(nowTicks*1000/NET_DEF.stepHz,true);
@@ -2885,17 +2926,24 @@ const sceneView={
   this.runtime.capture({revision:0,sequence:nowTicks,timeMs:seconds*1000,mode:reset?'reset':'continuous',entities},now);
   for(const c of roomCats.values())c.viewTeleport=false;
  },
- sample(alpha,now){
+ sample(alpha,now,frameMs=0){
   // Local fixed-step alpha is the SDK's residual fraction, not another simulation.
   // Guests use the SDK's receipt-clock mapping and the same frame/model API.
   const localClock=(nowTicks+((phase==='play'||phase==='collapse')?alpha:1))*1000/NET_DEF.stepHz;
+  const h=this.hold;
+  // Freeze-frame hold: while it lasts, the last sampled frame (poses, animation time, models) is reused and
+  // the runtime clock is not advanced. The PresentationRuntime forbids a clock behind its latest capture,
+  // so the display cannot read history to catch up; it simply resumes at the live clock (a classic pose hold).
+  if(h.leftMs>0&&this.frame){h.leftMs=Math.max(0,h.leftMs-frameMs);h.heldFrames=(h.heldFrames??0)+1;h.trace??=[];h.trace.push([Math.round(frameMs),Math.round(h.leftMs)]);if(h.trace.length>60)h.trace.shift();return;}
   this.frame=this.runtime.frame(net.room&&!net.isHost?now:localClock);
   this.displaySeconds=Math.max(0,this.frame.timeMs/1000);
-  this.cats.length=this.mobs.length=this.vacuums.length=this.projectiles.length=0;
-  this.frame.forEach((model,id)=>{if(id.startsWith('cat:'))this.cats.push(model);else if(id.startsWith('mob:'))this.mobs.push(model);else if(id.startsWith('throw:')){if(projectiles.some(shot=>shot.id===model.id))this.projectiles.push(model);}else this.vacuums.push(model);});
+  this.cats.length=this.mobs.length=this.vacuums.length=this.projectiles.length=0;this.byId.clear();
+  this.frame.forEach((model,id)=>{this.byId.set(id,model);if(id.startsWith('cat:'))this.cats.push(model);else if(id.startsWith('mob:'))this.mobs.push(model);else if(id.startsWith('throw:')){if(projectiles.some(shot=>shot.id===model.id))this.projectiles.push(model);}else this.vacuums.push(model);});
  },
- cat(id){return this.frame?.sample('cat:'+id,0)??null;},
- mob(id){return this.frame?.sample('mob:'+id,0)??null;}
+ // Draw code reads the models sampled last; a held frame must not touch the runtime (its clock has moved on).
+ byId:new Map(),
+ cat(id){return this.byId.get('cat:'+id)??null;},
+ mob(id){return this.byId.get('mob:'+id)??null;}
 };
 
 const net={
@@ -3309,6 +3357,8 @@ function bindControls(){const keyboard={KeyW:'up',ArrowUp:'up',KeyS:'down',Arrow
   window.addEventListener(type,()=>{if(phase==='play')simLoop.observeInput(performance.now());});
  }
  ui.startBtn.addEventListener('click',()=>net.leaveTo(start));ui.retryBtn.addEventListener('click',()=>{if(net.room&&!net.isHost){net.status('방장이 다음 판을 시작하면 함께 시작해요.');return;}if(net.room)net.sendReset();start();});net.bindLobby();ui.help.addEventListener('click',()=>navigation.navigate({screen:'help'}));ui.sound.addEventListener('click',()=>{soundEnabled=!soundEnabled;ui.sound.textContent=soundEnabled?'효과음 켜짐':'효과음 꺼짐';ui.sound.setAttribute('aria-pressed',String(soundEnabled));if(soundEnabled)wakeAudio()});
+ const paintMotion=()=>{ui.motion.textContent=reduceMotion?'타격 연출 줄임 (정지·킥·파편 끔)':'타격 연출 전체';ui.motion.setAttribute('aria-pressed',String(reduceMotion));};paintMotion();
+ ui.motion.addEventListener('click',()=>{reduceMotion=!reduceMotion;paintMotion();});
 }
 async function main(){try{
  document.querySelector('#boot').textContent='Rapier 3D 물리 엔진 불러오는 중…';
@@ -3325,7 +3375,7 @@ async function main(){try{
  document.querySelector('#error').textContent=String(error.stack||error);
  document.querySelector('#error').classList.add('show');console.error(error);}}
 if(new URLSearchParams(location.search).get('debug')==='1'){window.__meowTumble={get state(){return{product:"와르르냥 / Meow Tumble",version:DEF.version,build:DEF.build,phase,seconds,fallen:tower.scattered,total:tower.blocks.length,movingBlocks:tower.movingBlocks,collapse:collapseState?{...collapseState}:null,
- level:cat?.level,xp:cat?.xp,mass:cat?.mass,hp:cat?.hp,animation:cat?.motion?.state,animationMs:cat?.motion?.elapsedMs,maxHp:DEF.cat.maxHp,kills:{...kills},combo:cat?{count:cat.combo.count,mult:cat.combo.mult,leftMs:cat.combo.leftMs,best:cat.combo.best,config:DEF.combo}:null,spawners:spawners.map(s=>({id:s.id,hp:s.hp,broken:s.broken,stock:s.stock,used:s.used,at:s.def.at.slice()})),vacuums:vacuums.map(v=>({id:v.id,state:v.attack.state,leftMs:v.attack.leftMs,cooldownMs:v.attack.cooldownMs,dead:v.dead,batteryMs:v.batteryMs,p:v.body.translation()})),mobs:mobs.length,mobList:mobs.map(m=>{const p=m.body.translation();return{id:m.id,type:m.type,hp:m.hp,state:m.ai.state,waypoint:m.ai.waypoint,x:p.x,y:p.y,z:p.z};}),zone:cat?zoneAt(cat.x,cat.z):null,respawning:cat?.motion?.state==='dead',cat:cat?{x:cat.x,z:cat.z,y:cat.y,yaw:cat.yaw,
+ level:cat?.level,xp:cat?.xp,mass:cat?.mass,hp:cat?.hp,animation:cat?.motion?.state,animationMs:cat?.motion?.elapsedMs,maxHp:DEF.cat.maxHp,kills:{...kills},feel:{reduceMotion,holdLeftMs:sceneView.hold.leftMs,heldFrames:sceneView.hold.heldFrames??0,trace:(sceneView.hold.trace??[]).slice(),kick:(camera?.kick??[0,0,0]).slice(),shake:camera?.shake??0,particles:particles.length,sparks:particles.filter(p=>p.kind==='spark').length,debris:particles.filter(p=>p.kind==='debris').length,flashing:tower.blocks.filter(b=>b.flash>0).map(b=>b.id),voices:activeVoices,config:DEF.feel},combo:cat?{count:cat.combo.count,mult:cat.combo.mult,leftMs:cat.combo.leftMs,best:cat.combo.best,config:DEF.combo}:null,spawners:spawners.map(s=>({id:s.id,hp:s.hp,broken:s.broken,stock:s.stock,used:s.used,at:s.def.at.slice()})),vacuums:vacuums.map(v=>({id:v.id,state:v.attack.state,leftMs:v.attack.leftMs,cooldownMs:v.attack.cooldownMs,dead:v.dead,batteryMs:v.batteryMs,p:v.body.translation()})),mobs:mobs.length,mobList:mobs.map(m=>{const p=m.body.translation();return{id:m.id,type:m.type,hp:m.hp,state:m.ai.state,waypoint:m.ai.waypoint,x:p.x,y:p.y,z:p.z};}),zone:cat?zoneAt(cat.x,cat.z):null,respawning:cat?.motion?.state==='dead',cat:cat?{x:cat.x,z:cat.z,y:cat.y,yaw:cat.yaw,
  knockX:cat.knockX,knockZ:cat.knockZ,vy:cat.vy}:null,camera:camera?{yaw:camera.yaw,pitch:camera.pitch,eye:camera.eye.slice()}:null,
  impactGraceMs:cat?.impactGraceMs,unwedge:cat?.unwedge?{blockedMs:cat.unwedge.blockedMs,cooldownMs:cat.unwedge.cooldownMs,recoveries:cat.unwedge.recoveries,lastDirection:cat.unwedge.lastDirection?.slice()??null}:null,controls:{lookPointer:look.id,chargeLookPointer:look.chargeId,joyPointer:joy.id},layers:tower.layers,maxLayers:TOWER.maxLayers,nextBuilder:humanBuilderTurnId(),activeBodies:tower.blocks.length-tower.sleeperCount,
  humans:(human??[]).map(h=>{const id=h.grip?.blockId??h.remoteGripId??h.buildPlan?.blockId??null,block=id===null?null:tower.blocks.find(b=>b.id===id),shoulder=humanBuildShoulder(h),slam= (h.pattern==='slam'||h.pattern==='sweep')&&['warning','strike','recover'].includes(h.mode);return{id:h.id,label:HUMAN_PROFILES[h.id].label,pattern:h.pattern,mode:h.mode,anger:h.anger,ammo:h.ammo,refill:h.refill?{...h.refill}:null,available:HUMAN_PROFILES[h.id].patterns.filter(p=>humanPatternAvailable(h,p)),target:h.target.slice(),aimLocked:h.aimLocked,height:HUMAN_MODEL.height,scale:HUMAN_MODEL.scale,x:h.x,y:h.y,z:h.z,yaw:h.yaw,buildStage:h.buildStage,buildDone:h.buildDone,lastBuildAbort:h.lastBuildAbort??null,builds:h.builds,attacks:h.attacks,attackTimer:['warning','strike','recover'].includes(h.mode)?h.timer:null,blockId:id,blockMass:block?.mass??null,blockPosition:block?.p.slice()??null,blockBuilding:block?.building??false,handTarget:h.handTarget?.slice()??null,armReachLimit:HUMAN_BUILD.armUpper+HUMAN_BUILD.armForearm,handDistance:h.handTarget?len(vsub(h.handTarget,shoulder)):null,bodyLean:humanBuildLean(h),bodyCrouch:humanBuildCrouch(h),attackPending:h.pendingReactionTargetId,slamPoint:slam?humanGroundSlamPoint(h):null,slamWrist:slam?humanGroundSlamWrist(h):null,reaction:h.reaction?{...h.reaction}:null};}),towerBlocks:tower.blocks.map(b=>({id:b.id,mass:b.mass,p:b.p.slice(),building:b.building,fallen:b.fallen})),projectiles:projectiles.map(p=>({id:p.id,owner:p.owner,p:p.p.slice(),q:p.q.slice(),sleeping:p.sleeping})),impactDamage:{config:IMPACT_DAMAGE,events:collisionDamage.events,decisions:collisionDamage.decisions,catBlockEvents:collisionDamage.catBlockEvents,pairs:collisionDamage.pairs.size},throwPhysics:{kind:'toy-ball',radius:HUMAN_THROW.radius,reference:throwReference(),mass:HUMAN_THROW.mass,speed:HUMAN_THROW.speed,maxBalls:HUMAN_THROW.maxBalls,stats:throwStats},
