@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { Q, compose } from './math3d.js';
 import { COLOR, meshCube, meshSphere, meshCylinder, meshRing, meshDisc } from './geometry.js';
 import { MATERIALS, makeHouseAtlas } from './house.js';
@@ -85,6 +86,21 @@ class Toon3D {
     this.lastW = 0; this.lastH = 0;
     this.vp = new THREE.Matrix4();
     this.eye = [0, 0, 0];
+  }
+
+  /* Authored glb models draw through the same call-ordered path as primitives: draw('<name>', ...). `modelSize`
+     is the authored bounding box so callers can scale a model to a physics size without knowing the asset. */
+  async loadModels(urls) {
+    const loader = new GLTFLoader(); this.modelSize ??= {};
+    await Promise.all(Object.entries(urls).map(async ([name, url]) => {
+      const gltf = await loader.loadAsync(url); let mesh = null;
+      gltf.scene.traverse(node => { if (!mesh && node.isMesh) mesh = node; });
+      if (!mesh) throw new Error(`${url}: 메시가 없습니다.`);
+      const g = mesh.geometry.clone(); g.applyMatrix4(mesh.matrixWorld);
+      if (!g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Array(g.attributes.position.count * 2).fill(0), 2));
+      g.computeBoundingBox(); const size = g.boundingBox.getSize(new THREE.Vector3());
+      this.modelSize[name] = [size.x, size.y, size.z]; this.geometry[name] = g; this.pool[name] = { meshes: [], used: 0 };
+    }));
   }
 
   resize() {

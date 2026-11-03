@@ -10,7 +10,7 @@
 
 작은 고양이가 식탁 위 거대한 젠가탑을 연속으로 들이받아 **콤보로 성장**하고, 화가 난 사람이 집에 있는 물건(공·전동 쥐·로봇청소기)으로 방해하면 외곽 방의 거점을 부숴 끊는 **Rapier 3D 물리 게임**입니다. 블록이 무너지는 마지막 순간까지 관전하세요.
 
-**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.24.0** · PC / 터치 · 1–4명
+**[▶ 바로 플레이 / Play now](https://byh-playground.github.io/meow-tumble/)** · **v0.24.1** · PC / 터치 · 1–4명
 
 ![실제 Edge에서 실행한 와르르냥](docs/gameplay.png)
 
@@ -293,3 +293,9 @@ A light claw hit on a mass-20 block a builder is carrying prompts a brief look a
 - 게임 그리기 코드(`g.cube/orb/tube/cone/disc/ring/draw`)는 그대로입니다. 호출마다 풀링된 Mesh를 호출 순서로 정렬해 프레임 끝의 `g.render()` 한 번으로 제출합니다. 기존 톤 셰이더(태양·조명 램프·아틀라스 재질)는 `ShaderMaterial`로 그대로 옮겨 화면이 같게 유지됩니다.
 - 집 정적 지오메트리는 한 번 합쳐 BufferGeometry 배치로 만듭니다. 시뮬레이션은 렌더러를 읽지 않습니다.
 - 검증: 같은 시나리오(시작·탑 접근·박치기)의 전후 캡처 비교와 호출 수 182 동일. 실제 GPU 프레임 시간은 미측정입니다(검증 환경은 SwiftShader).
+
+## 첫 모델: 젠가 블록 0.24.1
+- Blender 5.2에서 모서리를 깎은 블록(`assets/models/block.glb`, 96 정점, 4.5KB)을 만들어 탑 블록을 이 모델로 그립니다. 제작 스크립트는 `assets/src/block.py`이고 Blender에서 실행하면 같은 glb가 나옵니다.
+- 모델은 자기 바운딩 박스를 기준으로 물리 크기에 맞춰 스케일합니다(`renderer.modelSize`). 로드에 실패하면 기존 큐브로 그립니다.
+- 하이라이트·타격 섬광 껍질도 같은 모델을 씁니다.
+

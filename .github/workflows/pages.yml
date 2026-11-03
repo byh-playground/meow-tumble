@@ -25,6 +25,7 @@ jobs:
           mkdir _site
           cp index.html _site/index.html
           cp -R src _site/src
+          cp -R assets _site/assets
           python3 - <<'PY'
           import hashlib
           import json
