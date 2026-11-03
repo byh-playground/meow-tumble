@@ -3008,7 +3008,8 @@ function createGameRoomFacade(room){
   if(!raw)return raw;if(cache.has(raw))return cache.get(raw);
   const transport={get state(){return raw.state},get bufferedAmount(){return raw.bufferedAmount},
    send(data){return raw.send(data)},
-   subscribe(fn){return raw.subscribe(data=>{if(data&&data.length&&data[0]>=NET_DEF.inputType&&data[0]<=NET_DEF.startType)return;fn(data);});},
+   // Every game packet type (input … perks) stays out of the SDK session; an unfiltered type is a wire protocol error there.
+   subscribe(fn){return raw.subscribe(data=>{if(data&&data.length&&data[0]>=NET_DEF.inputType&&data[0]<=NET_DEF.perksType)return;fn(data);});},
    subscribeStatus(fn){return raw.subscribeStatus?.(fn)??(()=>{});},
    close(){return raw.close?.();}};
   cache.set(raw,transport);return transport;
@@ -3542,6 +3543,6 @@ if(new URLSearchParams(location.search).get('debug')==='1'){window.__meowTumble=
   // A real physical shove on every standing block so the tower collapses through Rapier (stage test).
   collapse(){beginCollapse();},
   topple(){for(const b of tower.blocks){if(b.fallen||b.building)continue;const p=b.body.translation();b.body.applyImpulseAtPoint({x:(p.x>=0?1:-1)*b.mass*9,y:b.mass*2,z:(p.z>=0?1:-1)*b.mass*6},{x:p.x,y:p.y+.3,z:p.z},true);}},ammo(id,value){const h=human?.[id];if(h)h.ammo=Math.max(0,value|0);},breakSpawner(id){const s=spawnerById(id);if(s&&!s.broken&&cat){s.hp=1;damageSpawner(s,cat,{x:s.def.at[0],y:ARENA.floorY+.4,z:s.def.at[1]});}}},
- get actors(){return [...roomCats].map(([id,c])=>({id,x:c.x,z:c.z,y:c.y,level:c.level,hp:c.hp,charge:c.charge.ratio}));},get gl(){return renderer?.gl},get network(){return {connected:!!net.room,isHost:net.isHost,players:net.room?.players.length??1,room:net.room?.room??null,receivedTick:net.snapshotVersion,pin:GAMEKIT_PIN,sdkVersion:GAMEKIT_VERSION,sourceCommit:GAMEKIT_SOURCE_COMMIT,distCommit:GAMEKIT_PIN,manifestSha256:GAMEKIT_MANIFEST_SHA256}}};}
+ get actors(){return [...roomCats].map(([id,c])=>({id,x:c.x,z:c.z,y:c.y,level:c.level,hp:c.hp,charge:c.charge.ratio,perks:{...c.perks},maxLinks:chainMaxLinks(c),combo:{count:c.combo.count,best:c.combo.best},legacy:{...c.legacy}}));},get gl(){return renderer?.gl},get network(){return {connected:!!net.room,isHost:net.isHost,players:net.room?.players.length??1,room:net.room?.room??null,receivedTick:net.snapshotVersion,pin:GAMEKIT_PIN,sdkVersion:GAMEKIT_VERSION,sourceCommit:GAMEKIT_SOURCE_COMMIT,distCommit:GAMEKIT_PIN,manifestSha256:GAMEKIT_MANIFEST_SHA256}}};}
 main();
 
