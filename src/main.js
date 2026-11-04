@@ -278,7 +278,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
  const DEF={
-    build:'20261104-claw-consistency-v0272',version:'0.27.2',
+    build:'20261104-claw-small-xp-v0273',version:'0.27.3',
   // One continuous game: after each collapse the people rebuild with heavier wood, and the cat starts over
   // at LV1 keeping a permanent mass bonus from the chains it landed. No result screen, no mode, no timer.
   stage:{blockMassGrowth:1.5,legacyMassPerCombo:1.1,clearIntervalMs:140,layerIntervalMs:900},
@@ -304,7 +304,7 @@ class PhysicsTower {
   // pressing attack inside it IS the next headbutt — no charging, charge ratio 1 in GOLDEN decaying to
   // coyoteEndCharge through COYOTE — and the cat pops upward. Links = combo count = XP multiplier.
   // A press up to bufferMs before contact is kept as a reservation. Miss, timeout or damage ends the chain.
-  combo:{xpPerHit:1,maxLinks:3,goldenMs:50,coyoteMs:150,bufferMs:100,coyoteStartCharge:.94,coyoteEndCharge:.70,popUpSpeed:7,popHopSpeed:1.5,popMs:150,linkLockMs:70},
+  combo:{xpPerHit:1,clawXp:.1,maxLinks:3,goldenMs:50,coyoteMs:150,bufferMs:100,coyoteStartCharge:.94,coyoteEndCharge:.70,popUpSpeed:7,popHopSpeed:1.5,popMs:150,linkLockMs:70},
   // Impact feel is presentation only: the host simulation, input and network never pause.
   // hold = my own confirmed tower hit freezes my rendered frame briefly (pose hold), then the live view resumes.
   feel:{holdMs:45,strongHoldMs:65,strongMult:4,kick:.09,kickDecayPerSecond:9,flashMs:120,sparks:10,sparkPower:9,sparkTailSec:.05,debris:5,farHearingDistance:18,voiceLimit:3,pitchPerCombo:1.06},
@@ -969,9 +969,12 @@ function registerComboHit(actor,event){const cfg=DEF.combo,c=actor.combo;
  // Hit direction from the attacking cat's actual velocity (the solver contact point is event.p).
  const body=tower.playerBodies.get(actor.id)?.body,v=body?body.linvel():{x:0,y:0,z:1},speed=Math.hypot(v.x,v.y,v.z)||1,dir=[v.x/speed,v.y/speed,v.z/speed].map(n=>Math.round(n*100)/100);
  if(!dashHit){
-  // Only a headbutt pays tower XP. A claw scratch, walking into the tower, or a second contact of the same dash
-  // still flashes and sparks (everyone sees the touch) but earns nothing, so no tap or bump out-earns a chain.
-  combatUI.queue({kind:'combo',tick:nowTicks,entityId:actor.id,sequence:++c.sequence,count:0,mult:1,xp:0,feedbackOnly:true,blockId:event.blockId,p:event.p.slice(),dir});
+  // A claw scratch pays a sliver (0.1 x 3 taps/s = 0.3 XP/s, under a single headbutt's ~0.5 XP/s and far under a chain);
+  // walking into the tower or a second contact of the same dash pays nothing. Both still flash and spark.
+  // One swing pays once however many blocks it brushes (all of a swing's events share its tick).
+  const payClaw=event.kind==='claw'&&c.clawXpTick!==nowTicks;if(payClaw)c.clawXpTick=nowTicks;
+  const gained=payClaw?grantXp(actor,cfg.clawXp,event.p):0;
+  combatUI.queue({kind:'combo',tick:nowTicks,entityId:actor.id,sequence:++c.sequence,count:0,mult:1,xp:gained,feedbackOnly:!gained,blockId:event.blockId,p:event.p.slice(),dir});
   return;
  }
  c.windowSerial=c.dashSerial;c.count=c.armed?c.count+1:1;c.armed=false;
@@ -2986,9 +2989,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewpo
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
-  namespace:'meow-tumble-0.27.2',inputBytes:5,snapshotLimit:15000,
+  namespace:'meow-tumble-0.27.3',inputBytes:5,snapshotLimit:15000,
   inputType:91,snapshotType:92,resetType:93,startType:94,perksType:95,protocol:21});
-const LOBBY_VERSION='meow-tumble-0.27.2';
+const LOBBY_VERSION='meow-tumble-0.27.3';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};
