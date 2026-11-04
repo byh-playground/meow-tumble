@@ -278,7 +278,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
  const DEF={
-    build:'20261103-xp-goal-v0271',version:'0.27.1',
+    build:'20261104-claw-consistency-v0272',version:'0.27.2',
   // One continuous game: after each collapse the people rebuild with heavier wood, and the cat starts over
   // at LV1 keeping a permanent mass bonus from the chains it landed. No result screen, no mode, no timer.
   stage:{blockMassGrowth:1.5,legacyMassPerCombo:1.1,clearIntervalMs:140,layerIntervalMs:900},
@@ -295,7 +295,7 @@ class PhysicsTower {
   // The collapse goal is a share of the blocks that exist (a fixed count can exceed the tower: 8 layers x 3 = 24 blocks).
   round:{durationMs:0,winRatio:.5,
     collapseMinMs:2800,collapseQuietMs:1350,collapseMaxMs:11800,collapseMovingTolerance:2},
-  cat:{size:{min:.6,max:1.2,baseRadius:.5},moveSpeed:6.3,mass:{base:1,growthFactor:1.5},jump:{baseVelocity:10,maxMultiplier:2,durationMs:1000},charge:{durationMs:1500,baseSpeed:{base:5,perLevel:5/7},maxMultiplier:2,minDashMs:250,maxDashMs:560,cooldownMs:1550},claw:{tapMaxMs:250,cooldownMs:320,animationMs:260,hitAtMs:65,reach:2.55,queryRadius:1.46,queryForward:1.16,minFacingDot:.18,knockback:1.25},dodgeCooldownMs:1350,dodgeDurationMs:650,rollRecoveryMs:180,rollSpeed:12.5,rollIFrameStartMs:70,rollIFrameEndMs:495,launchAirControl:1.05,stunDurationMs:820,recoverDurationMs:550,maxHp:100,hitInvulnMs:1250},
+  cat:{size:{min:.6,max:1.2,baseRadius:.5},moveSpeed:6.3,mass:{base:1,growthFactor:1.5},jump:{baseVelocity:10,maxMultiplier:2,durationMs:1000},charge:{durationMs:1500,baseSpeed:{base:5,perLevel:5/7},maxMultiplier:2,minDashMs:250,maxDashMs:560,cooldownMs:1550},claw:{tapMaxMs:250,cooldownMs:320,animationMs:260,hitAtMs:65,reach:1.55,queryRadius:.80,queryForward:.95,minFacingDot:.6,knockback:1.25},dodgeCooldownMs:1350,dodgeDurationMs:650,rollRecoveryMs:180,rollSpeed:12.5,rollIFrameStartMs:70,rollIFrameEndMs:495,launchAirControl:1.05,stunDurationMs:820,recoverDurationMs:550,maxHp:100,hitInvulnMs:1250},
    humans:{buildDurationMs:45000,waveSpeed:15.2,impulse:11.8,slamUpSpeed:21.0,slamOutSpeed:14.5,otherUpSpeed:6.4,otherOutSpeed:10.2,launchMassExponent:.32,
     // People escalate from hand swats to household gadgets as directional cat→block hits add anger.
     anger:{perSeverity:12,decayPerSecond:1.5,max:100},refill:{runSpeed:2.4,pickMs:1200,spilledPickMs:900}},
@@ -413,7 +413,7 @@ class CombatPresentation {
     // only the cat that hit feels it (display hold + directional camera kick), so a teammate's hit
     // never interrupts my aim in co-op.
     const feel=DEF.feel,mine=e.entityId===localCat?.id,strong=e.mult>=feel.strongMult,dir=e.dir??[0,0,1];
-    this.popup((e.xp>0?'+'+e.xp+' XP':'MAX')+(e.mult>1?' ×'+e.mult:''),e.p,strong?'heavy':'damage',now,e.count%2?10:-10);
+    if(!e.feedbackOnly)this.popup((e.xp>0?'+'+e.xp+' XP':'MAX')+(e.mult>1?' ×'+e.mult:''),e.p,strong?'heavy':'damage',now,e.count%2?10:-10);
     const block=tower.blocks.find(b=>b.id===e.blockId);if(block)block.flash=feel.flashMs/1000;
     if(!reduceMotion){spark(e.p,dir,feel.sparks+(strong?4:0),feel.sparkPower);if(strong)debrisBurst(e.p,dir,feel.debris);}
     else particle(e.p,'cream',6,1.8);
@@ -916,10 +916,11 @@ function resolveClawHit(){
   if(hitIds.has(handle))continue;
   const target=collisionDamage.actorByHandle(handle);
   if(!target||target.kind==='cat')continue;
-  const p=target.body.translation(),dx=p.x-origin.x,dz=p.z-origin.z,dy=p.y-origin.y;
-  const planar=Math.hypot(dx,dz),radius=target.kind==='mob'?MOB_TYPES[target.actor.type].radius:target.kind==='spawner'?target.actor.def.radius:target.kind==='block' ? .58 : target.kind==='appliance' ? .48 : .36;
-  if(planar>config.reach*scale+radius||Math.abs(dy)>1.25*scale+radius||
-     (planar>.05&&(dx*fx+dz*fz)/planar<config.minFacingDot))continue;
+  // Reach and facing are measured to the nearest point of the target, so a long block's face counts, not its centre.
+  let contact=target.collider.translation();
+  try{const projection=target.collider.projectPoint(center,false);if(projection?.point&&[projection.point.x,projection.point.y,projection.point.z].every(Number.isFinite))contact=projection.point;}catch{}
+  const dx=contact.x-origin.x,dz=contact.z-origin.z,dy=contact.y-origin.y,planar=Math.hypot(dx,dz);
+  if(planar>config.reach*scale||Math.abs(dy)>.9*scale||(planar>.05&&(dx*fx+dz*fz)/planar<config.minFacingDot))continue;
   // Keep the established fixed-wall occlusion rule for every dynamic target.
   const range=Math.hypot(dx,dy,dz);
   if(range>.01){
@@ -927,12 +928,11 @@ function resolveClawHit(){
    const obstruction=tower.world.castRay(ray,range,true,RAPIER.QueryFilterFlags.ONLY_FIXED);
    if(obstruction&&obstruction.timeOfImpact<range-.10)continue;
   }
-  let contact=target.collider.translation();
-  try{const projection=target.collider.projectPoint(center,false);if(projection?.point&&[projection.point.x,projection.point.y,projection.point.z].every(Number.isFinite))contact=projection.point;}catch{}
   hitIds.add(handle);
   // A fixed household base has no solver response; claws wear it down directly.
   if(target.kind==='spawner'){damageSpawner(target.actor,cat,contact);hits++;continue;}
-  const impulse=config.knockback*Math.pow(cat.mass,.32),result=collisionDamage.strike(target,source,[fx*impulse,impulse*.34,fz*impulse],contact,{attackType:'claw'});
+  // Claw momentum grows with the cat's mass exactly like a headbutt does; no damped exponent.
+  const impulse=config.knockback*cat.mass,result=collisionDamage.strike(target,source,[fx*impulse,impulse*.34,fz*impulse],contact,{attackType:'claw'});
   if(result.applied)hits++;
   // Claw perk: flat extra damage on the people's gadgets, on top of the impulse-based hit.
   if(result.applied&&target.kind==='mob'&&!target.actor.dead&&(cat.perks?.claw??0)>0)damageMob(target.actor,perkNode('claw').damagePerLevel*cat.perks.claw,'claw',contact,120,{perk:'claw'});
@@ -966,15 +966,20 @@ function updateCombos(dt){
 function registerComboHit(actor,event){const cfg=DEF.combo,c=actor.combo;
  // The link's own tick does not count as its contact: the chained headbutt must travel at least one tick.
  const dashHit=!event.kind&&actor.motion.state==='dash'&&c.windowSerial!==c.dashSerial&&nowTicks>(c.linkTick??-1);
- if(dashHit){c.windowSerial=c.dashSerial;c.count=c.armed?c.count+1:1;c.armed=false;}
- (c.log??=[]).push({tick:nowTicks,kind:'hit',dashHit,serial:c.dashSerial,count:c.count,buffered:c.bufferedUntilTick,speed:+event.attackSpeed.toFixed(2)});if(c.log.length>16)c.log.shift();
- const mult=dashHit?c.count:1;c.mult=Math.max(1,c.count);c.best=Math.max(c.best,c.count);
- // Every valid hit is worth the same, whatever its impulse or the block mass; only the chain multiplier scales it.
- const gained=grantXp(actor,cfg.xpPerHit*mult,event.p);
  // Hit direction from the attacking cat's actual velocity (the solver contact point is event.p).
- const body=tower.playerBodies.get(actor.id)?.body,v=body?body.linvel():{x:0,y:0,z:1},speed=Math.hypot(v.x,v.y,v.z)||1;
- combatUI.queue({kind:'combo',tick:nowTicks,entityId:actor.id,sequence:++c.sequence,count:dashHit?c.count:1,mult,xp:gained,blockId:event.blockId,p:event.p.slice(),dir:[v.x/speed,v.y/speed,v.z/speed].map(n=>Math.round(n*100)/100)});
- if(!dashHit)return;
+ const body=tower.playerBodies.get(actor.id)?.body,v=body?body.linvel():{x:0,y:0,z:1},speed=Math.hypot(v.x,v.y,v.z)||1,dir=[v.x/speed,v.y/speed,v.z/speed].map(n=>Math.round(n*100)/100);
+ if(!dashHit){
+  // Only a headbutt pays tower XP. A claw scratch, walking into the tower, or a second contact of the same dash
+  // still flashes and sparks (everyone sees the touch) but earns nothing, so no tap or bump out-earns a chain.
+  combatUI.queue({kind:'combo',tick:nowTicks,entityId:actor.id,sequence:++c.sequence,count:0,mult:1,xp:0,feedbackOnly:true,blockId:event.blockId,p:event.p.slice(),dir});
+  return;
+ }
+ c.windowSerial=c.dashSerial;c.count=c.armed?c.count+1:1;c.armed=false;
+ (c.log??=[]).push({tick:nowTicks,kind:'hit',dashHit,serial:c.dashSerial,count:c.count,buffered:c.bufferedUntilTick,speed:+event.attackSpeed.toFixed(2)});if(c.log.length>16)c.log.shift();
+ const mult=c.count;c.mult=Math.max(1,c.count);c.best=Math.max(c.best,c.count);
+ // Every headbutt is worth the same, whatever its impulse or the block mass; only the chain multiplier scales it.
+ const gained=grantXp(actor,cfg.xpPerHit*mult,event.p);
+ combatUI.queue({kind:'combo',tick:nowTicks,entityId:actor.id,sequence:++c.sequence,count:c.count,mult,xp:gained,blockId:event.blockId,p:event.p.slice(),dir});
  // The contact opens the GOLDEN→COYOTE window for the next link, unless the chain is already at its cap.
  if(c.count>=chainMaxLinks(actor)){c.window=null;endCombo(actor,'complete');return;}
  c.window={openedTick:nowTicks,until:nowTicks+ticksOf(cfg.goldenMs+cfg.coyoteMs)};
@@ -2981,9 +2986,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewpo
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
-  namespace:'meow-tumble-0.27.1',inputBytes:5,snapshotLimit:15000,
+  namespace:'meow-tumble-0.27.2',inputBytes:5,snapshotLimit:15000,
   inputType:91,snapshotType:92,resetType:93,startType:94,perksType:95,protocol:21});
-const LOBBY_VERSION='meow-tumble-0.27.1';
+const LOBBY_VERSION='meow-tumble-0.27.2';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};
@@ -3531,7 +3536,7 @@ if(new URLSearchParams(location.search).get('debug')==='1'){window.__meowTumble=
  knockX:cat.knockX,knockZ:cat.knockZ,vy:cat.vy}:null,camera:camera?{yaw:camera.yaw,pitch:camera.pitch,eye:camera.eye.slice()}:null,
  impactGraceMs:cat?.impactGraceMs,unwedge:cat?.unwedge?{blockedMs:cat.unwedge.blockedMs,cooldownMs:cat.unwedge.cooldownMs,recoveries:cat.unwedge.recoveries,lastDirection:cat.unwedge.lastDirection?.slice()??null}:null,controls:{lookPointer:look.id,chargeLookPointer:look.chargeId,joyPointer:joy.id},layers:tower.layers,maxLayers:TOWER.maxLayers,nextBuilder:humanBuilderTurnId(),activeBodies:tower.blocks.length-tower.sleeperCount,
  humans:(human??[]).map(h=>{const id=h.grip?.blockId??h.remoteGripId??h.buildPlan?.blockId??null,block=id===null?null:tower.blocks.find(b=>b.id===id),shoulder=humanBuildShoulder(h),slam= (h.pattern==='slam'||h.pattern==='sweep')&&['warning','strike','recover'].includes(h.mode);return{id:h.id,label:HUMAN_PROFILES[h.id].label,pattern:h.pattern,mode:h.mode,anger:h.anger,ammo:h.ammo,refill:h.refill?{...h.refill}:null,available:HUMAN_PROFILES[h.id].patterns.filter(p=>humanPatternAvailable(h,p)),target:h.target.slice(),aimLocked:h.aimLocked,height:HUMAN_MODEL.height,scale:HUMAN_MODEL.scale,x:h.x,y:h.y,z:h.z,yaw:h.yaw,buildStage:h.buildStage,buildDone:h.buildDone,lastBuildAbort:h.lastBuildAbort??null,builds:h.builds,attacks:h.attacks,attackTimer:['warning','strike','recover'].includes(h.mode)?h.timer:null,blockId:id,blockMass:block?.mass??null,blockPosition:block?.p.slice()??null,blockBuilding:block?.building??false,handTarget:h.handTarget?.slice()??null,armReachLimit:HUMAN_BUILD.armUpper+HUMAN_BUILD.armForearm,handDistance:h.handTarget?len(vsub(h.handTarget,shoulder)):null,bodyLean:humanBuildLean(h),bodyCrouch:humanBuildCrouch(h),attackPending:h.pendingReactionTargetId,slamPoint:slam?humanGroundSlamPoint(h):null,slamWrist:slam?humanGroundSlamWrist(h):null,reaction:h.reaction?{...h.reaction}:null};}),towerBlocks:tower.blocks.map(b=>({id:b.id,mass:b.mass,p:b.p.slice(),building:b.building,fallen:b.fallen})),projectiles:projectiles.map(p=>({id:p.id,owner:p.owner,p:p.p.slice(),q:p.q.slice(),sleeping:p.sleeping})),impactDamage:{config:IMPACT_DAMAGE,events:collisionDamage.events,decisions:collisionDamage.decisions,catBlockEvents:collisionDamage.catBlockEvents,pairs:collisionDamage.pairs.size},throwPhysics:{kind:'toy-ball',radius:HUMAN_THROW.radius,reference:throwReference(),mass:HUMAN_THROW.mass,speed:HUMAN_THROW.speed,maxBalls:HUMAN_THROW.maxBalls,stats:throwStats},
- shockwaves:shockwaves.length,impulses:tower.totalImpulses,physicsEngine:'Rapier 3D 0.21.0',physicsVersion:DEF.version,motion:cat?.motion?.state,motionElapsedMs:cat?.motion?.elapsedMs,humanHits:cat?.humanHits,successfulRolls:cat?.successfulRolls,landings:cat?.landings,chargePercent:cat?Math.round(cat.charge.ratio*100):0,chargeHeld:cat?.charge.held,clawCooldownMs:cat?.claw.cooldown.leftMs,clawAnimationMs:cat?.claw.animation.leftMs,clawHitPending:cat?.claw.pendingHit,clawAttacks:cat?.claw.attacks,clawLastHits:cat?.claw.lastHits,jumpHeld:cat?.jump.held,jumpPercent:cat?Math.round(cat.jump.ratio*100):0,jumpLaunchVelocity:cat?.jump.lastVelocity,headbuttBaseSpeed:cat?headbuttBaseSpeed(cat.level):null,dashVelocity:cat?.dash.velocity,dashCooldownMs:cat?.dash.cooldown.leftMs,
+ shockwaves:shockwaves.length,impulses:tower.totalImpulses,physicsEngine:'Rapier 3D 0.21.0',physicsVersion:DEF.version,motion:cat?.motion?.state,motionElapsedMs:cat?.motion?.elapsedMs,clawAttacks:cat?.claw?.attacks,clawHits:cat?.claw?.lastHits,humanHits:cat?.humanHits,successfulRolls:cat?.successfulRolls,landings:cat?.landings,chargePercent:cat?Math.round(cat.charge.ratio*100):0,chargeHeld:cat?.charge.held,clawCooldownMs:cat?.claw.cooldown.leftMs,clawAnimationMs:cat?.claw.animation.leftMs,clawHitPending:cat?.claw.pendingHit,clawAttacks:cat?.claw.attacks,clawLastHits:cat?.claw.lastHits,jumpHeld:cat?.jump.held,jumpPercent:cat?Math.round(cat.jump.ratio*100):0,jumpLaunchVelocity:cat?.jump.lastVelocity,headbuttBaseSpeed:cat?headbuttBaseSpeed(cat.level):null,dashVelocity:cat?.dash.velocity,dashCooldownMs:cat?.dash.cooldown.leftMs,
  catBodyMass:tower.catBody?.mass(),contacts:tower.contacts,loopRunning:simLoop.running,drawCalls:renderer?.drawCalls,
  mobVitals:[...combatUI.plates].filter(([,p])=>p.mob).map(([id,p])=>({id,type:p.type,hp:p.mob.hp,maxHp:MOB_TYPES[p.type].maxHp,display:p.node.style.display})),
  combatFeedback:{pending:combatUI.pending.length,activeNumbers:combatUI.floats.filter(f=>f.endMs>performance.now()).length,activeBursts:combatUI.bursts.length,dropped:combatUI.dropped}}},
