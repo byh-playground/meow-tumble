@@ -278,7 +278,7 @@ class PhysicsTower {
    Rapier rigid bodies are not snapshotted into the rollback Core.
    Presentation (Toon3D, particles/HUD) cannot decide contacts, drops or HP. */
  const DEF={
-    build:'20261104-chain-sonic-v0280',version:'0.28.0',
+    build:'20261104-chain-ball-v0290',version:'0.29.0',
   // One continuous game: after each collapse the people rebuild with heavier wood, and the cat starts over
   // at LV1 keeping a permanent mass bonus from the chains it landed. No result screen, no mode, no timer.
   stage:{blockMassGrowth:1.5,legacyMassPerCombo:1.1,clearIntervalMs:140,layerIntervalMs:900},
@@ -304,7 +304,7 @@ class PhysicsTower {
   // pressing attack inside it IS the next headbutt — no charging, charge ratio 1 in GOLDEN decaying to
   // coyoteEndCharge through COYOTE — and the cat pops upward. Links = combo count = XP multiplier.
   // A press up to bufferMs before contact is kept as a reservation. Miss, timeout or damage ends the chain.
-  combo:{xpPerHit:1,clawXp:.1,maxLinks:3,goldenMs:50,coyoteMs:150,bufferMs:100,coyoteStartCharge:.94,coyoteEndCharge:.70,popUpSpeed:7,popHopSpeed:1.5,popMs:330,linkLockMs:70},
+  combo:{xpPerHit:1,clawXp:.1,maxLinks:3,goldenMs:50,coyoteMs:150,bufferMs:100,coyoteStartCharge:.94,coyoteEndCharge:.70,popUpSpeed:8.5,popHopSpeed:3.2,popMs:440,spinTurns:2,finisherPopScale:.85,finisherBallMs:1300,linkLockMs:70},
   // Impact feel is presentation only: the host simulation, input and network never pause.
   // hold = my own confirmed tower hit freezes my rendered frame briefly (pose hold), then the live view resumes.
   feel:{holdMs:45,holdPerLink:22,holdMaxMs:110,sparksPerLink:5,debrisPerLink:4,flashBase:.34,strongMult:4,kick:.09,kickDecayPerSecond:9,flashMs:120,sparks:10,sparkPower:9,sparkTailSec:.05,debris:5,farHearingDistance:18,voiceLimit:3,pitchPerCombo:1.06},
@@ -994,7 +994,7 @@ function registerComboHit(actor,event){const cfg=DEF.combo,c=actor.combo;
  const gained=grantXp(actor,cfg.xpPerHit*mult,event.p);c.markP=event.p.slice();
  combatUI.queue({kind:'combo',tick:nowTicks,entityId:actor.id,sequence:++c.sequence,count:c.count,mult,xp:gained,blockId:event.blockId,p:event.p.slice(),dir});
  // The contact opens the GOLDEN→COYOTE window for the next link, unless the chain is already at its cap.
- if(c.count>=chainMaxLinks(actor)){c.window=null;endCombo(actor,'complete');return;}
+ if(c.count>=chainMaxLinks(actor)){c.window=null;endCombo(actor,'complete');fireChainRebound();return;}
  c.window={openedTick:nowTicks,until:nowTicks+ticksOf(cfg.goldenMs+cfg.coyoteMs)};
  if(c.bufferedUntilTick>=nowTicks){c.bufferedUntilTick=-1;fireChainLink(1);}
 }
@@ -1025,6 +1025,16 @@ function fireChainLink(ratio){const cfg=DEF.combo,config=DEF.cat.charge,c=cat.co
  (c.log??=[]).push({tick:nowTicks,kind:'link',ratio:+ratio.toFixed(2),serial:c.dashSerial,vyBefore:+velocity.y.toFixed(2),vyAfter:+body.linvel().y.toFixed(2)});if(c.log.length>16)c.log.shift();
  particle([cat.x,cat.y+.30,cat.z],'yellow',14,2.6);sfx('dash',.9,1+c.count*.08);
  if(cat===localCat)announce(ratio>=1?'✦ 저스트! 연쇄 박치기':'연쇄 박치기 '+Math.round(ratio*100)+'%',700);
+}
+// The last link of a chain has nothing left to lunge at, but it still bounces off and spins like every other link:
+// the same up-and-back impulse, no forward headbutt afterwards.
+function fireChainRebound(){const cfg=DEF.combo,body=tower.catBody;
+ if(!body||CAT_DISABLED_STATES.has(cat.motion.state)||cat.motion.state==='roll')return;
+ const k=cfg.finisherPopScale,dirX=Math.sin(cat.aimYaw),dirZ=Math.cos(cat.aimYaw),v=body.linvel();
+ cat.dash.direction.x=dirX;cat.dash.direction.z=dirZ;cat.dash.velocity=0;cat.dash.leftMs=cfg.finisherBallMs;cat.dash.cooldown.leftMs=DEF.cat.charge.cooldownMs;cancelCharge();cat.charge.inputMs=0;cat.charge.tapPending=false;
+ body.applyImpulse({x:(-dirX*cfg.popHopSpeed*k-v.x)*body.mass(),y:Math.max(0,cfg.popUpSpeed*k-v.y)*body.mass(),z:(-dirZ*cfg.popHopSpeed*k-v.z)*body.mass()},true);
+ setCatMotion('dash',{chargeRatio:0,chained:true,finisher:true,popMs:cfg.finisherBallMs,pendingForward:0});
+ particle([cat.x,cat.y+.30,cat.z],'yellow',14,2.6);sfx('dash',.8,1+cat.combo.count*.08);
 }
 function endCombo(actor,reason){const c=actor.combo;const had=c.count>0||c.armed||c.window;
  c.count=0;c.mult=1;c.leftMs=0;c.window=null;c.armed=false;c.bufferedUntilTick=-1;
@@ -1383,8 +1393,8 @@ function updateCatMotion(dt){
   if(m.elapsedMs>=500)setCatMotion('idle');
  }
  // Brief world-space speed streaks: all source poses come from the physics body.
- if((m.state==='launched'||m.state==='roll')&&nowTicks%2===0){
-  cat.trail.push({p:[cat.x,cat.y+.65*catScaleForLevel(cat.level),cat.z],scale:catScaleForLevel(cat.level),life:.20,strength:m.state==='launched'?.48:.33});
+ if((m.state==='launched'||m.state==='roll'||(m.state==='dash'&&(m.popMs??0)>0))&&nowTicks%2===0){
+  cat.trail.push({p:[cat.x,cat.y+.65*catScaleForLevel(cat.level),cat.z],scale:catScaleForLevel(cat.level),life:.20,strength:m.state==='launched'?.48:m.state==='dash'?.42:.33});
   if(cat.trail.length>12)cat.trail.shift();
  }
  for(let i=cat.trail.length-1;i>=0;i--){cat.trail[i].life-=dt;if(cat.trail[i].life<=0)cat.trail.splice(i,1);}
@@ -1965,7 +1975,9 @@ function updateCat(dt,input){
     body.applyImpulse({x:fx*delta*body.mass(),y:0,z:fz*delta*body.mass()},true);vx=fx*speed;vz=fz*speed;particle([cat.x,cat.y+.3,cat.z],'white',10,2);}}
   if(cat.ticks%3===0)particle([cat.x,cat.y+.32,cat.z],'white',2,.6);
   if(cat.motion.popMs>0&&cat.ticks%2===0)particle([cat.x,cat.y+.15,cat.z],'yellow',3,1.1);
-  if(cat.dash.leftMs<=0)setCatMotion(!isCatSupported(p)?'jump':'idle');
+  // The finisher's ball keeps spinning until it lands, then hands the cat back.
+  if(cat.motion.finisher&&cat.motion.elapsedMs>200&&isCatSupported(p))setCatMotion('idle');
+  else if(cat.dash.leftMs<=0)setCatMotion(!isCatSupported(p)?'jump':'idle');
  }else if(cat.motion.state==='roll'){
   cat.dodgeMs=Math.max(0,cat.dodgeMs-ms);
   vx=cat.motion.rollDirX*DEF.cat.rollSpeed;vz=cat.motion.rollDirZ*DEF.cat.rollSpeed;
@@ -2455,7 +2467,7 @@ function drawLockMarker(g,p,size,col){
  g.orb(at,[.10,.10,.10],col);
 }
 function drawCatTrail(g,c){for(const t of c.trail){const opacity=clamp(t.life/.20,0,1)*t.strength;
- g.draw('sphere',t.p,[.42,.30,.52].map(value=>value*t.scale),c.motion.state==='roll'?COLOR.mint:COLOR.pink,Q(),opacity,1);
+ g.draw('sphere',t.p,[.42,.30,.52].map(value=>value*t.scale),c.motion.state==='roll'||(c.motion.popMs??0)>0?COLOR.mint:COLOR.pink,Q(),opacity,1);
 }}
 function drawCat(g,c){
  const scale=catScaleForLevel(c.level),p=[c.x,c.y,c.z],yaw=c.yaw,m=c.motion,mode=m.state,t=mode==='roll'?clamp(m.elapsedMs/DEF.cat.dodgeDurationMs,0,1):0;
@@ -2501,8 +2513,8 @@ function drawCat(g,c){
  }else if(isDash){
   if(isPop){
    // Chain pop: tuck into a ball and do one forward somersault over the air time, then lunge (the dash clip takes over).
-   const spin=clamp(m.elapsedMs/DEF.combo.popMs,0,1);
-   q=axisAngle([1,0,0],Math.PI*2*smooth(0,1,spin));squash=.10;curl=.55;
+   const turnsPerSecond=DEF.combo.spinTurns/(DEF.combo.popMs/1000);
+   q=axisAngle([1,0,0],Math.PI*2*turnsPerSecond*m.elapsedMs/1000);squash=.18;curl=.85;
   }else{stretch=.14+.14*(m.chargeRatio??0);squash=.035;}
  }
  const rollSettle=Math.sin(Math.PI*clamp((m.rollRecoveryMs||0)/DEF.cat.rollRecoveryMs,0,1));
@@ -2963,7 +2975,7 @@ function drawWorld({alpha=0}={}){if(!renderer)return;const frameNow=performance.
  const combo=cat.combo,windowMs=DEF.combo.goldenMs+DEF.combo.coyoteMs;ui.combo.classList.toggle('show',combo.count>0&&phase==='play');if(combo.count>0){ui.comboMult.textContent='×'+combo.mult;ui.comboHits.textContent=combo.count+' 연쇄'+(combo.window?' · 지금 공격!':'');ui.comboFill.style.width=clamp(combo.leftMs/windowMs*100,0,100)+'%';}
  // Lock-on marker: after a chain link fires, a triangle shows where the next contact will land (the face, one pop higher),
  // closing in as the lunge nears. The gold ring at the feet below still owns the press timing.
- if(cat.combo.armed&&cat.combo.markP){const link=clamp((nowTicks-(cat.combo.linkTick??nowTicks))*1000/NET_DEF.stepHz/(DEF.combo.popMs+DEF.cat.charge.minDashMs),0,1),apex=DEF.combo.popUpSpeed**2/(2*PHYS.gravity)*.92;
+ if(cat.combo.armed&&cat.combo.markP){const link=clamp((nowTicks-(cat.combo.linkTick??nowTicks))*1000/NET_DEF.stepHz/(DEF.combo.popMs+DEF.cat.charge.minDashMs),0,1),apex=DEF.combo.popUpSpeed**2/(2*PHYS.gravity)*.78;
   drawLockMarker(g,[cat.combo.markP[0],cat.combo.markP[1]+apex,cat.combo.markP[2]],lerp(.80,.46,link),link>.7?COLOR.yellow:COLOR.white);}
  // Chain window telegraph: a gold ring at the cat's feet during GOLDEN that fades through COYOTE.
  if(combo.window&&combo.leftMs>0){const t=1-combo.leftMs/windowMs,golden=t*windowMs<DEF.combo.goldenMs;g.ring([c.x,c.y+.06,c.z],.9+t*.9,golden?COLOR.yellow:COLOR.cream,golden?.95:.8*(1-t));}
@@ -3024,9 +3036,9 @@ function sampleControls(){if(navigation.snapshot().screen!=='play'||mobileViewpo
  * During a round late joining is explicitly blocked by the host admission gate.
  * The host can start with any committed 1..4 members in the lobby. */
 const NET_DEF=Object.freeze({maxPlayers:4,stepHz:30,snapshotHz:10,
-  namespace:'meow-tumble-0.28.0',inputBytes:5,snapshotLimit:15000,
+  namespace:'meow-tumble-0.29.0',inputBytes:5,snapshotLimit:15000,
   inputType:91,snapshotType:92,resetType:93,startType:94,perksType:95,protocol:21});
-const LOBBY_VERSION='meow-tumble-0.28.0';
+const LOBBY_VERSION='meow-tumble-0.29.0';
 const DEFAULT_PEER_INPUT=new Uint8Array([128,128,0,0,128]);
 function createMembershipAdapter(){
  let state={tick:0,epoch:-1,players:[]};
